@@ -1,0 +1,23 @@
+site_name: microfading
+
+theme:
+  name: "material"
+  
+nav:
+  - index.md
+  - tutorials.md
+  - reference.md
+  - How-To Guides: how-to-guides.md
+  
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          paths: ['src']  # Make sure mkdocstrings looks in the 'src' directory
+          
+markdown_extensions:
+  - admonition
+  - codehilite
+  - toc:
+      permalink: true
