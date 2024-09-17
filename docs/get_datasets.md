@@ -25,10 +25,7 @@ ds
 
 
 
-
-```python
-
-```
+<hr style="border:20px solid blue">
 
 
 ```python
@@ -51,10 +48,9 @@ ds
 
 
 
+<hr style="border:2px solid blue">
 
-```python
-
-```
+<hr style="border: 2px solid black; width: 80%;">
 
 
 ```python
@@ -73,10 +69,7 @@ ds
 
 
 
-
-```python
-
-```
+---
 
 
 ```python

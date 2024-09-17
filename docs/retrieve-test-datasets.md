@@ -6,6 +6,7 @@ First, open a jupyter notebook, import the microfading package and then retrieve
 - `BWS` (True or False) : you can decide to include or exclude measurements performed on blue wool samples.
 - `stdev` (True or False) : you can decide to retrieve file with or without standard deviation values. This parameter only applies for the *interim* files.
 
+
 ```python
 import microfading as mf
 ```
@@ -33,10 +34,7 @@ ds
 
 
 
-
-```python
-
-```
+<hr style="border: none; border-top: 2px solid blue; margin: 0;">
 
 
 ```python
@@ -59,10 +57,7 @@ ds
 
 
 
-
-```python
-
-```
+<hr style="border: none; border-top: 2px solid blue; margin: 0;">
 
 
 ```python
@@ -81,10 +76,7 @@ ds
 
 
 
-
-```python
-
-```
+<hr style="border: none; border-top: 2px solid blue; margin: 0;">
 
 
 ```python
@@ -98,5 +90,6 @@ ds
 
     [PosixPath('/home/gpatin/Documents/test/venv/lib/python3.11/site-packages/microfading/datasets/2024-144_MF.dayflower4.G01_avg_0h_model_2024-07-30_MFT2.xlsx'),
      PosixPath('/home/gpatin/Documents/test/venv/lib/python3.11/site-packages/microfading/datasets/2024-144_MF.indigo3.G01_avg_0h_model_2024-08-02_MFT2.xlsx')]
+
 
 
