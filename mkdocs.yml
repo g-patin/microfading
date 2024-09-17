@@ -7,16 +7,21 @@ nav:
   - index.md
   - installation.md  
   - Documentation: 
-       - tutorials.md
-       - How-to-guides: 
-           - how-to-guides.md
+       - Tutorials:
+           - first-steps.md
+           - assess-light-sensitivity.md
+           - generate-report.md
+       - How-to-guides:     
+           - manage-databases.md       
            - retrieve-test-datasets.md
-       - reference.md
-       - installation.md
-  
+           - create-MFT-class-instance.md
+           - visualize-data.md
+       - explanation.md
+       - references.md 
   
 plugins:
   - search
+  - mkdocs-jupyter
   - mkdocstrings:
       handlers:
         python:

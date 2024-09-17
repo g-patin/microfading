@@ -1,11 +1,3 @@
-This page describes how to retrieve examples of interim files that can subsequently be used to explore the microfading package. 
-
-First, open a jupyter notebook, import the microfading package and then retrieve the paths using the `get_datasets()` function, as illustrated below. The `get_datasets()` function has three optional parameters that allows you to filter the files:
-
-- `rawfiles` (True or False) : you can decide to retrieve rawdata files or interim files. The former will enable you to run the `process_rawdata()` function, while the latter will allow you to directly create an `MFT` class instance and explore the functionalities of the package.
-- `BWS` (True or False) : you can decide to include or exclude measurements performed on blue wool samples.
-- `stdev` (True or False) : you can decide to retrieve file with or without standard deviation values. This parameter only applies for the *interim* files.
-
 ```python
 import microfading as mf
 ```
