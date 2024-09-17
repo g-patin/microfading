@@ -5,9 +5,15 @@ theme:
   
 nav:
   - index.md
-  - tutorials.md
-  - reference.md
-  - How-To Guides: how-to-guides.md
+  - installation.md  
+  - Documentation: 
+       - tutorials.md
+       - How-to-guides: 
+           - how-to-guides.md
+           - retrieve-test-datasets.md
+       - reference.md
+       - installation.md
+  
   
 plugins:
   - search
