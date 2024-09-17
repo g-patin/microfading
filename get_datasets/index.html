@@ -585,8 +585,7 @@
 <span class="w"> </span><span class="nx">PosixPath</span><span class="p">(</span><span class="err">&#39;</span><span class="o">/</span><span class="nx">home</span><span class="o">/</span><span class="nx">gpatin</span><span class="o">/</span><span class="nx">Documents</span><span class="o">/</span><span class="nx">test</span><span class="o">/</span><span class="nx">venv</span><span class="o">/</span><span class="nx">lib</span><span class="o">/</span><span class="nx">python3</span><span class="m m-Double">.11</span><span class="o">/</span><span class="nx">site</span><span class="o">-</span><span class="nx">packages</span><span class="o">/</span><span class="nx">microfading</span><span class="o">/</span><span class="nx">datasets</span><span class="o">/</span><span class="mi">2024</span><span class="o">-</span><span class="mi">144</span><span class="nx">_MF</span><span class="p">.</span><span class="nx">vermillon</span><span class="m m-Double">.01</span><span class="nx">_G01_red_model_2024</span><span class="o">-</span><span class="mi">07</span><span class="o">-</span><span class="mi">31</span><span class="nx">_MFT1</span><span class="p">.</span><span class="nx">xlsx</span><span class="err">&#39;</span><span class="p">)]</span>
 </code></pre></div>
 
-<div class="codehilite"><pre><span></span><code>
-</code></pre></div>
+<hr style="border:20px solid blue">
 
 <div class="codehilite"><pre><span></span><code><span class="c1"># retrieve all the rawfiles</span>
 <span class="n">ds</span> <span class="o">=</span> <span class="n">mf</span><span class="o">.</span><span class="n">get_datasets</span><span class="p">(</span><span class="n">rawfiles</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
@@ -603,8 +602,9 @@
 <span class="w"> </span><span class="nx">PosixPath</span><span class="p">(</span><span class="err">&#39;</span><span class="o">/</span><span class="nx">home</span><span class="o">/</span><span class="nx">gpatin</span><span class="o">/</span><span class="nx">Documents</span><span class="o">/</span><span class="nx">test</span><span class="o">/</span><span class="nx">venv</span><span class="o">/</span><span class="nx">lib</span><span class="o">/</span><span class="nx">python3</span><span class="m m-Double">.11</span><span class="o">/</span><span class="nx">site</span><span class="o">-</span><span class="nx">packages</span><span class="o">/</span><span class="nx">microfading</span><span class="o">/</span><span class="nx">datasets</span><span class="o">/</span><span class="mi">2024</span><span class="o">-</span><span class="mi">144</span><span class="w"> </span><span class="nx">BWS0024</span><span class="w"> </span><span class="nx">G01</span><span class="w"> </span><span class="nx">BW1_01</span><span class="p">.</span><span class="nx">rfc</span><span class="err">&#39;</span><span class="p">)]</span>
 </code></pre></div>
 
-<div class="codehilite"><pre><span></span><code>
-</code></pre></div>
+<hr style="border:2px solid blue">
+
+<hr style="border: 2px solid black; width: 80%;">
 
 <div class="codehilite"><pre><span></span><code><span class="c1"># excluded the rawfiles performed on blue wool samples</span>
 <span class="n">ds</span> <span class="o">=</span> <span class="n">mf</span><span class="o">.</span><span class="n">get_datasets</span><span class="p">(</span><span class="n">rawfiles</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">BWS</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
@@ -617,9 +617,7 @@
 <span class="w"> </span><span class="nx">PosixPath</span><span class="p">(</span><span class="err">&#39;</span><span class="o">/</span><span class="nx">home</span><span class="o">/</span><span class="nx">gpatin</span><span class="o">/</span><span class="nx">Documents</span><span class="o">/</span><span class="nx">test</span><span class="o">/</span><span class="nx">venv</span><span class="o">/</span><span class="nx">lib</span><span class="o">/</span><span class="nx">python3</span><span class="m m-Double">.11</span><span class="o">/</span><span class="nx">site</span><span class="o">-</span><span class="nx">packages</span><span class="o">/</span><span class="nx">microfading</span><span class="o">/</span><span class="nx">datasets</span><span class="o">/</span><span class="mi">2024</span><span class="o">-</span><span class="mi">8200</span><span class="w"> </span><span class="nx">P</span><span class="o">-</span><span class="mi">001</span><span class="w"> </span><span class="nx">G01</span><span class="w"> </span><span class="nx">uncleaned_01</span><span class="p">.</span><span class="nx">rfc</span><span class="err">&#39;</span><span class="p">)]</span>
 </code></pre></div>
 
-<div class="codehilite"><pre><span></span><code>
-</code></pre></div>
-
+<hr />
 <div class="codehilite"><pre><span></span><code><span class="c1"># retrieved the interim files with standard devivation values</span>
 <span class="n">ds</span> <span class="o">=</span> <span class="n">mf</span><span class="o">.</span><span class="n">get_datasets</span><span class="p">(</span><span class="n">rawfiles</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">BWS</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">stdev</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="n">ds</span>
