@@ -12,8 +12,6 @@
         <link rel="prev" href="../explanation/">
       
       
-        <link rel="next" href="../installation/">
-      
       
       <link rel="icon" href="../assets/images/favicon.png">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.34">
@@ -64,7 +62,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#microfading.microfading" class="md-skip">
+        <a href="#commands" class="md-skip">
           Skip to content
         </a>
       
@@ -564,6 +562,57 @@
       Table of contents
     </label>
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#commands" class="md-nav__link">
+    <span class="md-ellipsis">
+      Commands
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Commands">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#datasets" class="md-nav__link">
+    <span class="md-ellipsis">
+      Datasets
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#databases-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      Databases management
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#data-processing" class="md-nav__link">
+    <span class="md-ellipsis">
+      Data processing
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mft-class" class="md-nav__link">
+    <span class="md-ellipsis">
+      MFT class
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
       
         <li class="md-nav__item">
   <a href="#microfading.microfading" class="md-nav__link">
@@ -1225,27 +1274,6 @@
 
               
             
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../installation/" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
-    Installation
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
           </ul>
         </nav>
       
@@ -1276,6 +1304,57 @@
       Table of contents
     </label>
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#commands" class="md-nav__link">
+    <span class="md-ellipsis">
+      Commands
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Commands">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#datasets" class="md-nav__link">
+    <span class="md-ellipsis">
+      Datasets
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#databases-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      Databases management
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#data-processing" class="md-nav__link">
+    <span class="md-ellipsis">
+      Data processing
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mft-class" class="md-nav__link">
+    <span class="md-ellipsis">
+      MFT class
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
       
         <li class="md-nav__item">
   <a href="#microfading.microfading" class="md-nav__link">
@@ -1945,7 +2024,29 @@
 
   <h1>References</h1>
 
-<p>There is a new sentence !</p>
+<h2 id="commands">Commands<a class="headerlink" href="#commands" title="Permanent link">&para;</a></h2>
+<h3 id="datasets">Datasets<a class="headerlink" href="#datasets" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>get_datasets [rawfiles, BWS, stdev]</code> - Retrieve examples of data files.</li>
+</ul>
+<h3 id="databases-management">Databases management<a class="headerlink" href="#databases-management" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>create_DB [folder]</code> - Create two empty databases (projects and objects).</li>
+<li><code>get_DB [db]</code> - Retrieve the databases.</li>
+<li><code>folder_DB</code> - Retrieve the folder where the databases are stored.</li>
+<li><code>add_new_project</code> - Add a new project to the database.</li>
+<li><code>add_new_object</code> - Add a new object to the database.</li>
+<li><code>update_DB_project [new, old]</code> - Modify or add a new parameter to the project database.</li>
+<li><code>update_DB_object [new, old]</code> - Modify or add a new parameter to the object database.</li>
+</ul>
+<h3 id="data-processing">Data processing<a class="headerlink" href="#data-processing" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>process_rawdata [files, device]</code> - Process rawdata files into interim files.</li>
+</ul>
+<h3 id="mft-class">MFT class<a class="headerlink" href="#mft-class" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>data_points</code> - Select colourimetric values for one or multiple light dose values.</li>
+</ul>
 
 
 <div class="doc doc-object doc-module">

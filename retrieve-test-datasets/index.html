@@ -543,27 +543,6 @@
 
               
             
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../installation/" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
-    Installation
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
           </ul>
         </nav>
       
@@ -607,7 +586,7 @@
 <p>This page describes how to retrieve examples of interim files that can subsequently be used to explore the microfading package. </p>
 <p>First, open a jupyter notebook, import the microfading package and then retrieve the paths using the <code>get_datasets()</code> function, as illustrated below. The <code>get_datasets()</code> function has three optional parameters that allows you to filter the files:</p>
 <ul>
-<li><code>rawfiles</code> (True or False) : you can decide to retrieve rawdata files or interim files. The former will enable you to run the <code>process_rawfiles()</code> function, while the latter will allow you to directly create an <code>MFT</code> class instance and explore the functionalities of the package.</li>
+<li><code>rawfiles</code> (True or False) : you can decide to retrieve rawdata files or interim files. The former will enable you to run the <code>process_rawdata()</code> function, while the latter will allow you to directly create an <code>MFT</code> class instance and explore the functionalities of the package.</li>
 <li><code>BWS</code> (True or False) : you can decide to include or exclude measurements performed on blue wool samples.</li>
 <li><code>stdev</code> (True or False) : you can decide to retrieve file with or without standard deviation values. This parameter only applies for the <em>interim</em> files.</li>
 </ul>
