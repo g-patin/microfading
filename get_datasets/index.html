@@ -9,10 +9,6 @@
       
       
       
-        <link rel="prev" href="../manage-databases/">
-      
-      
-        <link rel="next" href="../create-MFT-class-instance/">
       
       
       <link rel="icon" href="../assets/images/favicon.png">
@@ -20,7 +16,7 @@
     
     
       
-        <title>Retrieve test datasets - microfading</title>
+        <title>Get datasets - microfading</title>
       
     
     
@@ -95,7 +91,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Retrieve test datasets
+              Get datasets
             
           </span>
         </div>
@@ -225,19 +221,17 @@
       
   
   
-    
   
   
-  
     
     
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
         
           
           <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
@@ -251,7 +245,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_3">
             <span class="md-nav__icon md-icon"></span>
             Documentation
@@ -368,19 +362,17 @@
                 
   
   
-    
   
   
-  
     
     
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_2" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_2" >
         
           
           <label class="md-nav__link" for="__nav_3_2" id="__nav_3_2_label" tabindex="0">
@@ -394,7 +386,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_2_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_2_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_3_2">
             <span class="md-nav__icon md-icon"></span>
             How-to-guides
@@ -426,17 +418,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../retrieve-test-datasets/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -445,7 +430,6 @@
   
 
       </a>
-      
     </li>
   
 
@@ -602,15 +586,8 @@
                   
 
 
-  <h1>Retrieve test datasets</h1>
+  <h1>Get datasets</h1>
 
-<p>This page describes how to retrieve examples of interim files that can subsequently be used to explore the microfading package. </p>
-<p>First, open a jupyter notebook, import the microfading package and then retrieve the paths using the <code>get_datasets()</code> function, as illustrated below. The <code>get_datasets()</code> function has three optional parameters that allows you to filter the files:</p>
-<ul>
-<li><code>rawfiles</code> (True or False) : you can decide to retrieve rawdata files or interim files. The former will enable you to run the <code>process_rawfiles()</code> function, while the latter will allow you to directly create an <code>MFT</code> class instance and explore the functionalities of the package.</li>
-<li><code>BWS</code> (True or False) : you can decide to include or exclude measurements performed on blue wool samples.</li>
-<li><code>stdev</code> (True or False) : you can decide to retrieve file with or without standard deviation values. This parameter only applies for the <em>interim</em> files.</li>
-</ul>
 <div class="codehilite"><pre><span></span><code><span class="kn">import</span> <span class="nn">microfading</span> <span class="k">as</span> <span class="nn">mf</span>
 </code></pre></div>
 
