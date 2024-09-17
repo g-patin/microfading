@@ -456,7 +456,14 @@
 
   <h1>Retrieve test datasets</h1>
 
-<p>This page describes how to retrieve exemple of interim files that you can use to explore the microfading package. </p>
+<p>This page describes how to retrieve examples of interim files that can subsequently be used to explore the microfading package. </p>
+<p>First, open a jupyter notebook and import the microfading package.</p>
+<div class="codehilite"><pre><span></span><code><span class="kn">import</span> <span class="nn">microfading</span> <span class="k">as</span> <span class="nn">mf</span>
+</code></pre></div>
+
+<p>Then obtain a list of the interim filenames with the following line:</p>
+<div class="codehilite"><pre><span></span><code><span class="n">ds</span> <span class="o">=</span> <span class="n">mf</span><span class="o">.</span><span class="n">get_datasets</span><span class="p">()</span>
+</code></pre></div>
 
 
 
