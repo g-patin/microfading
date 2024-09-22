@@ -16,12 +16,354 @@ class DB:
         self.folder_db = Path(self.load_folder_db())
 
 
+    def add_new_object(self):
+
+        db_projects = self.get_db(db='projects')
+        projects_list = ['noProject'] + list(db_projects['project_id'].values)
+
+        db_objects = self.get_db(db='objects')
+        existing_columns = list(db_objects.columns)
+
+        creators_file = open(self.folder_db / r'object_creators.txt', 'r').read()
+        creators = creators_file.split("\n")
+        
+        types_file = open(self.folder_db / r'object_types.txt', 'r').read()
+        types = types_file.split("\n")        
+
+        techniques_file = open(self.folder_db / r'object_techniques.txt', 'r').read()
+        techniques = techniques_file.split("\n")        
+
+        supports_file = open(self.folder_db  / r'object_supports.txt', 'r').read()
+        supports = supports_file.split("\n")        
+
+        owners_file = open(self.folder_db / r'institutions.txt', 'r').read()
+        owners = owners_file.split("\n")
+               
+
+        # Define ipython widgets
+
+        project_id = ipw.Combobox(
+            #value = ' ',
+            placeholder='Project',
+            options = projects_list,
+            description = 'Project id',
+            ensure_option=False,
+            disabled=False,
+            layout=Layout(width="99%", height="30px"),
+            style=style,
+        )
+
+        object_id = ipw.Text(        
+            value='',
+            placeholder='Inv. N°',
+            description='Id',
+            disabled=False,
+            layout=Layout(width="99%", height="30px"),
+            style=style,   
+        )
+
+        object_category = ipw.Dropdown(
+            options=['heritage','model','reference','sample'],
+            value='heritage',
+            description='Category',
+            disabled=False,
+            layout=Layout(width="99%", height="30px"),
+            style=style,
+        )    
+
+        object_creator = ipw.Combobox(
+            placeholder = 'Surname, Name',
+            options = creators,
+            description = 'Creator',
+            ensure_option=False,
+            disabled=False,
+            layout=Layout(width="99%", height="30px"),
+            style=style,
+        ) 
+
+        object_date = ipw.Text(
+            value='',
+            placeholder='Enter a date',
+            description='Date',
+            disabled=False,
+            layout=Layout(width="99%", height="30px"),
+            style=style,         
+        )  
+
+        object_owner = ipw.Combobox(
+            placeholder = 'Enter an institution/owner',
+            options = owners,
+            description = 'Object owner',
+            ensure_option = False,
+            disabled = False,
+            layout=Layout(width='99%',height="30px"),
+            style = style
+
+        )
+
+        object_title = ipw.Textarea(        
+            value='',
+            placeholder='Enter the title',
+            description='Title',
+            disabled=False,
+            layout=Layout(width='99%',height="100%"),
+            style=style,   
+        )  
+
+        object_name = ipw.Text(        
+            value='',
+            placeholder='Enter a short object name without space',
+            description='Name',
+            disabled=False,
+            layout=Layout(width='99%',height="30px"),
+            style=style,   
+        )
+
+        object_type = ipw.Combobox(
+            placeholder = 'General classification',
+            options = types,
+            description = 'Type',
+            ensure_option=False,
+            disabled=False,
+            layout=Layout(width="99%", height="30px"),
+            style=style,
+        )
+
+        object_technique = ipw.SelectMultiple(
+            placeholder = 'Enter techniques/materials',
+            options = techniques,
+            description = 'Technique',
+            ensure_option=False,
+            disabled=False,
+            layout=Layout(width="99%", height="160px"),
+            style=style,
+        )   
+
+        object_support = ipw.Combobox(
+            placeholder = 'Enter a material',
+            options = supports,
+            description = 'Support',
+            ensure_option=False,
+            disabled=False,
+            layout=Layout(width="99%", height="30px"),
+            style=style,
+        )
+
+        recording = ipw.Button(
+            description='Create record',
+            disabled=False,
+            button_style='', # 'success', 'info', 'warning', 'danger' or ''
+            tooltip='Click me',
+            #layout=Layout(width="50%", height="30px"),
+            #style=style,
+            #icon='check' # (FontAwesome names without the `fa-` prefix)
+        )        
+        
+
+        button_record_output = ipw.Output()       
+    
+
+        object_color = ipw.Combobox(
+            description = 'Color',
+            placeholder = 'Optional',
+            ensure_option=False,
+            disabled=False,
+            layout=Layout(width="99%", height="30px"),
+            style=style,
+        )        
+                
+        # Combobox for additional parameters (if any)
+        additional_params = [col for col in existing_columns if col not in [
+            'project_id',
+            'object_id',
+            'object_category',
+            'object_type',
+            'object_technique',
+            'object_title',
+            'object_name',
+            'object_creator',
+            'object_date',
+            'object_owner',
+            'object_support']]
+
+        additional_param_widgets = {}
+        for param in additional_params:
+            additional_param_widgets[param] = ipw.Combobox(
+                description=param,
+                options=[],  # You can populate this with options if needed
+                placeholder=f"Enter {param} value"
+            )        
+
+
+        def button_record_pressed(b):
+            """
+            Save the object info in the object database file (DB_objects.csv).
+            """
+
+            with button_record_output:
+                button_record_output.clear_output(wait=True)
+
+                db_objects_file = self.folder_db / 'DB_objects.csv'
+                db_objects = pd.read_csv(db_objects_file)                
+
+                creators_file = open(self.folder_db  / r'object_creators.txt', 'r').read().splitlines()
+                creators = creators_file 
+
+                owners_file = open(self.folder_db  / r'institutions.txt', 'r').read().splitlines()
+                owners = owners_file             
+
+                types_file = open(self.folder_db / r'object_types.txt', 'r').read().splitlines()
+                types = types_file       
+
+                techniques_file = open(self.folder_db / r'object_techniques.txt', 'r').read().splitlines()
+                techniques = techniques_file        
+
+                supports_file = open(self.folder_db  / r'object_supports.txt', 'r').read().splitlines()
+                supports = supports_file                        
+
+                new_row = pd.DataFrame({                    
+                    'project_id': project_id.value,
+                    'object_id' : object_id.value,                   
+                    'object_category': object_category.value, 
+                    'object_type': object_type.value, 
+                    "object_technique": "_".join(object_technique.value),
+                    "object_title": object_title.value,
+                    'object_name': object_name.value,
+                    'object_creator': object_creator.value,                        
+                    'object_date': object_date.value,
+                    'object_owner': object_owner.value,
+                    'object_support': object_support.value},                       
+                    index=[0] 
+                    ) 
+
+
+                if object_creator.value not in creators:
+                    creators.append(str(object_creator.value))
+                    creators = sorted(creators, key=str.casefold) 
+                    
+                    with open(self.folder_db / 'object_creators.txt', 'w') as f:
+                        f.write('\n'.join(creators).strip())
+                    f.close()
+
+                if object_owner.value not in owners:                       
+                    owners.append(str(object_owner.value))         
+                    owners = sorted(owners)   
+
+                    with open(self.folder_db / 'institutions.txt', 'w') as f:
+                        f.write('\n'.join(owners).strip())  
+                    f.close() 
+
+                
+                if object_support.value not in supports:
+                    supports.append(str(object_support.value))
+                    supports = sorted(supports, key=str.casefold)                    
+
+                    with open(self.folder_db / 'object_supports.txt', 'w') as f:
+                        f.write('\n'.join(supports).strip()) 
+                    f.close()
+
+                if object_type.value not in types:
+                    types.append(str(object_type.value))
+                    types = sorted(types, key=str.casefold)
+
+                    with open(self.folder_db / 'object_types.txt', 'w') as f:
+                        f.write('\n'.join(types).strip())
+                    f.close()                                 
+                
+
+                # Add additional parameters to the new record
+                for param, widget in additional_param_widgets.items():
+                    new_row[param] = widget.value
+
+                db_objects_new = pd.concat([db_objects, new_row],)
+                db_objects_new.to_csv(db_objects_file, index= False)
+                print(f'Object {object_id.value} added to database.')
+
+        recording.on_click(button_record_pressed)
+
+        display(ipw.HBox([ipw.VBox([object_id,project_id,object_creator,object_date,object_owner,object_title, object_name],layout=Layout(width="40%", height="300px"), style=style,),
+                        ipw.VBox([object_category,object_type,object_technique,object_support,object_color],layout=Layout(width="40%", height="300px"), style=style),
+                        ]))  
+
+        display(*[widget for widget in additional_param_widgets.values()])
+        display(ipw.HBox([recording, button_record_output]))
+        
+
+    def add_new_person(self):
+
+        # Define ipython widgets
+        name = ipw.Text(        
+            value='',
+            placeholder='Enter a name',
+            description='Name',
+            disabled=False,
+            layout=Layout(width="50%", height="30px"),
+            style=style,   
+        )
+
+        surname = ipw.Text(        
+            value='',
+            placeholder='Enter a surname',
+            description='Surname',
+            disabled=False,
+            layout=Layout(width="50%", height="30px"),
+            style=style,   
+        )
+        
+        initials = ipw.Text(        
+            value='',
+            placeholder='Enter initials capital letters',
+            description='Initials',
+            disabled=False,
+            layout=Layout(width="50%", height="30px"),
+            style=style,   
+        )
+
+        recording = ipw.Button(
+            description='Create record',
+            disabled=False,
+            button_style='', # 'success', 'info', 'warning', 'danger' or ''
+            tooltip='Click me',
+            #layout=Layout(width="50%", height="30px"),
+            #style=style,
+            #icon='check' # (FontAwesome names without the `fa-` prefix)
+        )        
+        
+
+        button_record_output = ipw.Output()
+
+        def button_record_pressed(b):
+            """
+            Save the person info in the persons.txt file.
+            """
+
+            with button_record_output:
+                button_record_output.clear_output(wait=True)
+
+                with open(self.folder_db / 'persons.txt', 'a') as f:
+                    f.write(f'\n{name.value}, {surname.value} : {initials.value}')  
+                    f.close()  
+
+                print(f'{name.value}, {surname.value} added to the database.')
+
+        recording.on_click(button_record_pressed)
+
+        display(name,surname,initials)
+        display(ipw.HBox([recording, button_record_output]))
+
+
     def add_new_project(self):
 
         db_projects = self.get_db(db='projects')
         existing_columns = list(db_projects.columns)
+        
+        with open(self.folder_db / 'persons.txt') as f:
+            persons = f.read().splitlines()
+            f.close()
 
-        # Define the ipython widgets
+        persons = [x.split(':')[0] for x in persons]
+
+        # Define ipython widgets
         project_Id = ipw.Text(        
             value='',
             placeholder='Type something',
@@ -56,8 +398,8 @@ class DB:
         )
 
         PL = ipw.Dropdown(
-            options=['A','B'],
-            value='A',
+            options=persons,
+            value=persons[0],
             description='Project leader',
             disabled=False,
             layout=Layout(width="90%", height="30px"),
@@ -106,8 +448,10 @@ class DB:
                 button_record_output.clear_output(wait=True)
 
                 Projects_DB_file = self.folder_db / 'DB_projects.csv'
-                Projects_DB = pd.read_csv(Projects_DB_file)        
+                Projects_DB = pd.read_csv(Projects_DB_file)  
 
+                institutions = open(self.folder_db  / r'institutions.txt', 'r').read().splitlines()
+                
                 new_row = pd.DataFrame({'project_id':project_Id.value,
                         'institution':institution.value, 
                         'start_date':startDate.value, 
@@ -116,18 +460,15 @@ class DB:
                         'keywords':project_keyword.value},                       
                         index=[0] 
                         )  
-                '''         
-                institutions_list = list(institution.options)
                 
-                if institution.value not in institutions_list:                       
-                    institutions_list.append(str(institution.value))         
-                    institutions_list = sorted(institutions_list)
+                if institution.value not in institutions:                       
+                    institutions.append(str(institution.value))         
+                    institutions = sorted(institutions)   
 
-                    with open(self.folder_db / r'Institutions.txt', 'w') as f:
-                        f.write('\n'.join(institutions_list))
-
-                    f.close()
-                '''
+                    with open(self.folder_db / 'institutions.txt', 'w') as f:
+                        f.write('\n'.join(institutions).strip())  
+                    f.close()                
+                
 
                 # Add additional parameters to the new record
                 for param, widget in additional_param_widgets.items():
@@ -170,6 +511,78 @@ class DB:
 
         print(f'DB_projects.csv and DB_objects.csv created in the following folder: {folder_path}')
 
+        # create several text files
+        with open(Path(folder_path) / 'object_creators.txt', 'w') as f:
+            pass
+
+        with open(Path(folder_path) / 'object_techniques.txt', 'w') as f:
+            f.write("China ink\n")
+            f.write("acrylinc\n")
+            f.write("aquatinte\n")
+            f.write("black ink\n")
+            f.write("black pencil\n")
+            f.write("chalk\n")
+            f.write("charcoal\n")
+            f.write("monotypie\n")
+            f.write("dye\n")
+            f.write("felt-tip ink\n")
+            f.write("frescoe\n")
+            f.write("gouache\n")
+            f.write("ink\n")
+            f.write("linoleum print\n")
+            f.write("lithograh\n")
+            f.write("mezzotinte\n")
+            f.write("oil paint\n")
+            f.write("pastel\n")
+            f.write("tin-glazed\n")
+            f.write("watercolor\n")
+            f.write("wood block print\n")        
+
+        with open(Path(folder_path) / 'object_types.txt', 'w') as f:            
+            f.write("banknote\n")
+            f.write("book\n")
+            f.write("BWS\n")       
+            f.write("ceramic\n")
+            f.write("colorchart\n")
+            f.write("drawing\n")
+            f.write("notebook\n")
+            f.write("paint-out\n")
+            f.write("painting\n")
+            f.write("photograph\n")
+            f.write("print\n")
+            f.write("sculpture\n")
+            f.write("seals\n")
+            f.write("spectralon\n")
+            f.write("tapistry\n")
+            f.write("textile\n")
+            f.write("wallpainting\n")
+
+        with open(Path(folder_path) / 'object_supports.txt', 'w') as f:
+            f.write("blue paper\n")
+            f.write("canvas\n")
+            f.write("cardboard\n")
+            f.write("ceramic\n")
+            f.write("coloured paper\n")
+            f.write("cotton\n")
+            f.write("Japanese paper\n")
+            f.write("none\n")
+            f.write("opacity chart\n")
+            f.write("paper\n")
+            f.write("parchment\n")
+            f.write("rag paper\n")
+            f.write("stone\n")
+            f.write("transparent paper\n")
+            f.write("wax\n")
+            f.write("wood\n")
+            f.write("woodpulp paper\n")
+            f.write("wool\n")            
+
+        with open(Path(folder_path) / 'institutions.txt', 'w') as f:
+            pass
+
+        with open(Path(folder_path) / 'persons.txt', 'w') as f:
+            pass
+
 
     def save_folder_db(self, folder_path):
         # Save folder path in a JSON file
@@ -208,8 +621,6 @@ class DB:
         
         elif db == 'objects':
             return db_objects
-        
-
 
 
     def update_db_projects(self, new: str, old:Optional[str] = None):
@@ -220,7 +631,6 @@ class DB:
         else:
             print('No databases have been created yet.')
             
-
 
     def update_db_objects(self, new: str, old:Optional[str] = None):
 

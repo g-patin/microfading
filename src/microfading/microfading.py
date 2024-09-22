@@ -144,7 +144,13 @@ def add_new_project():
 
 def add_new_object():
 
-    print('jjj')
+    DB = databases.DB()    
+    return DB.add_new_object()
+
+def add_new_person():
+
+    DB = databases.DB()    
+    return DB.add_new_person()
 
 
 
