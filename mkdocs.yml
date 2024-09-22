@@ -2,22 +2,30 @@ site_name: microfading
 
 theme:
   name: "material"
+  logo: MF_logo_wbg-circle.png
+ 
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/g-patin/microfading
+      name: GitHub
+
   
 nav:
   - index.md
   - installation.md  
-  - Documentation: 
-       - Tutorials:
-           - first-steps.md
-           - assess-light-sensitivity.md
-           - generate-report.md
-       - How-to-guides:     
-           - manage-databases.md       
-           - retrieve-test-datasets.md
-           - create-MFT-class-instance.md
-           - visualize-data.md
-       - explanation.md
-       - references.md 
+  - Tutorials:
+      - first-steps.md
+      - assess-light-sensitivity.md
+      - generate-report.md
+  - How-to-guides:     
+      - manage-databases.md       
+      - retrieve-test-datasets.md
+      - Create an MFT class instance: create-MFT-class-instance.md
+      - visualize-data.md
+  - Explanation:
+      - datafiles.md
+  - Ref: references.md 
   
 plugins:
   - search
@@ -30,5 +38,9 @@ plugins:
 markdown_extensions:
   - admonition
   - codehilite
+  - pymdownx.superfences
   - toc:
       permalink: true
+      
+extra_css:
+  - custom.css
