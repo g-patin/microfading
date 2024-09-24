@@ -94,7 +94,7 @@ def get_datasets(rawfiles:Optional[bool] = False, BWS:Optional[bool] = True, std
 
 
 def create_DB(folder:str):
-    """Create two empty databases, one for the projects and one for the objects.
+    """Initiate the creation of databases.
 
     Parameters
     ----------
@@ -103,7 +103,7 @@ def create_DB(folder:str):
 
     Returns
     -------
-        It creates the two empty databases as csv file (DB_projects.csv and DB_objects.csv) in the folder given as input.
+        It creates the two empty databases as csv file (DB_projects.csv and DB_objects.csv), as well as six .txt files in the folder given as input.
     """
 
     DB = databases.DB()
@@ -131,42 +131,127 @@ def folder_DB():
 
 
 def get_DB(db:Optional[str] = 'all'):
+    """Retrieve the databases
+
+    Parameters
+    ----------
+    db : Optional[str], optional
+        Choose which databases to retrieve, by default 'all'
+        When 'projects', it returns the DB_projects.csv file
+        When 'objects', it returns the DB_objects.csv file
+        When 'all', it returns both file as a tuple
+
+    Returns
+    -------
+    pandas dataframe or tuple
+        It returns the databases as a pandas dataframe or a tuple if both dataframes are being asked.
+    """
 
     DB = databases.DB()
     return DB.get_db(db=db)
 
 
 def add_new_project():
+    """Record the information about a new project inside the DB_projects.csv file.
+    """
 
     DB = databases.DB()    
     return DB.add_new_project()
 
 
 def add_new_object():
+    """Record the information about a new object inside the DB_objects.csv file.
+    """
 
     DB = databases.DB()    
     return DB.add_new_object()
 
+
 def add_new_person():
+    """Record the information of a new person inside the pesons.txt file.
+    """
 
     DB = databases.DB()    
     return DB.add_new_person()
 
 
-
 def update_DB_objects(new: str, old:Optional[str] = None):
+    """Add a new column or modify an existing one in the DB_objects.csv file.
+
+    Parameters
+    ----------
+    new : str
+        value of the new column
+
+    old : Optional[str], optional
+        value of the old column to be replaced, by default None        
+    """
+    
 
     DB = databases.DB()
     DB.update_db_objects(new=new, old=old) 
 
 
 def update_DB_projects(new: str, old:Optional[str] = None):
+    """Add a new column or modify an existing one in the DB_projects.csv file.
+
+    Parameters
+    ----------
+    new : str
+        value of the new column
+        
+    old : Optional[str], optional
+        value of the old column to be replaced, by default None        
+    """
 
     DB = databases.DB()
     DB.update_db_projects(new=new, old=old) 
 
 
 def process_rawdata(files: list, device: str, filenaming:Optional[str] = 'none', db:Optional[bool] = False, comment:Optional[str] = '', authors:Optional[str] = 'XX', interpolation:Optional[str] = 'He', step:Optional[float | int] = 0.1):
+    """Process the microfading raw files created by the software that performed the microfading analysis. 
+
+    Parameters
+    ----------
+    files : list
+        A list of string that corresponds to the absolute path of the raw files.
+    
+    device : str
+        Define the  microfading that has been used to generate the raw files ('fotonowy', 'sMFT').
+    
+    filenaming : Optional[str | list], optional
+        Define the filename of the output excel file, by default 'none' 
+        When 'none', it uses the filename of the raw files
+        When 'auto', it creates a filename based on the info provided by the databases
+        A list of parameters provided in the info sheet of the excel output can be used to create a filename   
+    
+    db : Optional[bool], optional
+        Whether to make use of the databases, by default False
+        When True, it will populate the info sheet in the interim file (the output excel file) with the data found in the databases.
+        Make sure that the databases were created and that the information about about the project and the objects were recorded.
+    
+    comment : Optional[str], optional
+        Whether to include a comment in the final excel file, by default ''
+    
+    authors : Optional[str], optional
+        Initials of the persons that performed and processed the microfading measurements, by default 'XX' (unknown).
+        Make sure that you registered the persons in the persons.txt file (see function 'add_new_person').
+        If there are several persons, use a dash to connect the initials (e.g: 'JD-MG-OL').
+    
+    interpolation : Optional[str], optional
+        Whether to perform the interpolation ('He', 'Hv', 't') or not ('none'), by default 'He'
+        'He' performs interpolation based on the radiant exposure (MJ/m2)
+        'Hv' performs interpolation based on the exposure dose (Mlxh)
+        't' performs interpolation based on the exposure duration (sec)
+    
+    step : Optional[float  |  int], optional
+        Interpolation step related to the scale previously mentioned ('He', 'Hv', 'time'), by default 0.1
+
+    Returns
+    -------
+    Excel file
+        It returns an excel file composed of three tabs (info, CIELAB, spectra).
+    """
 
     if device.lower() == 'fotonowy':
         return process_rawfiles.MFT_fotonowy(files=files, filenaming=filenaming, db=db, comment=comment, authors=authors, interpolation=interpolation, step=step)
