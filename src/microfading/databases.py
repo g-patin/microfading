@@ -17,6 +17,7 @@ class DB:
 
 
     def add_new_object(self):
+        """Add a new object in the DB_objects.csv file"""
 
         db_projects = self.get_db(db='projects')
         projects_list = ['noProject'] + list(db_projects['project_id'].values)
@@ -290,43 +291,61 @@ class DB:
         
 
     def add_new_person(self):
+        """Record a new person in the persons.txt file
+        """
+
+        # Function to get the existing initials from the file
+        def get_existing_initials(file_path):
+            try:
+                with open(file_path, 'r') as file:
+                    # Reading the file line by line and storing the initials in a set
+                    existing_initials = set()
+                    for line in file:
+                        initials = line.strip().split(' : ')[1]
+                        existing_initials.add(initials)
+                    return existing_initials
+            except FileNotFoundError:
+                # If the file does not exist, return an empty set
+                return set()
+            
+        # Function to update the text file if the initials are unique
+        def update_text_file(file_path, name, surname, initials):
+            # Check if the initials already exist
+            existing_initials = get_existing_initials(file_path)
+            
+            if initials in existing_initials:
+                print(f"Initials '{initials}' already exist. Please use different initials.")
+            else:
+                # If the initials are unique, add the new entry
+                with open(file_path, 'a') as file:
+                    file.write(f"{name}, {surname} : {initials}\n")
+                print(f"Added: {name}, {surname} : {initials}")
+
 
         # Define ipython widgets
-        name = ipw.Text(        
+        name_widget = ipw.Text(        
             value='',
             placeholder='Enter a name',
-            description='Name',
-            disabled=False,
-            layout=Layout(width="50%", height="30px"),
-            style=style,   
+            description='Name',               
         )
 
-        surname = ipw.Text(        
+        surname_widget = ipw.Text(        
             value='',
             placeholder='Enter a surname',
-            description='Surname',
-            disabled=False,
-            layout=Layout(width="50%", height="30px"),
-            style=style,   
+            description='Surname',             
         )
         
-        initials = ipw.Text(        
+        initials_widget = ipw.Text(        
             value='',
-            placeholder='Enter initials capital letters',
-            description='Initials',
-            disabled=False,
-            layout=Layout(width="50%", height="30px"),
-            style=style,   
+            placeholder='Enter initials in capital letters',
+            description='Initials',             
         )
 
         recording = ipw.Button(
             description='Create record',
             disabled=False,
             button_style='', # 'success', 'info', 'warning', 'danger' or ''
-            tooltip='Click me',
-            #layout=Layout(width="50%", height="30px"),
-            #style=style,
-            #icon='check' # (FontAwesome names without the `fa-` prefix)
+            tooltip='Click me',            
         )        
         
 
@@ -337,25 +356,34 @@ class DB:
             Save the person info in the persons.txt file.
             """
 
+            button_record_output.clear_output(wait=True)
+
+            name = name_widget.value.strip()
+            surname = surname_widget.value.strip()
+            initials = initials_widget.value.strip()
+
             with button_record_output:
-                button_record_output.clear_output(wait=True)
 
-                with open(self.folder_db / 'persons.txt', 'a') as f:
-                    f.write(f'\n{name.value}, {surname.value} : {initials.value}')  
-                    f.close()  
+                if name and surname and initials: # ensure all fields are filled
+                    update_text_file(self.folder_db / 'persons.txt', name, surname, initials)
+                else:
+                    
+                    print("Please enter all fields (Name, Surname, Initials)")
 
-                print(f'{name.value}, {surname.value} added to the database.')
+            
 
         recording.on_click(button_record_pressed)
 
-        display(name,surname,initials)
+        display(name_widget,surname_widget,initials_widget)
         display(ipw.HBox([recording, button_record_output]))
 
 
     def add_new_project(self):
+        """Add a new project in the DB_projects.csv file"""
 
         db_projects = self.get_db(db='projects')
         existing_columns = list(db_projects.columns)
+        institutions = sorted(set(db_projects['institution']))
         
         with open(self.folder_db / 'persons.txt') as f:
             persons = f.read().splitlines()
@@ -375,7 +403,7 @@ class DB:
 
         institution = ipw.Combobox(
             placeholder = 'Enter an institution',
-            options = [],  #institutions_list,
+            options = institutions,  
             description = 'Institution',
             ensure_option=False,
             disabled=False,
@@ -496,7 +524,7 @@ class DB:
         display(ipw.HBox([recording, button_record_output]))
 
 
-    def create_db(self, folder_path):
+    def create_db(self, folder_path):      
 
         self.folder_db = folder_path
         self.save_folder_db(folder_path)
@@ -596,7 +624,10 @@ class DB:
             with open(self.config_file, 'r') as file:
                 config = json.load(file)
                 return config.get("folder_db")
-        return None
+            
+        else:
+            print('Databases have not been created or were deleted.')
+            return None
     
 
     def get_db(self, db:Optional[str] = 'all'):
@@ -626,16 +657,38 @@ class DB:
     def update_db_projects(self, new: str, old:Optional[str] = None):
 
         if (Path(self.folder_db) / 'DB_projects.csv').exists():
-            print('dddd')
+            
+            db_projects = self.get_db(db='projects')
+            db_projects[new] = ''
+            
+            if old != None:
+                if old in db_projects.columns:
+                    db_projects.drop(old, axis=1, inplace=True)
+                else:
+                    print(f'The column {old} cannot be removed because it does not exist.')
+
+            db_projects.to_csv(Path(self.folder_db) / 'DB_projects.csv',index=False)
+            print('DB_projects successfully updated.')
 
         else:
             print('No databases have been created yet.')
-            
+        
 
     def update_db_objects(self, new: str, old:Optional[str] = None):
 
         if (Path(self.folder_db) / 'DB_objects.csv').exists():
-            print('dddd')
+            
+            db_objects = self.get_db(db='objects')
+            db_objects[new] = ''
+            
+            if old != None:
+                if old in db_objects.columns:
+                    db_objects.drop(old, axis=1, inplace=True)
+                else:
+                    print(f'The column {old} cannot be removed because it does not exist.')
+
+            db_objects.to_csv(Path(self.folder_db) / 'DB_objects.csv',index=False)
+            print('DB_projects successfully updated.')
 
         else:
             print('No databases have been created yet.')
