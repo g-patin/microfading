@@ -111,8 +111,8 @@ def MFT_fotonowy(files: list, filenaming:Optional[str] = 'none', folder:Optional
                                  
         else:
             # define abscissa units
-            abs_scales = {'He': He, 'Hv': Hv, 'time': times}
-            abs_scales_name = {'He': 'He_MJ/m2', 'Hv': 'Hv_Mlxh', 'time': 't_sec'}           
+            abs_scales = {'He': He, 'Hv': Hv, 't': times}
+            abs_scales_name = {'He': 'He_MJ/m2', 'Hv': 'Hv_Mlxh', 't': 't_sec'}           
 
             #  define the abscissa range according to the choosen step value
             wanted_x = np.arange(0, abs_scales[interpolation].values[-1], step)            
