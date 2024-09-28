@@ -15,14 +15,15 @@ nav:
   - index.md
   - installation.md  
   - Tutorials:
-      - first-steps.md
+      - databases-management.md
       - assess-light-sensitivity.md
       - generate-report.md
-  - How-to-guides:     
-      - manage-databases.md       
+      - data-processing.md
+      - data-visualization.md
+  - How-to-guides:             
       - retrieve-test-datasets.md
-      - Create an MFT class instance: create-MFT-class-instance.md
-      - visualize-data.md
+      - create-databases.md
+      - Create an MFT class instance: create-MFT-class-instance.md      
   - Explanation:
       - datafiles.md
   - Ref: references.md 
