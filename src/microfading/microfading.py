@@ -291,9 +291,73 @@ class MFT(object):
        
     def __repr__(self) -> str:
         return f'Microfading data class - Number of files = {len(self.files)}'
-    
+      
 
-    def data_points(self, coordinates:Optional[list] = ['dE00'], dose_unit:Optional[str] = 'He', dose_values:Union[int, float, list, tuple] = 1, index:Optional[bool] = False):
+    
+    def data_sp(self, wl_range:Union[int, float, list, tuple] = 'all', dose_unit:Optional[str] = 'He', dose_values:Union[int, float, list, tuple] = 'all'):
+
+        data_sp = []
+        files = self.read_files(sheets=['spectra', 'CIELAB'])        
+
+        for file in files:
+            df_sp = file[0]
+            df_sp = df_sp.set_index(df_sp.columns[0])
+
+            # Set the dose unit
+            if dose_unit == 'Hv':
+                Hv = file[1]['Hv_Mlxh'].values
+                df_sp.columns = Hv
+                df_sp.index.name = 'wl-nm_Hv-Mlxh'
+            
+            elif dose_unit =='t':
+                t = file[1]['t_sec'].values
+                df_sp.columns = t
+                df_sp.index.name = 'wl-nm_t-sec'
+                
+
+            # Set the wavelengths
+            if isinstance(wl_range, tuple):
+                if len(wl_range) == 2:
+                    wl_range = (wl_range[0],wl_range[1],1)
+                
+                wavelengths = np.arange(wl_range[0], wl_range[1], wl_range[2])
+                df_sp = df_sp.loc[wavelengths]
+
+            elif isinstance(wl_range, int) or isinstance(wl_range, list):
+                df_sp = df_sp.loc[wl_range]
+
+            
+            # Set the dose values 
+            if isinstance(dose_values, tuple):
+                if len(dose_values) == 2:
+                    dose_values = (dose_values[0],dose_values[1],1)
+                
+                doses = np.arange(dose_values[0], dose_values[1], dose_values[2])
+                
+            elif isinstance(dose_values, int) or isinstance(dose_values, float):            
+                doses = [dose_values]
+
+            elif isinstance(dose_values, list):
+                doses = dose_values
+
+            else:
+                doses = df_sp.columns
+
+
+            # interpolate the reflectance values according to the wanted dose values
+            interp = RegularGridInterpolator((df_sp.index,df_sp.columns), df_sp.values)
+
+            pw, px = np.meshgrid(df_sp.index, doses, indexing='ij')     
+            interp_data = interp((pw, px))    
+            df_sp_interp = pd.DataFrame(interp_data, index=df_sp.index, columns=doses)  
+
+            # append the spectral data
+            data_sp.append(df_sp_interp)
+
+        return data_sp
+    
+    
+    def data_cielab(self, coordinates:Optional[list] = ['dE00'], dose_unit:Optional[str] = 'He', dose_values:Union[int, float, list, tuple] = 1, index:Optional[bool] = True):
         """Select colourimetric values for one or multiple light dose values.
 
         Parameters
@@ -330,8 +394,9 @@ class MFT(object):
         elif isinstance(dose_values, list):
             dose_values = dose_values        
            
-        # Retrieve the data
-        original_data = self.get_data(data='cl')
+        # Retrieve the data        
+        original_data = self.read_files(sheets=['CIELAB'])
+        original_data = [x[0] for x in original_data]
         
         # Added the delta LabCh values to the data dataframes   
         if original_data[0].columns.nlevels > 1:
@@ -773,7 +838,7 @@ class MFT(object):
         
         
         if data == 'all':
-            if xarray == False:
+            if xarray == False:                
                 [data_sp.append(x[0]) for x in all_files]
                 [data_cl.append(x[1]) for x in all_files]
                 return data_sp, data_cl
@@ -782,10 +847,12 @@ class MFT(object):
                 return all_data
 
         elif data == 'sp':
-            if xarray == False:
-                [data_sp.append(x[0]) for x in all_files]                            
-            else:
+            if xarray == False:                
+                [data_sp.append(x[0]) for x in all_files]   
+                data_sp = [x.set_index(x.columns[0]) for x in data_sp]                         
+            else:                
                 data_sp = [x.sp for x in all_data]
+                
 
             return data_sp
         
@@ -889,7 +956,7 @@ class MFT(object):
         ccs_ill = colour.CCS_ILLUMINANTS[observers[observer]][illuminant]
 
         meas_ids = self.meas_ids
-
+        
         if self.stdev:
             df_sp = [x['mean'] for x in self.get_data(data='sp')]
         else:
@@ -908,7 +975,7 @@ class MFT(object):
                 sd = colour.SpectralDistribution(sp,wl)                
 
                 XYZ = colour.sd_to_XYZ(sd,cmfs_observers[observer], illuminant=illuminants[illuminant])        
-                Lab = np.round(colour.XYZ_to_Lab(XYZ/100,ccs_ill),2)               
+                Lab = np.round(colour.XYZ_to_Lab(XYZ/100,ccs_ill),3)               
                 Lab_values = pd.concat([Lab_values, pd.DataFrame(Lab, index=['L*','a*','b*']).T], axis=0)
                 Lab_values.index = np.arange(0,Lab_values.shape[0])
 
@@ -1259,7 +1326,7 @@ class MFT(object):
             return df_info, df_cl_final, df_sp_final
   
 
-    def plot_sp(self, stds=[], spectra:Optional[str] = 'i', labels:Union[str,list] = 'default', title:Optional[str] = None, fontsize:Optional[int] = 24, fontsize_legend:Optional[int] = 26, wl_range:Optional[tuple] = None, colors:Union[str,list] = None, lw:Union[int, list] = 2, ls:Union[str, list] = '-', save=False, path_fig='cwd', derivation=False, smooth=False, smooth_params=[10,1], report:Optional[bool] = False):
+    def plot_sp(self, stds=[], spectra:Optional[str] = 'i', dose_unit:Optional[str] = 'He', dose_values:Union[int, float, list, tuple] = 'all', labels:Union[str,list] = 'default', title:Optional[str] = None, fontsize:Optional[int] = 24, fontsize_legend:Optional[int] = 26, legend_title='', wl_range:Optional[tuple] = None, colors:Union[str,list] = None, lw:Union[int, list] = 2, ls:Union[str, list] = '-', save=False, path_fig='cwd', derivation=False, smooth=False, smooth_params=[10,1], report:Optional[bool] = False):
         """Plot the reflectance spectra corresponding to the associated microfading analyses.
 
         Parameters
@@ -1282,6 +1349,9 @@ class MFT(object):
 
         fontsize_legend : int, optional
             Fontsize of the legend, by default 26
+
+        legend_title : str, optional
+            Add a title above the legend, by default ''
 
         wl_range : tuple, optional
             Define the wavelength range, by default None
@@ -1324,12 +1394,67 @@ class MFT(object):
             _description_
         """
 
-        # Retrieve the data
-        data_sp = self.get_data(data='sp')
-        data_sp = [x.set_index(x.columns[0]) for x in data_sp]
+        # Retrieve the metadata
+        info = self.get_metadata()
+        object_info = info.loc['object_type'].values[0]
+        object_technique = info.loc['object_technique'][0]
+        group_nb = info.loc['group'].values[0]
+        group_descriptions = info.loc['group_description'].values
+        group_description = group_descriptions[0]
+
+        ids = [x for x in self.meas_ids if 'BW' not in x]
+        meas_nbs = [x.split('.')[-1] for x in ids]
+
+        # Define the labels
+        if labels == 'default':
+            labels = [f'{x}-{y}' for x,y in zip(self.meas_ids,group_descriptions)]
+            legend_title = 'Measurement $n^o$'
+
+        # Select the spectral data
+        if spectra == 'i':
+            data_sp_all = self.data_sp(wl_range=wl_range)
+            data_sp = [pd.DataFrame(x.iloc[:,0]) for x in data_sp_all]
+
+            text = 'Initial spectra'
+
+        elif spectra == 'f':
+            data_sp_all = self.data_sp(wl_range=wl_range)
+            data_sp = [pd.DataFrame(x.iloc[:,-1]) for x in data_sp_all]
+
+            text = 'Final spectra'
+
+        elif spectra == 'i+f':
+            data_sp_all = self.data_sp(wl_range=wl_range)
+            data_sp = [x.iloc[:,[0] + [-1]] for x in data_sp_all]
+
+            ls = ['-', '--'] * len(data_sp)
+            lw = [3,2] * len(data_sp)
+            colors = [colors, 'k'] * len(data_sp)
+
+            meas_labels = [f'{x}-{y}' for x,y in zip(self.meas_ids,group_descriptions)]
+            none_labels = [None] * len(meas_labels)
+            labels = [item for pair in zip(meas_labels, none_labels) for item in pair]
+
+            text = 'Initial and final spectra (black dashed lines)'
+
+        elif spectra == 'doses':
+            data_sp = self.data_sp(wl_range=wl_range, dose_unit=dose_unit,dose_values=dose_values)
+
+            
+            dose_units = {'He': 'MJ/m2', 'Hv': 'Mlxh', 't': 'sec'}
+            legend_title = f'Light dose values'
+            labels = [f'{str(x)} {dose_units[dose_unit]}' for x in dose_values]
+
+            text = ''
+            colors = None
+
+        else:
+            print(f'"{spectra}" is not an adequate value. Enter a value for the parameter "spectra" among the following list: "i", "f", "i+f", "doses".')
+            return
+            
         indices = [x.index for x in data_sp]        
         columns = [x.columns for x in data_sp] 
-        
+
 
         # Whether to smooth the data
         if smooth:
@@ -1342,57 +1467,17 @@ class MFT(object):
         if derivation:
             data = [pd.concat([x.iloc[:,0], pd.DataFrame(np.gradient(x.iloc[:,1:], axis=0))], axis=1) for x in data]
 
-        # Retrieve the metadata
-        info = self.get_metadata()
-        object_info = info.loc['object_type'].values[0]
-        object_technique = info.loc['object_technique'][0]
-        group_nb = info.loc['group'].values[0]
-        group_descriptions = info.loc['group_description'].values
-        group_description = group_descriptions[0]
-
-        ids = [x for x in self.meas_ids if 'BW' not in x]
-        meas_nbs = [x.split('.')[-1] for x in ids]
-
-        # Select which spectra to plot 
-        if spectra == 'i':
-            data = [(x.iloc[:,0].values, x.iloc[:,1].values) for x in data]            
-            text = 'Initial spectra'
         
-        elif spectra == 'f':
-            data = [(x.iloc[:,0].values, x.iloc[:,-1].values) for x in data]             
-            text = 'Final spectra'          
+        wanted_data = []
+
+        for el in data:
+            data_indexed = el.set_index(el.columns[0])
+            data_values = [ (data_indexed.index,x) for x in data_indexed.T.values]
+            wanted_data = wanted_data + data_values
+
+                
+        return plotting.spectra(data=wanted_data, stds=[], labels=labels, title=title, fontsize=fontsize, fontsize_legend=fontsize_legend, legend_title=legend_title, x_range=wl_range, colors=colors, lw=lw, ls=ls, text=text, save=save, path_fig=path_fig, derivation=derivation)
         
-        elif spectra == "i+f":
-            list_data = [[(x.iloc[:,0].values, x.iloc[:,1].values),(x.iloc[:,0].values, x.iloc[:,-1].values)] for x in data]
-            data = []
-
-            for l1 in list_data:
-                for l2 in l1:
-                    data.append(l2)
-
-            ls = ['--', '-'] * len(data)
-            lw = [2,3] * len(data)
-            colors = ['k',colors] * len(data)
-                     
-            meas_labels = [f'{x}-{y}' for x,y in zip(meas_nbs,group_descriptions)]
-            none_labels = [None] * len(meas_labels)
-            labels = [item for pair in zip(none_labels, meas_labels) for item in pair]
-            text = 'Initial (black dashed lines) and final spectra'
-
-        elif spectra == 'all' :
-            
-            data = [
-                [(df.index.values, df[col].values) for col in df.columns]
-                for df in data_sp
-            ]
-            #data = [(x.iloc[:,0].values, x.iloc[:,1:].values) for x in data]            
-            labels = []
-            text = 'All spectra'
-            colors = None
-
-
-        return plotting.spectra(data, stds=[], labels=labels, title=title, fontsize=fontsize, fontsize_legend=fontsize_legend, x_range=wl_range, colors=colors, lw=lw, ls=ls, text=text, save=save, path_fig=path_fig, derivation=derivation)
-    
 
 
     def set_illuminant(self, illuminant:Optional[str] = 'D65', observer:Optional[str] = '10'):
@@ -1500,8 +1585,8 @@ class MFT(object):
 
         for df, meas_id in zip(df_sp, meas_ids):
             
-            srgb_values = pd.DataFrame(index=['R','G','B']).T           
-            
+            srgb_values = pd.DataFrame(index=['R','G','B']).T            
+
             for col in df.columns:
                 
                 sp = df[col]
@@ -1509,7 +1594,7 @@ class MFT(object):
                 sd = colour.SpectralDistribution(sp,wl)                
 
                 XYZ = colour.sd_to_XYZ(sd,cmfs_observers[observer], illuminant=illuminants[illuminant]) 
-                srgb = colour.XYZ_to_sRGB(XYZ / 100, illuminant=ccs_ill)                          
+                srgb = np.round(colour.XYZ_to_sRGB(XYZ / 100, illuminant=ccs_ill), 4)                        
                 srgb_values = pd.concat([srgb_values, pd.DataFrame(srgb, index=['R','G','B']).T], axis=0)
                 srgb_values.index = np.arange(0,srgb_values.shape[0])
 
@@ -1564,8 +1649,8 @@ class MFT(object):
 
         for df, meas_id in zip(df_sp, meas_ids):
             
-            XYZ_values = pd.DataFrame(index=['X','Y','Z']).T           
-            
+            XYZ_values = pd.DataFrame(index=['X','Y','Z']).T
+
             for col in df.columns:
                 
                 sp = df[col]
@@ -1602,11 +1687,7 @@ class MFT(object):
 
         observer = str(observer)
 
-        illuminants = {'D65':colour.SDS_ILLUMINANTS['D65'], 'D50':colour.SDS_ILLUMINANTS['D50']}
-        observers = {
-            '10': 'cie_10_1964',
-            '2' : 'cie_2_1931',
-        }
+        illuminants = {'D65':colour.SDS_ILLUMINANTS['D65'], 'D50':colour.SDS_ILLUMINANTS['D50']}        
         cmfs_observers = {
             '10': colour.colorimetry.MSDS_CMFS_STANDARD_OBSERVER["CIE 1964 10 Degree Standard Observer"],
             '2': colour.colorimetry.MSDS_CMFS_STANDARD_OBSERVER["CIE 1931 2 Degree Standard Observer"] 
@@ -1620,14 +1701,14 @@ class MFT(object):
         for df, meas_id in zip(df_sp, meas_ids):
             
             xy_values = pd.DataFrame(index=['x','y']).T           
-            
+
             for col in df.columns:
                 
                 sp = df[col]
                 wl = df.index
                 sd = colour.SpectralDistribution(sp,wl)                
 
-                XYZ = np.round(colour.sd_to_XYZ(sd,cmfs_observers[observer], illuminant=illuminants[illuminant]),3)
+                XYZ = colour.sd_to_XYZ(sd,cmfs_observers[observer], illuminant=illuminants[illuminant])
                 xy = np.round(colour.XYZ_to_xy(XYZ),4)
                 xy_values = pd.concat([xy_values, pd.DataFrame(xy, index=['x','y']).T], axis=0)
                 xy_values.index = np.arange(0,xy_values.shape[0])
@@ -1636,54 +1717,6 @@ class MFT(object):
             df_xy.append(xy_values)
 
         return pd.concat(df_xy, axis=1)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        observer = str(observer)
-
-        illuminants = {'D65':colour.SDS_ILLUMINANTS['D65'], 'D50':colour.SDS_ILLUMINANTS['D50']}
-        observers = {
-            '10': 'cie_10_1964',
-            '2' : 'cie_2_1931',
-        }
-        cmfs_observers = {
-            '10': colour.colorimetry.MSDS_CMFS_STANDARD_OBSERVER["CIE 1964 10 Degree Standard Observer"],
-            '2': colour.colorimetry.MSDS_CMFS_STANDARD_OBSERVER["CIE 1931 2 Degree Standard Observer"] 
-            }
-        
-        df_xy = pd.DataFrame(index=pd.Series(['x','y']))
-        df_sp = self.get_data(data='sp')
-        wl = df_sp.index
-        
-        for col in df_sp.columns:
-            sp = df_sp[col]
-            sd = colour.SpectralDistribution(sp,wl)
-
-            XYZ = colour.sd_to_XYZ(sd,cmfs_observers[observer], illuminant=illuminants[illuminant]) 
-            xy = np.round(colour.XYZ_to_xy(XYZ),4)
-            
-            df_xy[col] = xy
-
-        return df_xy
-    
 
 
 
