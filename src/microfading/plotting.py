@@ -6,7 +6,7 @@ import colour
 from typing import Optional, Union
 
 
-def spectra(data, stds=[], labels=[], title='none', fontsize=24, fontsize_legend:Optional[int] = 22, x_range=(), colors:Union[str, list] = None, lw:Optional[int] = 2, ls:Union[str, list] = '-', text:Optional[str] = '', save=False, path_fig='cwd', derivation="none", *args, **kwargs):
+def spectra(data, stds=[], labels=[], title='none', fontsize=24, fontsize_legend:Optional[int] = 22, legend_title='', x_range=(), colors:Union[str, list] = None, lw:Optional[int] = 2, ls:Union[str, list] = '-', text:Optional[str] = '', save=False, path_fig='cwd', derivation=False, *args, **kwargs):
     """
     Description: Plot the reflectance spectrum of one or several datasets.
 
@@ -96,9 +96,9 @@ def spectra(data, stds=[], labels=[], title='none', fontsize=24, fontsize_legend
     
     ax.set_xlabel('Wavelength $\lambda$ (nm)', fontsize = fontsize)
 
-    if derivation == "none":
+    if derivation == False:
         ax.set_ylabel('Reflectance factor', fontsize = fontsize)
-    elif derivation == "first":
+    else:
         ax.set_ylabel(r'$\frac{dR}{d\lambda}$', fontsize = fontsize+10)
 
     ax.xaxis.set_tick_params(labelsize = fontsize)
@@ -116,7 +116,7 @@ def spectra(data, stds=[], labels=[], title='none', fontsize=24, fontsize_legend
         handles, labels = plt.gca().get_legend_handles_labels()
         by_label = dict(zip(labels, handles))  
         #plt.legend(labels, fontsize=fontsize_legend, title='Measurement $n^o$', title_fontsize=fontsize_legend) 
-        plt.legend(by_label.values(), by_label.keys(), ncol=ncols, fontsize=fontsize_legend, title='Measurement $n^o$', title_fontsize=fontsize_legend)
+        plt.legend(by_label.values(), by_label.keys(), ncol=ncols, fontsize=fontsize_legend, title=legend_title, title_fontsize=fontsize_legend)
 
     
     if text != '':
