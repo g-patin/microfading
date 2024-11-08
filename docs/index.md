@@ -2,16 +2,25 @@
 
 <img src="MF_logo_wbg-circle.png" alt="Logo" style="width: 300px; display: block; margin: 0 auto;">
 
-Welcome on the documentation website of the microfading python package. The documentation has been organized around four different groups (Tutorials, How-to, Explanations, References) as explained by [Daniele Procida](https://diataxis.fr/).
+Welcome on the documentation website of the microfading python package. The documentation follows the structure described by [Daniele Procida](https://diataxis.fr/), which organizes documentation into four different groups (Tutorials, How-to, Explanations, References).
 
-If you are a new user of the `microfading` package, I would recommend to use the test datasets [(get_datasets() function)](https://g-patin.github.io/microfading/retrieve-test-datasets/) so that you can start playing around with the various functions of the package. Afterwards, you can decide whether you want to use the packages with or without the databases. If you just want to process and visualize a few microfading analyses then you might not need databases. But if you are seeking to establish a long-term microfading framework where you want to connect information about the objects with microfading analyses, then you  might be interested in using databases.
+This package has been created to help microfading users to manipulate their data. It provides a set of computational tools to ease data processing and visualizations. If you are a new user of the `microfading` package, I would recommend to use the test datasets [(get_datasets() function)](https://g-patin.github.io/microfading/retrieve-test-datasets/) so that you can start playing around with the various functions of the package. Afterwards, you can decide whether you want to use the packages with or without the databases.
 
-## Commands
+## Installation
 
-* `mkdocs new [dir-name]` - Create a new project.
-* `mkdocs serve` - Start the live-reloading docs server.
-* `mkdocs build` - Build the documentation site.
-* `mkdocs -h` - Print help message and exit.
+You can install the package with the following command:
+
+```
+pip install microfading
+```
+
+## Cite package
+
+If you are using this package for a publication, please cite the package as follows: ......
+
+## Contributions
+
+We are welcoming any contributions that can improve the package. If you have encountered a bug or spotted an error, please don't hesitate to contact us. 
 
 ## Project layout
 

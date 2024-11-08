@@ -1,0 +1,1 @@
+Although by most devices, the  data can be exported to an open file format (txt, csv, etc.), the microfading raw files produced by each microfading devices are often difficult read. These files often prioritize efficiency or size at the expense of readability. Which is why, it was decided to create a specific file structure where information and data could easily be found. 

@@ -25,8 +25,9 @@ nav:
       - create-databases.md
       - Create an MFT class instance: create-MFT-class-instance.md      
   - Explanation:
+      - package-usage.md
       - datafiles.md
-  - Ref: references.md 
+  - References: references.md 
   
 plugins:
   - search
