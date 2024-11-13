@@ -38,5 +38,5 @@ Homepage = "https://github.com/g-patin/microfading"
 where = ["src"]
 
 [tool.setuptools.package-data]
-microfading = ['datasets/*', '*.json']
+microfading = ['datasets/*', '*.json', '*.png']
 
