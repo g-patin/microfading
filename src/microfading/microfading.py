@@ -357,7 +357,7 @@ class MFT(object):
         return data_sp
     
     
-    def data_cielab(self, coordinates:Optional[list] = ['dE00'], dose_unit:Optional[str] = 'He', dose_values:Union[int, float, list, tuple] = 1, index:Optional[bool] = True):
+    def data_cielab(self, coordinates:Optional[list] = ['dE00'], dose_unit:Optional[str] = 'He', dose_values:Union[int, float, list, tuple] = 'all', index:Optional[bool] = True):
         """Select colourimetric values for one or multiple light dose values.
 
         Parameters
@@ -366,12 +366,13 @@ class MFT(object):
             Select the desired colourimetric coordinates from the following list: ['L*', 'a*','b*', 'C*', 'h', 'dL*', 'da*','db*', 'dC*', 'dh', 'dE76', 'dE00', 'dR_vis'], by default ['dE00']
 
         dose_unit : Optional[str], optional
-            Select the unit of the light energy, by default ['He']
+            Unit of the light dose energy, by default ['He']
             Any of the following units can be added to the list: 'He', 'Hv', 't'. Where 'He' corresponds to radiant energy (MJ/m2), 'Hv' to exposure dose (Mlxh), and 't' to times (sec)
 
         dose_values : Union[int, float, list, tuple], optional
-            Select the values of the light energy, by default 1
-            A single value, a list of multiple values, or range values with a tuple (start, end, step) can be entered.
+            Values of the light dose energy, by default 'all'
+            A single value (integer or float number), a list of multiple numerical values, or range values with a tuple (start, end, step) can be entered.
+            When 'all', it takes the values found in the data. 
 
         index : Optional[bool], optional
             Whether to set the index of the returned dataframes, by default False
@@ -434,20 +435,26 @@ class MFT(object):
             # Select the wanted dose_unit and coordinate        
             wanted_data = [x[[doses[dose_unit]] + coordinates] for x in data]        
             wanted_data = [x.set_index(x.columns[0]) for x in wanted_data]
-            
-        # Interpolation function, assuming linear interpolation
-        interp_functions = lambda x, y: interp1d(x, y, kind='linear', bounds_error=False)
 
-        # Double comprehension list to interpolate each dataframe in wanted_data
-        interpolated_data = [
-            pd.DataFrame({
-                col: interp_functions(df.index, df[col])(dose_values)
-                for col in df.columns
-            }, index=dose_values)
-            .rename_axis(doses[dose_unit])
-            .reset_index()
-            for df in wanted_data
-        ]
+
+        if dose_values != 'all':  
+            # Interpolation function, assuming linear interpolation
+            interp_functions = lambda x, y: interp1d(x, y, kind='linear', bounds_error=False)
+
+            
+            # Double comprehension list to interpolate each dataframe in wanted_data
+            interpolated_data = [
+                pd.DataFrame({
+                    col: interp_functions(df.index, df[col])(dose_values)
+                    for col in df.columns
+                }, index=dose_values)
+                .rename_axis(doses[dose_unit])
+                .reset_index()
+                for df in wanted_data
+            ]
+        
+        else:
+            interpolated_data = [x.reset_index() for x in wanted_data]
 
         # Whether to set the index
         if index:
@@ -455,7 +462,7 @@ class MFT(object):
         
         return interpolated_data       
     
-    
+
     def delta(self, coordinates:Optional[list] = ['dE00'], dose_unit:Optional[list] = ['He'], rate:Optional[bool] = False):
         """Retrieve the CIE delta values for a given set of colorimetric coordinates corresponding to the given microfading analyses.
 
@@ -540,7 +547,7 @@ class MFT(object):
             Whether to return the fitted data, by default False
 
         dose_unit : string, optional
-            Select the light energy dose, by default 'He'
+            Unit of the light energy dose, by default 'He'
             Any of the following units can be used: 'He', 'Hv', 't'. Where 'He' corresponds to radiant energy (MJ/m2), 'Hv' to exposure dose (Mlxh), and 't' to times (sec)
 
         coordinates : string, optional
@@ -922,6 +929,37 @@ class MFT(object):
         else:            
             return df_metadata.loc[labels]
        
+
+    def JND(self, dose_unit:Optional[str] = 'Hv', JND_dE = 1.5, light_intensity=50, daily_exposure:Optional[int] = 10, yearly_exposure:Optional[int] = 365, fitting = True):
+
+        H_step = 0.01
+        dE_fitted = self.fit_data(dose_unit='Hv', x_range=(0,5.1,H_step), return_data=True)[1]
+        dE_rate = np.gradient(dE_fitted.T.values, H_step, axis=1)
+        dE_rate_mean = [np.mean(x[-20:]) for x in dE_rate]
+        dE_rate_std = [np.std(x[-20:]) for x in dE_rate]
+
+        rates = [ufloat(x, y) for x,y in zip(dE_rate_mean, dE_rate_std)]
+
+        times_years = []
+
+        for rate in rates:
+
+            if dose_unit == 'Hv':
+                
+                JND_dose = (JND_dE / rate) * 1e6                     # in lxh
+                time_hours = JND_dose / light_intensity
+                time_years = time_hours / (daily_exposure * yearly_exposure)            
+
+            if dose_unit == 'He':
+                JND_dose = (JND_dE / rate) * 1e6                     # in J/m²
+                time_sec = JND_dose / light_intensity
+                time_hours = time_sec / 3600
+                time_years = time_hours / (daily_exposure * yearly_exposure)
+
+            times_years.append(time_years)
+
+        return times_years
+
 
     def Lab(self, illuminant:Optional[str] = 'D65', observer:Optional[str] = '10'):
         """
@@ -1326,20 +1364,173 @@ class MFT(object):
             return df_info, df_cl_final, df_sp_final
   
 
-    def plot_sp(self, stds=[], spectra:Optional[str] = 'i', dose_unit:Optional[str] = 'He', dose_values:Union[int, float, list, tuple] = 'all', labels:Union[str,list] = 'default', title:Optional[str] = None, fontsize:Optional[int] = 24, fontsize_legend:Optional[int] = 26, legend_title='', wl_range:Optional[tuple] = None, colors:Union[str,list] = None, lw:Union[int, list] = 2, ls:Union[str, list] = '-', save=False, path_fig='cwd', derivation=False, smooth=False, smooth_params=[10,1], report:Optional[bool] = False):
+    def plot_CIELAB(self, stds=[], dose_unit:Optional[str] = 'He', dose_values:Union[int, float, list, tuple] = 'all', labels:Union[str,list] = 'default', title:Optional[str] = None, fontsize:Optional[int] = 24, legend_position:Optional[str] = 'in', legend_fontsize:Optional[int] = 24, legend_title:Optional[str] = None, save:Optional[bool] = False, path_fig:Optional[str] = 'cwd'):
+        """Plot the Lab values related to the microfading analyses.
+
+        Parameters
+        ----------
+        stds : list, optional
+            A list of standard variation values respective to each element given in the data parameter, by default []
+
+        dose_unit : str, optional
+            Unit of the light energy dose, by default 'He'
+            Any of the following units can be used: 'He', 'Hv', 't'. Where 'He' corresponds to radiant energy (MJ/m2), 'Hv' to exposure dose (Mlxh), and 't' to times (sec)
+
+        dose_values : Union[int, float, list, tuple], optional
+            Values of the light dose energy, by default 'all'
+            A single value (integer or float number), a list of multiple numerical values, or range values with a tuple (start, end, step) can be entered.
+            When 'all', it takes the values found in the data. 
+
+        labels : Union[str,list], optional
+            _description_, by default 'default'
+
+        title : Optional[str], optional
+           Whether to add a title to the plot, by default None
+
+        fontsize : Optional[int], optional
+            Fontsize of the plot (title, ticks, and labels), by default 24
+
+        legend_position : Optional[str], optional
+            Position of the legend, by default 'in'
+            The legend can either be inside the figure ('in') or outside ('out')
+
+        legend_fontsize : Optional[int], optional
+            Fontsize of the legend, by default 24
+
+        legend_title : Optional[str], optional
+            Add a title above the legend, by default ''
+
+        save : bool, optional
+            Whether to save the figure, by default False
+
+        path_fig : str, optional
+            Absolute path required to save the figure, by default 'cwd'
+            When 'cwd', it will save the figure in the current working directory.
+
+        Returns
+        -------
+        _type_
+            It returns a figure with 4 subplots that can be saved as a png file.
+        """
+
+        data_Lab = self.data_cielab(coordinates=['L*', 'a*', 'b*'], dose_unit=dose_unit, dose_values=dose_values)
+        data_Lab = [x.T.values for x in data_Lab]
+
+        # Retrieve the metadata
+        info = self.get_metadata()
+        object_info = info.loc['object_type'].values[0]
+        object_technique = info.loc['object_technique'][0]
+        group_nb = info.loc['group'].values[0]
+        group_descriptions = info.loc['group_description'].values
+        group_description = group_descriptions[0]
+
+        ids = [x for x in self.meas_ids if 'BW' not in x]
+        meas_nbs = [x.split('.')[-1] for x in ids]
+
+        # Define the labels
+        if labels == 'default':
+            labels = [f'{x}-{y}' for x,y in zip(self.meas_ids,group_descriptions)]
+            legend_title = 'Measurement $n^o$'
+
+        return plotting.CIELAB(data=data_Lab, labels=labels, title=title, fontsize=fontsize, legend_fontsize=legend_fontsize, legend_position=legend_position, legend_title=legend_title, save=save, path_fig=path_fig)
+
+
+    def plot_delta(self, coordinates:Optional[list] = ['dE00'], dose_unit:Optional[str] = ['He'], labels = 'default', colors:Union[str,list] = None, title:Optional[str] = None, fontsize:Optional[int] = 24, save:Optional[bool] = False, path_fig:Optional[str] = 'cwd'):
+
+
+        # Retrieve the data
+        list_data = [x.T.values for x in self.delta(coordinates=coordinates, dose_unit=dose_unit)] 
+
+        # Retrieve the metadata
+        info = self.get_metadata()
+        object_info = info.loc['object_type'].values[0]
+        object_technique = info.loc['object_technique'][0]
+        group_nb = info.loc['group'].values[0]
+        group_descriptions = info.loc['group_description'].values
+        group_description = group_descriptions[0]
+
+        ids = [x for x in self.meas_ids]
+        meas_nbs = [x.split('.')[-1] for x in ids]
+
+        # Set the labels values
+        if labels == 'default':                       
+            labels = [f'{x}-{y}' for x,y in zip(meas_nbs, group_descriptions)] 
+
+        elif labels == '':
+            labels = []
+        
+        elif isinstance(labels, list):
+            labels = labels
+            '''
+            labels_list = []
+            for i,Id in enumerate(self.meas_ids):
+                label = Id.split('.')[-1]
+                for el in labels:
+                    label = label + f'-{self.get_metadata().loc[el].values[i]}'
+                labels_list.append(label)
+
+            labels = labels_list
+            '''
+
+        # Set the color of the lines according to the sample
+        if colors == 'sample':
+
+            Lab = self.data_cielab(coordinates=['L*', 'a*', 'b*'])
+            if self.stdev == True:                
+                Lab = [df.loc[:, pd.IndexSlice[:,'mean']] for df in Lab]                       
+
+            Lab_initial = [x.iloc[0,:].values for x in Lab]
+            colors = list(colour.XYZ_to_sRGB(colour.Lab_to_XYZ(Lab_initial), self.set_illuminant()[0]).clip(0, 1))
+        
+        # Whether to add a title or not
+        if title == 'default':
+            technique = 'MFT'            
+            title = "make a generic title"
+        elif title == 'none':
+            title = None
+        else:
+            title = title 
+
+        # Define the saving folder in case the figure should be saved
+
+        filename = ''
+        if save:
+            if path_fig == 'default':
+                path_fig = self.get_dir(folder_type='figures') / filename                
+
+            if path_fig == 'cwd':
+                path_fig = f'{os.getcwd()}/{filename}' 
+
+        plotting.delta(data=list_data, x_unit=dose_unit, y_unit=coordinates, labels=labels, colors=colors)
+
+
+
+
+
+    def plot_sp(self, stds=[], spectra:Optional[str] = 'i', dose_unit:Optional[str] = 'He', dose_values:Union[int, float, list, tuple] = 'all', labels:Union[str,list] = 'default', title:Optional[str] = None, fontsize:Optional[int] = 24, fontsize_legend:Optional[int] = 24, legend_title='', wl_range:Optional[tuple] = None, colors:Union[str,list] = None, lw:Union[int, list] = 2, ls:Union[str, list] = '-', save=False, path_fig='cwd', derivation=False, smooth=False, smooth_params=[10,1], report:Optional[bool] = False):
         """Plot the reflectance spectra corresponding to the associated microfading analyses.
 
         Parameters
         ----------
         stds : list, optional
-             A list of standard variation values respective to each element given in the data parameter, by default []
+            A list of standard variation values respective to each element given in the data parameter, by default []
 
         spectra : Optional[str], optional
             Define which spectra to display, by default 'i'
             Use 'i' for initial spectral, 'f' for final spectra, 'i+f' for initial and final spectra, or 'all' for all the spectra.
 
+        dose_unit : str, optional
+            Unit of the light energy dose, by default 'He'
+            Any of the following units can be used: 'He', 'Hv', 't'. Where 'He' corresponds to radiant energy (MJ/m2), 'Hv' to exposure dose (Mlxh), and 't' to times (sec)
+
+        dose_values : Union[int, float, list, tuple], optional
+            Values of the light dose energy, by default 'all'
+            A single value (integer or float number), a list of multiple numerical values, or range values with a tuple (start, end, step) can be entered.
+            When 'all', it takes the values found in the data. 
+
         labels : Union[str, list], optional
-            _description_, by default 'default'
+            A list of labels respective to each element given in the data parameter that will be shown in the legend. When the list is empty there is no legend displayed, by default 'default'
+            When 'default', each label will composed of the Id number of the number followed by a short description
 
         title : str, optional
             Whether to add a title to the plot, by default None
@@ -1348,7 +1539,7 @@ class MFT(object):
             Fontsize of the plot (title, ticks, and labels), by default 24
 
         fontsize_legend : int, optional
-            Fontsize of the legend, by default 26
+            Fontsize of the legend, by default 24
 
         legend_title : str, optional
             Add a title above the legend, by default ''
@@ -1391,7 +1582,7 @@ class MFT(object):
         Returns
         -------
         _type_
-            _description_
+            It returns a figure that can be save as a png file.
         """
 
         # Retrieve the metadata
