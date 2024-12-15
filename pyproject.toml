@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "microfading"
-version = "1.0.13"
+version = "1.1.0"
 authors = [
   { name="Gauthier Patin", email="g.patin@monemail.com" },
 ]
@@ -33,6 +33,7 @@ dependencies = [
 
 [project.urls]
 Homepage = "https://github.com/g-patin/microfading"
+
 
 [tool.setuptools.packages.find]
 where = ["src"]
