@@ -3,6 +3,8 @@ site_name: microfading
 theme:
   name: "material"
   logo: MF_logo_wbg-circle.png
+  features:
+    - content.code.copy
  
 extra:
   social:
@@ -14,6 +16,7 @@ extra:
 nav:
   - index.md
   - installation.md  
+  - microfading.md
   - Tutorials:
       - databases-management.md
       - assess-light-sensitivity.md

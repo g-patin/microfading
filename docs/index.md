@@ -2,17 +2,34 @@
 
 <img src="MF_logo_wbg-circle.png" alt="Logo" style="width: 300px; display: block; margin: 0 auto;">
 
-Welcome on the documentation website of the microfading python package. The documentation follows the structure described by [Daniele Procida](https://diataxis.fr/), which organizes documentation into four different groups (Tutorials, How-to, Explanations, References).
+Welcome on the documentation website of the *microfading* python package. You will find on this website information and tutorials on how to install and use the *microfading* package.
 
-This package has been created to help microfading users to manipulate their data. It provides a set of computational tools to ease data processing and visualizations. If you are a new user of the `microfading` package, I would recommend to use the test datasets [(get_datasets() function)](https://g-patin.github.io/microfading/retrieve-test-datasets/) so that you can start playing around with the various functions of the package. Afterwards, you can decide whether you want to use the packages with or without the databases.
+## What is this package about ?
 
-## Installation
+This package has been created to help microfading users to manipulate their data. Microfading or microfadeometry can be defined as an artificial accelerated light-ageing technique operating at a micro-scale level. More information about the technique can be found in the [Microfading section](https://g-patin.github.io/microfading/microfading/).
 
-You can install the package with the following command:
+## What does this package provide ?
 
-```
-pip install microfading
-```
+The package provies computational tools to ease the manipulation of microfading data. The activities where the package provides help can be categorized in three main groups:
+
+- **Rawdata processing**
+	- Transform the raw files produced by the spectrometer of the microfading system into a standardized file structure that is easier to read and which also contains metadata about the object and the analysis.	 
+- **Visualizations**
+	- Creation of figures to visualize the spectral data and colorimetric coordinates (*L\**, *a\**, *b\**, *C\**, h, dE)
+	- Transform microfading numerical data into colored swatches
+	- Interactive plotting
+- **Data manipulation**
+	- Compute mean and standard deviation values
+	- Compute delta values
+	- Perform specific query on spectral and colorimetric data
+	
+## New users
+
+If you are a new user, and you know not sure yet whether the package can be useful for you or you simply want to see what exactly the package can offer, than I would recommand to use the example datasets [(get_datasets() function)](https://g-patin.github.io/microfading/retrieve-test-datasets/). This will allow you to start playing around with the various functions of the package.
+
+## Website structure
+
+ The documentation follows the structure described by [Daniele Procida](https://diataxis.fr/), which organizes documentation into four different groups (Tutorials, How-to, Explanations, References).
 
 ## Cite package
 
