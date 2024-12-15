@@ -16,6 +16,81 @@ class DB:
         self.folder_db = Path(self.load_folder_db())
 
 
+    def add_new_institution(self):        
+        """Record a new institution in the insitutions.txt file
+        """
+
+        # Function to get the existing initials from the file
+        def get_existing_acronyms(file_path):
+            try:
+                df_institutions = self.get_institutions()
+                existing_acronyms = df_institutions['acronym']                
+                return existing_acronyms
+            except FileNotFoundError:
+                # If the file does not exist, return an empty set
+                return set()
+            
+        # Function to update the text file if the initials are unique
+        def update_text_file(file_path, name, acronym):
+            # Check if the acronym already exists
+            existing_acronyms = get_existing_acronyms(file_path)
+            
+            if acronym in existing_acronyms:
+                print(f"Acronym '{acronym}' already exists. Please use a different acronym.")
+            else:
+                df_institutions = self.get_institutions()
+                df_institutions = pd.concat([df_institutions, pd.DataFrame(data=[name,acronym], index=['name','acronym']).T])
+                df_institutions = df_institutions.sort_values(by='name')
+                df_institutions.to_csv(self.folder_db/'institutions.txt',index=False)
+               
+                print(f"Added: {name} : {acronym}")
+
+        # Define ipython widgets
+        name_widget = ipw.Text(        
+            value='',
+            placeholder='Enter a name',
+            description='Name',               
+        )
+
+        acronym_widget = ipw.Text(        
+            value='',
+            placeholder='Enter an acronym',
+            description='Acronym',             
+        )
+
+        recording = ipw.Button(
+            description='Create record',
+            disabled=False,
+            button_style='', # 'success', 'info', 'warning', 'danger' or ''
+            tooltip='Click me',            
+        )
+
+        button_record_output = ipw.Output()
+
+        def button_record_pressed(b):
+            """
+            Save the person info in the persons.txt file.
+            """
+
+            button_record_output.clear_output(wait=True)
+
+            name = name_widget.value.strip()            
+            acronym = acronym_widget.value.strip()
+
+            with button_record_output:
+
+                if name and acronym: # ensure all fields are filled
+                    update_text_file(self.folder_db / 'institutions.txt', name, acronym)
+                else:
+                    
+                    print("Please enter all fields (Name, Acronym)")
+
+        recording.on_click(button_record_pressed)
+
+        display(name_widget,acronym_widget)
+        display(ipw.HBox([recording, button_record_output]))       
+    
+    
     def add_new_object(self):
         """Add a new object in the DB_objects.csv file"""
 
@@ -25,8 +100,8 @@ class DB:
         db_objects = self.get_db(db='objects')
         existing_columns = list(db_objects.columns)
 
-        creators_file = open(self.folder_db / r'object_creators.txt', 'r').read()
-        creators = creators_file.split("\n")
+        creators_file = pd.read_csv(self.folder_db / 'object_creators.txt')
+        creators = [f'{x[0]}, {x[1]}' for x in creators_file.values]
         
         types_file = open(self.folder_db / r'object_types.txt', 'r').read()
         types = types_file.split("\n")        
@@ -37,8 +112,8 @@ class DB:
         supports_file = open(self.folder_db  / r'object_supports.txt', 'r').read()
         supports = supports_file.split("\n")        
 
-        owners_file = open(self.folder_db / r'institutions.txt', 'r').read()
-        owners = owners_file.split("\n")
+        owners_file = pd.read_csv(self.folder_db / 'institutions.txt')
+        owners = tuple(owners_file['name'].values)
                
 
         # Define ipython widgets
@@ -238,21 +313,15 @@ class DB:
                     ) 
 
 
-                if object_creator.value not in creators:
-                    creators.append(str(object_creator.value))
-                    creators = sorted(creators, key=str.casefold) 
+                if object_creator.value not in creators:                    
+
+                    creator_surname = object_creator.value.split(',')[0].strip()
+                    creator_name = object_creator.value.split(',')[1].strip()
                     
-                    with open(self.folder_db / 'object_creators.txt', 'w') as f:
-                        f.write('\n'.join(creators).strip())
-                    f.close()
-
-                if object_owner.value not in owners:                       
-                    owners.append(str(object_owner.value))         
-                    owners = sorted(owners)   
-
-                    with open(self.folder_db / 'institutions.txt', 'w') as f:
-                        f.write('\n'.join(owners).strip())  
-                    f.close() 
+                    df_creators = pd.read_csv(self.folder_db / 'object_creators.txt')
+                    df_creators = pd.concat([df_creators, pd.DataFrame(data=[creator_surname,creator_name], index=['surname','name']).T])
+                    df_creators.to_csv(self.folder_db / 'object_creators.txt', index=False)
+                
 
                 
                 if object_support.value not in supports:
@@ -297,13 +366,9 @@ class DB:
         # Function to get the existing initials from the file
         def get_existing_initials(file_path):
             try:
-                with open(file_path, 'r') as file:
-                    # Reading the file line by line and storing the initials in a set
-                    existing_initials = set()
-                    for line in file:
-                        initials = line.strip().split(' : ')[1]
-                        existing_initials.add(initials)
-                    return existing_initials
+                df_persons = self.get_persons()
+                existing_initials = df_persons['initials']                
+                return existing_initials
             except FileNotFoundError:
                 # If the file does not exist, return an empty set
                 return set()
@@ -316,9 +381,11 @@ class DB:
             if initials in existing_initials:
                 print(f"Initials '{initials}' already exist. Please use different initials.")
             else:
-                # If the initials are unique, add the new entry
-                with open(file_path, 'a') as file:
-                    file.write(f"{name}, {surname} : {initials}\n")
+                df_persons = self.get_persons()
+                df_persons = pd.concat([df_persons, pd.DataFrame(data=[name,surname,initials], index=['name','surname','initials']).T])
+                df_persons = df_persons.sort_values(by='name')
+                df_persons.to_csv(self.folder_db/'persons.txt',index=False)
+               
                 print(f"Added: {name}, {surname} : {initials}")
 
 
@@ -383,13 +450,8 @@ class DB:
 
         db_projects = self.get_db(db='projects')
         existing_columns = list(db_projects.columns)
-        institutions = sorted(set(db_projects['institution']))
-        
-        with open(self.folder_db / 'persons.txt') as f:
-            persons = f.read().splitlines()
-            f.close()
-
-        persons = [x.split(':')[0] for x in persons]
+        institutions = tuple(self.get_institutions()['name'].values)    
+        persons = tuple([f'{x[0]} {x[1]}' for x in self.get_persons()[['name','surname']].values])    
 
         # Define ipython widgets
         project_Id = ipw.Text(        
@@ -403,7 +465,7 @@ class DB:
 
         institution = ipw.Combobox(
             placeholder = 'Enter an institution',
-            options = institutions,  
+            options = institutions,              
             description = 'Institution',
             ensure_option=False,
             disabled=False,
@@ -425,9 +487,9 @@ class DB:
             style=style,
         )
 
-        PL = ipw.Dropdown(
-            options=persons,
-            value=persons[0],
+        person = ipw.Combobox(
+            placeholder = 'Enter a name or a surname',
+            options=persons,            
             description='Project leader',
             disabled=False,
             layout=Layout(width="90%", height="30px"),
@@ -478,13 +540,13 @@ class DB:
                 Projects_DB_file = self.folder_db / 'DB_projects.csv'
                 Projects_DB = pd.read_csv(Projects_DB_file)  
 
-                institutions = open(self.folder_db  / r'institutions.txt', 'r').read().splitlines()
+                institutions = pd.read_csv(self.folder_db / 'institutions.txt')['name'].values
                 
                 new_row = pd.DataFrame({'project_id':project_Id.value,
                         'institution':institution.value, 
                         'start_date':startDate.value, 
                         'end_date':endDate.value,
-                        'project_leader':PL.value,                        
+                        'project_leader':person.value,                        
                         'keywords':project_keyword.value},                       
                         index=[0] 
                         )  
@@ -514,7 +576,7 @@ class DB:
             ipw.VBox([
                 ipw.HBox([
                     ipw.VBox([project_Id,institution, project_keyword],layout=Layout(width="60%", height="95%")),
-                    ipw.VBox([startDate,endDate, PL],layout=Layout(width="60%", height="95%")),
+                    ipw.VBox([startDate,endDate, person],layout=Layout(width="60%", height="95%")),
                     ]),                
                 ], layout=Layout(width="50%", height="100%")),                        
             ], layout=Layout(width="100%", height="110%"))
@@ -541,7 +603,7 @@ class DB:
 
         # create several text files
         with open(Path(folder_path) / 'object_creators.txt', 'w') as f:
-            pass
+            f.write('surname,name')
 
         with open(Path(folder_path) / 'object_techniques.txt', 'w') as f:
             f.write("China ink\n")
@@ -606,10 +668,10 @@ class DB:
             f.write("wool\n")            
 
         with open(Path(folder_path) / 'institutions.txt', 'w') as f:
-            pass
+            f.write('name,acronym')
 
         with open(Path(folder_path) / 'persons.txt', 'w') as f:
-            pass
+            f.write('name,surname,initials')
 
 
     def save_folder_db(self, folder_path):
@@ -629,6 +691,16 @@ class DB:
             print('Databases have not been created or were deleted.')
             return None
     
+
+    def get_creators(self):
+        if (Path(self.folder_db) / 'object_creators.txt').exists():
+            df_creators = pd.read_csv(Path(self.folder_db) / 'object_creators.txt')
+            return df_creators
+        
+        else:
+            print(f'The file {Path(self.folder_db) / "object_creators.txt"} is not existing. Make sure to create one by running the function "create_DB" from the microfading package.')
+            return
+
 
     def get_db(self, db:Optional[str] = 'all'):
 
@@ -654,6 +726,28 @@ class DB:
             return db_objects
 
 
+    def get_persons(self):
+        
+        if (Path(self.folder_db) / 'persons.txt').exists():
+            df_persons = pd.read_csv(Path(self.folder_db) / 'persons.txt')
+            return df_persons
+        
+        else:
+            print(f'The file {Path(self.folder_db) / "persons.txt"} is not existing. Make sure to create one by running the function "create_DB" from the microfading package.')
+            return
+        
+
+    def get_institutions(self):
+
+        if (Path(self.folder_db) / 'institutions.txt').exists():
+            df_institutions = pd.read_csv(Path(self.folder_db) / 'institutions.txt')
+            return df_institutions
+        
+        else:
+            print(f'The file {Path(self.folder_db) / "institutions.txt"} is not existing. Make sure to create one by running the function "create_DB" from the microfading package.')
+            return
+
+    
     def update_db_projects(self, new: str, old:Optional[str] = None):
 
         if (Path(self.folder_db) / 'DB_projects.csv').exists():
