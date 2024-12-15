@@ -1466,30 +1466,6 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#microfading.microfading.folder_DB" class="md-nav__link">
-    <span class="md-ellipsis">
-      folder_DB
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="folder_DB">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#microfading.microfading.folder_DB--returns" class="md-nav__link">
-    <span class="md-ellipsis">
-      Returns
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#microfading.microfading.get_DB" class="md-nav__link">
     <span class="md-ellipsis">
       get_DB
@@ -1591,6 +1567,30 @@
         
           <li class="md-nav__item">
   <a href="#microfading.microfading.get_institutions--returns" class="md-nav__link">
+    <span class="md-ellipsis">
+      Returns
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#microfading.microfading.get_path_DB" class="md-nav__link">
+    <span class="md-ellipsis">
+      get_path_DB
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="get_path_DB">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#microfading.microfading.get_path_DB--returns" class="md-nav__link">
     <span class="md-ellipsis">
       Returns
     </span>
@@ -2578,30 +2578,6 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#microfading.microfading.folder_DB" class="md-nav__link">
-    <span class="md-ellipsis">
-      folder_DB
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="folder_DB">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#microfading.microfading.folder_DB--returns" class="md-nav__link">
-    <span class="md-ellipsis">
-      Returns
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#microfading.microfading.get_DB" class="md-nav__link">
     <span class="md-ellipsis">
       get_DB
@@ -2703,6 +2679,30 @@
         
           <li class="md-nav__item">
   <a href="#microfading.microfading.get_institutions--returns" class="md-nav__link">
+    <span class="md-ellipsis">
+      Returns
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#microfading.microfading.get_path_DB" class="md-nav__link">
+    <span class="md-ellipsis">
+      get_path_DB
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="get_path_DB">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#microfading.microfading.get_path_DB--returns" class="md-nav__link">
     <span class="md-ellipsis">
       Returns
     </span>
@@ -2840,13 +2840,18 @@
 <h2 id="commands">Commands<a class="headerlink" href="#commands" title="Permanent link">&para;</a></h2>
 <h3 id="datasets">Datasets<a class="headerlink" href="#datasets" title="Permanent link">&para;</a></h3>
 <ul>
-<li><code>get_datasets [rawfiles, BWS, stdev]</code> - Retrieve examples of data files.</li>
+<li><code>get_datasets [MFT, rawfiles, BWS, stdev]</code> - Retrieve examples of data files.</li>
 </ul>
 <h3 id="databases-management">Databases management<a class="headerlink" href="#databases-management" title="Permanent link">&para;</a></h3>
 <ul>
 <li><code>create_DB [folder]</code> - Create two empty databases (projects and objects).</li>
+<li><code>get_creators</code> - Retrieve a list of names corresponding to the persons that created the microfaded objects.</li>
 <li><code>get_DB [db]</code> - Retrieve the databases.</li>
-<li><code>folder_DB</code> - Retrieve the folder where the databases are stored.</li>
+<li><code>get_institutions</code> - Retrieve a list of institutions owning the microfaded objects.</li>
+<li><code>get_path_DB</code> - Retrieve the absolute path of the folder where the databases are stored.</li>
+<li><code>get_persons</code> - Retrieve a list of persons that performed microfading analyses.</li>
+<li><code>add_new_institution</code> - Add a new institution to the database.</li>
+<li><code>add_new_person</code> - Add a new person to the list of persons doing microfading analyses.</li>
 <li><code>add_new_project</code> - Add a new project to the database.</li>
 <li><code>add_new_object</code> - Add a new object to the database.</li>
 <li><code>update_DB_project [new, old]</code> - Modify or add a new parameter to the project database.</li>
@@ -11332,81 +11337,6 @@ It can be either '2' or '10'</p>
 <div class="doc doc-object doc-function">
 
 
-<h2 id="microfading.microfading.folder_DB" class="doc doc-heading">
-            <code class=" language-python"><span class="n">folder_DB</span><span class="p">()</span></code>
-
-<a href="#microfading.microfading.folder_DB" class="headerlink" title="Permanent link">&para;</a></h2>
-
-
-    <div class="doc doc-contents ">
-
-        <p>Retrieve the absolute path of the folder where the databases are located.</p>
-<h4 id="microfading.microfading.folder_DB--returns">Returns<a class="headerlink" href="#microfading.microfading.folder_DB--returns" title="Permanent link">&para;</a></h4>
-<p>string or None
-    If dabases have been created, it will return the absolute path as a string. Otherwise, it will only print a statement indicating no databases were found.</p>
-
-            <details class="quote">
-              <summary>Source code in <code>src/microfading/microfading.py</code></summary>
-              <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">149</span>
-<span class="normal">150</span>
-<span class="normal">151</span>
-<span class="normal">152</span>
-<span class="normal">153</span>
-<span class="normal">154</span>
-<span class="normal">155</span>
-<span class="normal">156</span>
-<span class="normal">157</span>
-<span class="normal">158</span>
-<span class="normal">159</span>
-<span class="normal">160</span>
-<span class="normal">161</span>
-<span class="normal">162</span>
-<span class="normal">163</span>
-<span class="normal">164</span>
-<span class="normal">165</span>
-<span class="normal">166</span>
-<span class="normal">167</span>
-<span class="normal">168</span>
-<span class="normal">169</span>
-<span class="normal">170</span>
-<span class="normal">171</span>
-<span class="normal">172</span>
-<span class="normal">173</span>
-<span class="normal">174</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">folder_DB</span><span class="p">():</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Retrieve the absolute path of the folder where the databases are located.</span>
-
-<span class="sd">    Returns</span>
-<span class="sd">    -------</span>
-<span class="sd">    string or None</span>
-<span class="sd">        If dabases have been created, it will return the absolute path as a string. Otherwise, it will only print a statement indicating no databases were found.    </span>
-<span class="sd">    &quot;&quot;&quot;</span>
-
-    <span class="c1"># instantiate a DB class object</span>
-    <span class="n">DB</span> <span class="o">=</span> <span class="n">databases</span><span class="o">.</span><span class="n">DB</span><span class="p">()</span>   
-
-
-    <span class="k">if</span> <span class="n">DB</span><span class="o">.</span><span class="n">folder_db</span><span class="o">.</span><span class="n">stem</span> <span class="o">==</span> <span class="s2">&quot;folder_path&quot;</span><span class="p">:</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Databases have not been created or have been deleted. Please, create databases by running the function &quot;create_DB&quot; from the microfading package.&#39;</span><span class="p">)</span>
-        <span class="k">return</span> <span class="kc">None</span>
-
-    <span class="k">else</span><span class="p">:</span>    
-        <span class="k">if</span> <span class="s1">&#39;DB_projects.csv&#39;</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="n">DB</span><span class="o">.</span><span class="n">folder_db</span><span class="p">)</span> <span class="ow">and</span> <span class="s1">&#39;DB_objects.csv&#39;</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="n">DB</span><span class="o">.</span><span class="n">folder_db</span><span class="p">):</span>
-
-            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;DB_projects.csv and DB_objects.csv files can be found in the following folder: </span><span class="si">{</span><span class="n">DB</span><span class="o">.</span><span class="n">folder_db</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>    
-            <span class="k">return</span> <span class="n">DB</span><span class="o">.</span><span class="n">folder_db</span>       
-
-        <span class="k">else</span><span class="p">:</span>
-            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Databases have not been created or have been deleted. Please, create databases by running the function &quot;create_DB&quot; from the microfading package.&#39;</span><span class="p">)</span>
-            <span class="k">return</span> <span class="kc">None</span>
-</code></pre></div></td></tr></table></div>
-            </details>
-    </div>
-
-</div>
-
-<div class="doc doc-object doc-function">
-
-
 <h2 id="microfading.microfading.get_DB" class="doc doc-heading">
             <code class=" language-python"><span class="n">get_DB</span><span class="p">(</span><span class="n">db</span><span class="o">=</span><span class="s1">&#39;all&#39;</span><span class="p">)</span></code>
 
@@ -11801,6 +11731,81 @@ It only works if the rawfiles parameters is set to 'False'. The rawfiles do not 
 
     <span class="n">DB</span> <span class="o">=</span> <span class="n">databases</span><span class="o">.</span><span class="n">DB</span><span class="p">()</span>
     <span class="k">return</span> <span class="n">DB</span><span class="o">.</span><span class="n">get_institutions</span><span class="p">()</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="microfading.microfading.get_path_DB" class="doc doc-heading">
+            <code class=" language-python"><span class="n">get_path_DB</span><span class="p">()</span></code>
+
+<a href="#microfading.microfading.get_path_DB" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Retrieve the absolute path of the folder where the databases are located.</p>
+<h4 id="microfading.microfading.get_path_DB--returns">Returns<a class="headerlink" href="#microfading.microfading.get_path_DB--returns" title="Permanent link">&para;</a></h4>
+<p>string or None
+    If dabases have been created, it will return the absolute path as a string. Otherwise, it will only print a statement indicating no databases were found.</p>
+
+            <details class="quote">
+              <summary>Source code in <code>src/microfading/microfading.py</code></summary>
+              <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">149</span>
+<span class="normal">150</span>
+<span class="normal">151</span>
+<span class="normal">152</span>
+<span class="normal">153</span>
+<span class="normal">154</span>
+<span class="normal">155</span>
+<span class="normal">156</span>
+<span class="normal">157</span>
+<span class="normal">158</span>
+<span class="normal">159</span>
+<span class="normal">160</span>
+<span class="normal">161</span>
+<span class="normal">162</span>
+<span class="normal">163</span>
+<span class="normal">164</span>
+<span class="normal">165</span>
+<span class="normal">166</span>
+<span class="normal">167</span>
+<span class="normal">168</span>
+<span class="normal">169</span>
+<span class="normal">170</span>
+<span class="normal">171</span>
+<span class="normal">172</span>
+<span class="normal">173</span>
+<span class="normal">174</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">get_path_DB</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Retrieve the absolute path of the folder where the databases are located.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    string or None</span>
+<span class="sd">        If dabases have been created, it will return the absolute path as a string. Otherwise, it will only print a statement indicating no databases were found.    </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># instantiate a DB class object</span>
+    <span class="n">DB</span> <span class="o">=</span> <span class="n">databases</span><span class="o">.</span><span class="n">DB</span><span class="p">()</span>   
+
+
+    <span class="k">if</span> <span class="n">DB</span><span class="o">.</span><span class="n">folder_db</span><span class="o">.</span><span class="n">stem</span> <span class="o">==</span> <span class="s2">&quot;folder_path&quot;</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Databases have not been created or have been deleted. Please, create databases by running the function &quot;create_DB&quot; from the microfading package.&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="k">else</span><span class="p">:</span>    
+        <span class="k">if</span> <span class="s1">&#39;DB_projects.csv&#39;</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="n">DB</span><span class="o">.</span><span class="n">folder_db</span><span class="p">)</span> <span class="ow">and</span> <span class="s1">&#39;DB_objects.csv&#39;</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="n">DB</span><span class="o">.</span><span class="n">folder_db</span><span class="p">):</span>
+
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;DB_projects.csv and DB_objects.csv files can be found in the following folder: </span><span class="si">{</span><span class="n">DB</span><span class="o">.</span><span class="n">folder_db</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>    
+            <span class="k">return</span> <span class="n">DB</span><span class="o">.</span><span class="n">folder_db</span>       
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Databases have not been created or have been deleted. Please, create databases by running the function &quot;create_DB&quot; from the microfading package.&#39;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">None</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
