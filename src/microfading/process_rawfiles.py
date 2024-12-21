@@ -19,7 +19,7 @@ def MFT_fotonowy(files: list, filenaming:Optional[str] = 'none', folder:Optional
     if db:
         DB = databases.DB()
 
-        if DB.folder_db is None:
+        if DB.folder_db is None or DB.folder_db == 'folder_path':
             return 'Databases have not been created. Please, create databases by running the function "create_DB" from the microfading package.'
         
         else:            
@@ -131,7 +131,12 @@ def MFT_fotonowy(files: list, filenaming:Optional[str] = 'none', folder:Optional
             interpolated_df = pd.DataFrame(interpolated_abs_data, index=wanted_x, columns=df_abs.columns)
 
             interpolated_df.index.name = abs_scales_name[interpolation]
-            interpolated_df = interpolated_df.reset_index()            
+            interpolated_df = interpolated_df.reset_index()
+
+            # insert a row at the top with the word 'value' as input
+            df_value = pd.DataFrame({'He_MJ/m2':'value','t_sec':'value','Hv_Mlxh':'value'}, index=['value'])
+            interpolated_df = pd.concat([df_value, interpolated_df])
+            interpolated_df = interpolated_df.reset_index().drop('index', axis=1)          
             
             # modify the columns names according to the choosen abscissa unit
             raw_df_sp.columns = abs_scales[interpolation]
@@ -142,9 +147,7 @@ def MFT_fotonowy(files: list, filenaming:Optional[str] = 'none', folder:Optional
             pw, px = np.meshgrid(wanted_wl, wanted_x, indexing='ij')     
             interp_data = interp((pw, px))    
             df_sp_interp = pd.DataFrame(interp_data, index=wanted_wl, columns=wanted_x)
-                            
-            # name the columns
-            df_sp_interp.columns.name = abs_scales_name[interpolation] 
+                   
 
             # empty list to store XYZ values
             XYZ = []
@@ -159,11 +162,11 @@ def MFT_fotonowy(files: list, filenaming:Optional[str] = 'none', folder:Optional
             Lab = np.array([colour.XYZ_to_Lab(d / 100, d65) for d in XYZ])
             LCh = np.array([colour.Lab_to_LCHab(d) for d in Lab])
                     
-            L = []
-            a = []
-            b = []
-            C = []
-            h = []
+            L = ['value']
+            a = ['value']
+            b = ['value']
+            C = ['value']
+            h = ['value']
 
             [L.append(np.round(i[0],3)) for i in Lab]
             [a.append(np.round(i[1],3)) for i in Lab]
@@ -173,13 +176,13 @@ def MFT_fotonowy(files: list, filenaming:Optional[str] = 'none', folder:Optional
 
                 
             # compute the delta E values
-            dE76 = np.round(np.array([colour.delta_E(Lab[0], d, method="CIE 1976") for d in Lab]),3)
-            dE00 = np.round(np.array([colour.delta_E(Lab[0], d) for d in Lab]),3)
+            dE76 = ['value'] + list(np.round(np.array([colour.delta_E(Lab[0], d, method="CIE 1976") for d in Lab]),3))
+            dE00 = ['value'] + list(np.round(np.array([colour.delta_E(Lab[0], d) for d in Lab]),3))
 
             # calculate dR_VIS and dR
-            dR_vis = []                                                            # empty list to store the dRvis values                                   
-            df_sp_vis = df_sp_interp.loc[400:740]                                  # reflectance spectra in the visible range
-            sp_initial = (df_sp_vis.iloc[:,0].values) * 100                        # initial spectrum
+            dR_vis = ['value']                                                    # empty list to store the dRvis values                                   
+            df_sp_vis = df_sp_interp.loc[400:740]                                 # reflectance spectra in the visible range
+            sp_initial = (df_sp_vis.iloc[:,0].values) * 100                       # initial spectrum
         
             for col in df_sp_vis.columns:
                 sp = df_sp_vis[col]
@@ -198,11 +201,20 @@ def MFT_fotonowy(files: list, filenaming:Optional[str] = 'none', folder:Optional
                                 })                
             
             # concatenate the energy values with df_cl
-            df_cl = pd.concat([interpolated_df,df_cl], axis=1)
+            df_cl = pd.concat([interpolated_df,df_cl], axis=1, ignore_index=False)
 
+            # add a new row 'value' at the top
+            df_value = pd.DataFrame(df_sp_interp.shape[1] * ['value'], columns=['value']).T
+            df_value.index.name = 'wavelength_nm'            
+            df_value.columns = df_sp_interp.columns
+            df_sp_interp = pd.concat([df_value, df_sp_interp]) 
+            
+            # name the columns
+            df_sp_interp.columns.name = abs_scales_name[interpolation]  
+            
             # rename spectral dataframe
             df_sp = df_sp_interp
-
+            
 
             ###### CREATE INFO DATAFRAME ####### 
 
@@ -237,6 +249,7 @@ def MFT_fotonowy(files: list, filenaming:Optional[str] = 'none', folder:Optional
 
                 df_info.index.name = 'parameters'
                 df_info.columns = ['values']  
+                df_info = df_info.reset_index()
 
             else:
                 
@@ -249,6 +262,19 @@ def MFT_fotonowy(files: list, filenaming:Optional[str] = 'none', folder:Optional
                 "date_time",
                 "comment",
                 "[PROJECT INFO]"] + list(db_projects.columns) + ["[OBJECT INFO]"] + list(db_objects.columns) + MFT_info_template.device_info + MFT_info_template.analysis_info + MFT_info_template.beam_info
+
+                df_authors = DB.get_persons()                
+                if '-' in authors or ' - ' in authors:                     
+                    list_authors = []
+                    for x in authors.split('-'):
+                        x = x.strip()
+                        df_author = df_authors[df_authors['initials'] == x]
+                        list_authors.append(f"{df_author['surname'].values[0]}, {df_author['name'].values[0]}")                    
+                    authors_names = '_'.join(list_authors)
+                    
+                else:                    
+                    df_author = df_authors[df_authors['initials'] == authors]
+                    authors_names = f"{df_author['surname'].values[0]}, {df_author['name'].values[0]}"
 
                 date_time = pd.to_datetime(df_info.loc['Date'].values[0])
                 date = date_time.date()
@@ -331,14 +357,14 @@ def MFT_fotonowy(files: list, filenaming:Optional[str] = 'none', folder:Optional
 
                 info_values = [
                     " ",
-                    authors,
+                    authors_names,
                     date_time,
                     comment,
                     " "] + project_info + [" "] + object_info + device_info + analysis_info + beam_info
 
                 df_info = pd.DataFrame({'parameters':info_parameters})
                 df_info["values"] = pd.Series(info_values)
-
+            
             df_info = df_info.set_index('parameters')
 
             # define the output filename
