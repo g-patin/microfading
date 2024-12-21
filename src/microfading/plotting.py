@@ -97,6 +97,23 @@ colors_dic = {
 
 ####### THE FUNCTIONS #######
 
+def bars(data, stds=None, coordinate='dE00', colors=None, fontsize=24, legend_labels=[], title=None, title_fontsize=24, save=False, path_fig='cwd'):
+
+    sns.set_theme(font='serif')
+    fig, ax = plt.subplots(1,1, figsize=(15,8))
+
+    ax.xaxis.set_tick_params(labelsize=fontsize)
+    ax.yaxis.set_tick_params(labelsize=fontsize)
+
+    ax.set_xlabel('Microfading analyses numbers', fontsize=fontsize)
+    ax.set_ylabel(labels_eq[coordinate], fontsize=fontsize)
+
+    ax.xaxis.grid() # horizontal lines only
+
+
+    plt.tight_layout()
+    plt.show()
+
 
 def CIELAB(data, stds=None, colors=None, fontsize=24, legend_labels=[], title=None, title_fontsize=24, line=False, legend_position='in', legend_fontsize=20, legend_title='', save=False, path_fig='cwd', start_value=False, dE=False, return_data=False, *args, **kwargs):
     """Plot the CIELAB coordinates of one or several datasets.
@@ -579,7 +596,7 @@ def spectra(data, stds=[], spectral_mode:Optional[str] = 'rfl', labels=[], title
     if len(labels) == 0:
         labels = ['none'] * len(data)
 
-    print(type(colors))
+    
     # Set the list of colors
     if isinstance(colors, list) or isinstance(colors, np.ndarray):        
         colors = colors
@@ -620,15 +637,11 @@ def spectra(data, stds=[], spectral_mode:Optional[str] = 'rfl', labels=[], title
             sd = colour.SpectralDistribution(sp,wl)  
             XYZ = colour.sd_to_XYZ(sd,observer, illuminant=illuminant) 
             srgb = colour.XYZ_to_sRGB(XYZ / 100, illuminant=d65).clip(0, 1)
-            color = np.array(srgb)           
-        
-        
-    
-        
+            color = np.array(srgb)        
+                
         ax.plot(wl,sp, color=color, lw=lw[i], ls=ls[i], label=labels[i])
         
-            
-    
+        
     if x_range not in [(), None]:
         ax.set_xlim(x_range[0],x_range[1])
     
@@ -670,36 +683,65 @@ def spectra(data, stds=[], spectral_mode:Optional[str] = 'rfl', labels=[], title
     plt.show()
 
 
-def swatches_circle(data, light_doses: Optional[list] = [0.5,1,2,5,15], JND:Optional[list] = [1,2,3,5,10], fontsize: Optional[int] = 24, save:Optional[bool] = False, path_fig:Optional[str] = 'default', title:Optional[bool] = True, background_grey: Optional [float] = 0.85):
+def swatches_circle(data, data_type:Optional[str] = 'Lab', light_doses: Optional[list] = [0.5,1,2,5,15], JND:Optional[list] = [], fontsize: Optional[int] = 24, save:Optional[bool] = False, path_fig:Optional[str] = 'cwd', title:Optional[bool] = True, background_grey: Optional [float] = 0.85):
 
-    x_range=(0, light_doses[-1]+0.05, 0.05)
-    N = len(data)
-    h = 0.05 / (N*0.5)                     # height empty space between each colour patch
-    H = (0.9 - ((N-1)*h))/N                # height of each colour patch
-    H2 = 0.01 + h + ((1-0.01-0.01-(h*N)) / (2.5*N)) #       (1 - 0.05 - 0.05 - (h*N)) / (N)   # height of MFT number
-    x1 = 0
-    x2 = 0
-    x3 = 0
+    if list(set([len(x) for x in data]))[0] == len(JND):
+        xlabel = 'Just noticeable difference (JND)'
 
-    fig, ax = plt.subplots(1,1, figsize=(15,6*N))
+    elif list(set([len(x) for x in data]))[0] == len(light_doses):
+        xlabel = 'Exposure dose $H_v$ (Mlxh)'
 
-    ax.set_facecolor((background_grey,background_grey,background_grey))
-    fig.patch.set_facecolor((background_grey, background_grey, background_grey))
+    else:
+        print('Plotting aborted ! The length of data values is not equal to the length of light_doses or JND values.')
+        return
+    
+    if data_type.lower() == 'lab':
+        data_srgb = data
 
-    cp_init = matplotlib.patches.Rectangle((0.05, 0.01+x1+x2), 0.9, H, edgecolor='None', fc=srgb_init, lw=2)
-    cp_1 = matplotlib.patches.Ellipse(xy=(0.14, H2+x3), width=0.13, height=0.4/N, edgecolor='None', fc=wanted_srgb[0], lw=2)
-    cp_2 = matplotlib.patches.Ellipse(xy=(0.32, H2+x3), width=0.13, height=0.4/N, edgecolor='None', fc=wanted_srgb[1], lw=2)
-    cp_3 = matplotlib.patches.Ellipse(xy=(0.5, H2+x3), width=0.13, height=0.4/N, edgecolor='None', fc=wanted_srgb[2], lw=2)
-    cp_4 = matplotlib.patches.Ellipse(xy=(0.68, H2+x3), width=0.13, height=0.4/N, edgecolor='None', fc=wanted_srgb[3], lw=2)
-    cp_5 = matplotlib.patches.Ellipse(xy=(0.86, H2+x3), width=0.13, height=0.4/N, edgecolor='None', fc=wanted_srgb[4], lw=2)
+    else:
+        data_srgb = data
 
 
-    ax.add_patch(cp_init)
-    ax.add_patch(cp_1)
-    ax.add_patch(cp_2)
-    ax.add_patch(cp_3)
-    ax.add_patch(cp_4)
-    ax.add_patch(cp_5)
+    for data in data_srgb:
 
-    plt.tight_layout()
-    plt.show()
+        N = len(data)
+        fig, ax = plt.subplots(1,1, figsize=((N-1)*5,6))        
+
+        ax.set_facecolor((background_grey,background_grey,background_grey))
+        fig.patch.set_facecolor((background_grey, background_grey, background_grey))
+
+        cp_init = matplotlib.patches.Rectangle((0.05, 0.01), 0.9, 0.9, edgecolor='None', fc=data[0], lw=2)
+        ax.add_patch(cp_init)
+
+        i = 0
+        for d in data[1:]:
+            cp = matplotlib.patches.Ellipse(xy=(1/N + i, 0.5), width=0.6/(N-1), height=0.6, edgecolor='None', fc=d, lw=2)
+            ax.add_patch(cp)
+            i = i + (1/N)
+
+        ax.xaxis.set_ticks_position(position='both')
+        ax.set_xticks(np.linspace(0,1,N+1)[1:-1])        
+        ax.set_xticklabels(light_doses[1:])
+        ax.set_yticks([])
+
+        ax.xaxis.set_tick_params(labelsize=fontsize)    
+        ax.set_xlabel('Exposure dose $H_v$ (Mlxh)', fontsize=fontsize)
+        
+        ax.spines['top'].set_visible(False)
+        ax.spines['right'].set_visible(False)
+        ax.spines['bottom'].set_visible(False)
+        ax.spines['left'].set_visible(False)
+        
+        ax.grid(False)
+
+        plt.tight_layout()
+
+        if save == True:
+            if path_fig == 'cwd':
+                path_fig = f'{os.getcwd()}/MFT_SW.png'                    
+                
+            fig.savefig(path_fig,dpi=300, facecolor=(background_grey, background_grey, background_grey)) 
+
+        
+
+        plt.show()
