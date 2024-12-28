@@ -299,7 +299,7 @@ def CIELAB(data, stds=None, colors=None, fontsize=24, legend_labels=[], title=No
         plt.show()
 
 
-def delta(data: list, yerr=None, x_unit:Optional[list] = ['He'], y_unit:Optional[list] = ['dE00'], labels=[], initial_values=None, figsize=(15,9), colors=None, ls='random', lw='default', title=None, legend_title=None, fontsize=28, legend_fontsize=24, save=False, path_fig='cwd'):
+def delta(data: list, yerr=None, dose_unit:Optional[list] = ['He'], coordinates:Optional[list] = ['dE00'], initial_values=None, object_ids=None, figsize=(15,9), colors=None, ls='random', lw='default', title=None, fontsize=28, legend_labels=[], legend_title=None, legend_fontsize=24, save=False, path_fig='cwd'):
     """Plot the delta values of choosen colorimetric coordinates
 
     Parameters
@@ -310,13 +310,13 @@ def delta(data: list, yerr=None, x_unit:Optional[list] = ['He'], y_unit:Optional
     yerr : _type_, optional
         _description_, by default None
 
-    x_unit : Optional[list], optional
+    dose_unit : Optional[list], optional
         _description_, by default ['He']
 
-    y_unit : Optional[list], optional
+    coordinates : Optional[list], optional
         _description_, by default ['dE00']
 
-    labels : list, optional
+    legend_labels : list, optional
         _description_, by default []
 
     initial_values : _type_, optional
@@ -363,69 +363,69 @@ def delta(data: list, yerr=None, x_unit:Optional[list] = ['He'], y_unit:Optional
 
     # define the color of the lines
     if colors is None:
-        colors = [[colors] * len(y_unit)] * len(data)
+        colors = [[colors] * len(coordinates)] * len(data)
 
     elif colors == 'default':
-        colors = [[colors_dic[x] for x in y_unit]] * len(data)
+        colors = [[colors_dic[x] for x in coordinates]] * len(data)
 
     elif isinstance(colors, str):
-        colors = [[colors] * len(y_unit)] * len(data)
+        colors = [[colors] * len(coordinates)] * len(data)
 
     elif type(colors) == list:      
-        if len(y_unit) == 1:
-            colors = [len(y_unit)*[x] for x in colors] 
+        if len(coordinates) == 1:
+            colors = [len(coordinates)*[x] for x in colors] 
         else:
             colors = [colors] * len(data) 
 
 
     # define the width of the lines
     if lw == 'default':
-        list_lw = [[lw_dic[x] for x in y_unit]] * len(data)  
+        list_lw = [[lw_dic[x] for x in coordinates]] * len(data)  
 
     elif isinstance(lw, int):
-        list_lw = [[lw] * len(y_unit)] * len(data)
+        list_lw = [[lw] * len(coordinates)] * len(data)
 
     elif isinstance(lw, list):
-        if len(y_unit) == 1:
-            list_lw = [len(y_unit)*[x] for x in lw] 
+        if len(coordinates) == 1:
+            list_lw = [len(coordinates)*[x] for x in lw] 
         else:
             list_lw = [lw] * len(data)
     
     
-    # check whether the length of the data matches the length of the x_unit and y_unit values
+    
+    # check whether the length of the data matches the length of the dose_unit and coordinates lengths
     for d in data:
-        if len(x_unit + y_unit) != len(d):
+        if len(dose_unit + coordinates) != len(d):
             print('The length of each data objects should correspond to sum of the x and y units.')
             return       
 
         else:
             pass         
     
-    
-    
+        
+    # set the labels of the legend
+    if len(legend_labels) == 0:
+        legend_labels = ['none'] * len(data)
 
-    if len(labels) == 0:
-        labels = ['none'] * len(data)
-
-    if len(y_unit) == 1:
-        labels = [[x] for x in labels]
+    if len(coordinates) == 1:
+        legend_labels = [[x] for x in legend_labels]
         list_ls = [[None]] * len(data)
-        y_unit = [f'd{x}' if x in ['L*','a*','b*','C*','h'] else x for x in y_unit]
+        coordinates = [f'd{x}' if x in ['L*','a*','b*','C*','h'] else x for x in coordinates]
         
     else:
-        list_ls = [[ls_dic[x] for x in y_unit]] * len(data)
+        list_ls = [[ls_dic[x] for x in coordinates]] * len(data)
 
         if isinstance(initial_values, list):
-            dy_unit = [f'd{x}' if x in ['L*','a*','b*','C*','h'] else x for x in y_unit]
+            dy_unit = [f'd{x}' if x in ['L*','a*','b*','C*','h'] else x for x in coordinates]
             dy_unit = [labels_eq[x] for x in dy_unit]
             #y_unit = [f'{x} ({x[1:]} init$ = {i})' for x,i in zip(y_unit, initial_values)]
-            dy_unit = [f'{x} (${c[0]}^*_i$ = {i})' for x,c,i in zip(dy_unit,y_unit, initial_values)]
+            dy_unit = [f'{x} (${c[0]}^*_i$ = {i})' for x,c,i in zip(dy_unit,coordinates, initial_values)]
 
         else:
-            dy_unit = [f'd{x}' if x in ['L*','a*','b*','C*','h'] else x for x in y_unit]        
+            dy_unit = [f'd{x}' if x in ['L*','a*','b*','C*','h'] else x for x in coordinates]        
             dy_unit = [labels_eq[x] for x in dy_unit]
 
-        labels = [dy_unit] * len(data)
+        legend_labels = [dy_unit] * len(data)
         
 
     
@@ -433,7 +433,7 @@ def delta(data: list, yerr=None, x_unit:Optional[list] = ['He'], y_unit:Optional
     sns.set_theme(context='paper', font='serif', palette='colorblind') 
 
     # Plot with a single x-axis, ie. 1 light energy unit
-    if len(x_unit) == 1:
+    if len(dose_unit) == 1:
 
         # create an empty figure
         fig, ax1 = plt.subplots(1,1, figsize=figsize)
@@ -444,7 +444,7 @@ def delta(data: list, yerr=None, x_unit:Optional[list] = ['He'], y_unit:Optional
             ax1.set_prop_cycle(ls = ["-","--","-.",":"])
 
         # 
-        for d,s,label,ls,lw,color in zip(data,yerr,labels,list_ls,list_lw,colors):
+        for d,s,label,ls,lw,color in zip(data,yerr,legend_labels,list_ls,list_lw,colors):
 
             x = d[0]            
 
@@ -467,10 +467,10 @@ def delta(data: list, yerr=None, x_unit:Optional[list] = ['He'], y_unit:Optional
         ax1.xaxis.set_tick_params(labelsize=fontsize)
         ax1.yaxis.set_tick_params(labelsize=fontsize)
 
-        ax1.set_xlabel(x_labels[x_unit[0]], fontsize=fontsize)
+        ax1.set_xlabel(x_labels[dose_unit[0]], fontsize=fontsize)
 
-        if len(y_unit) == 1:
-            ax1.set_ylabel(labels_eq[y_unit[0]], fontsize=fontsize)
+        if len(coordinates) == 1:
+            ax1.set_ylabel(labels_eq[coordinates[0]], fontsize=fontsize)
 
         else:
             ax1.set_ylabel('Colorimetric differences ($\Delta$)', fontsize=fontsize)
@@ -549,13 +549,13 @@ def delta(data: list, yerr=None, x_unit:Optional[list] = ['He'], y_unit:Optional
             
         fig.savefig(path_fig,dpi=300, facecolor='white')         
 
-    if len(x_unit) == 1: 
+    if len(dose_unit) == 1: 
         return plt, ax1
     else:
         return plt, ax1, ax2
 
 
-def spectra(data, stds=[], spectral_mode:Optional[str] = 'rfl', labels=[], title='none', fontsize=24, fontsize_legend:Optional[int] = 22, legend_title='', x_range=(), colors:Union[str, list] = None, lw:Optional[int] = 2, ls:Union[str, list] = '-', text:Optional[str] = '', save=False, path_fig='cwd', derivation=False, *args, **kwargs):
+def spectra(data, stds=[], spectral_mode:Optional[str] = 'rfl', legend_labels=[], title='none', fontsize=24, fontsize_legend:Optional[int] = 22, legend_title='', x_range=(), colors:Union[str, list] = None, lw:Optional[int] = 2, ls:Union[str, list] = '-', text:Optional[str] = '', save=False, path_fig='cwd', derivation=False, *args, **kwargs):
     """
     Description: Plot the reflectance spectrum of one or several datasets.
 
@@ -593,33 +593,37 @@ def spectra(data, stds=[], spectral_mode:Optional[str] = 'rfl', labels=[], title
     fig, ax = plt.subplots(1,1, figsize=(15, 9))
     
     # Set the list of labels
-    if len(labels) == 0:
-        labels = ['none'] * len(data)
+    if len(legend_labels) == 0:
+        legend_labels = ['none'] * len(data)
 
     
     # Set the list of colors
     if isinstance(colors, list) or isinstance(colors, np.ndarray):        
-        colors = colors
+        colors = colors        
 
     elif colors == None:
         colors = [None] * len(data)
     
     elif colors == 'sample':
         colors = ['sample'] * len(data)
-
+    
     # Set the linestyle
     if isinstance(ls, str):
         ls = [ls] * len(data)
 
     # Set the linewidth
-    if isinstance(lw, int):
+    if isinstance(lw, int):        
         lw = [lw] * len(data)
+    #print(stds)
+    # Set the std values
+    if len(stds) == 0:        
+        stds = [np.zeros(len(x[1])) for x in data]
+                
          
-    # Initiate a for loop to plot the data
-    
-    for i, d in enumerate(data):
-
-        df_sp = pd.DataFrame(data=d[1], index=d[0])
+    # Initiate a for loop to plot the data    
+    for i, (d,s) in enumerate(zip(data,stds)):
+        
+        df_sp = pd.DataFrame(data=[d[1],s], columns=d[0], index=['sp','std']).T
 
         # Index data according the x_range values
         if x_range not in [(), None]:            
@@ -628,7 +632,7 @@ def spectra(data, stds=[], spectral_mode:Optional[str] = 'rfl', labels=[], title
         # Get the wavelengths and spectral values
         wl = df_sp.index.values
         sp = df_sp.iloc[:,0].values
-
+        std = df_sp['std'].values        
 
         if isinstance(colors, list) or isinstance(colors, np.ndarray):
             color = colors[i]
@@ -637,9 +641,12 @@ def spectra(data, stds=[], spectral_mode:Optional[str] = 'rfl', labels=[], title
             sd = colour.SpectralDistribution(sp,wl)  
             XYZ = colour.sd_to_XYZ(sd,observer, illuminant=illuminant) 
             srgb = colour.XYZ_to_sRGB(XYZ / 100, illuminant=d65).clip(0, 1)
-            color = np.array(srgb)        
+            color = np.array(srgb)            
+        
+               
                 
-        ax.plot(wl,sp, color=color, lw=lw[i], ls=ls[i], label=labels[i])
+        ax.plot(wl,sp, color=color, lw=lw[i], ls=ls[i], label=legend_labels[i])
+        ax.fill_between(wl, sp-std,sp+std, alpha=0.5, color='0.75', ec='none')
         
         
     if x_range not in [(), None]:
@@ -662,12 +669,12 @@ def spectra(data, stds=[], spectral_mode:Optional[str] = 'rfl', labels=[], title
     if title != 'none':
         ax.set_title(title, fontsize = fontsize+3)
     
-    if len(labels) > 6:
+    if len(legend_labels) > 6:
         ncols = 2
     else:
         ncols = 1
 
-    if labels[0] != 'none' and len(labels) < 19:
+    if legend_labels[0] != 'none' and len(legend_labels) < 19:
         handles, labels = plt.gca().get_legend_handles_labels()
         by_label = dict(zip(labels, handles))  
         #plt.legend(labels, fontsize=fontsize_legend, title='Measurement $n^o$', title_fontsize=fontsize_legend) 
