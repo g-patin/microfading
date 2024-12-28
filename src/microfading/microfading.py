@@ -426,7 +426,7 @@ class MFT(object):
         return f'Microfading data class - Number of files = {len(self.files)}'
        
     
-    def get_spectra(self, wl_range:Union[int, float, list, tuple] = 'all', dose_unit:Optional[str] = 'He', dose_values:Union[int, float, list, tuple] = 'all', spectral_mode:Optional[str] = 'rfl'):
+    def get_spectra(self, wl_range:Union[int, float, list, tuple] = 'all', dose_unit:Optional[str] = 'He', dose_values:Union[int, float, list, tuple] = 'all', spectral_mode:Optional[str] = 'rfl', smoothing:Optional[list] = [1,0]):
         """Retrieve the reflectance spectra related to the input files.
 
         Parameters
@@ -461,11 +461,12 @@ class MFT(object):
         """
 
         data_sp = []
-        files = self.read_files(sheets=['spectra', 'CIELAB'])        
+        files = self.read_files(sheets=['spectra', 'CIELAB'])   
+
+        dose_units = {'He':'He_MJ/m2', 'Hv':'Hv_Mlxh', 't':'t_sec'}     
 
         for file in files:
-            df_sp = file[0]
-            df_sp = df_sp.set_index(df_sp.columns[0])
+            df_sp = file[0]            
 
             # whether to compute the absorption spectra
             if spectral_mode == 'abs':
@@ -474,14 +475,14 @@ class MFT(object):
 
             # Set the dose unit
             if dose_unit == 'Hv':
-                Hv = file[1]['Hv_Mlxh'].values
-                df_sp.columns = Hv
-                df_sp.index.name = 'wl-nm_Hv-Mlxh'
+                Hv = file[1]['Hv_Mlxh','value'].values
+                df_sp.columns = df_sp.columns.set_levels(Hv, level=0)                
+                #df_sp.index.name = 'wl-nm_Hv-Mlxh'
             
             elif dose_unit =='t':
-                t = file[1]['t_sec'].values
-                df_sp.columns = t
-                df_sp.index.name = 'wl-nm_t-sec'
+                t = file[1]['t_sec','value'].values
+                df_sp.columns = df_sp.columns.set_levels(t, level=0)
+                #df_sp.index.name = 'wl-nm_t-sec'
                 
 
             # Set the wavelengths
@@ -489,39 +490,79 @@ class MFT(object):
                 if len(wl_range) == 2:
                     wl_range = (wl_range[0],wl_range[1],1)
                 
-                wavelengths = np.arange(wl_range[0], wl_range[1], wl_range[2])
-                df_sp = df_sp.loc[wavelengths]
+                wavelengths = np.arange(wl_range[0], wl_range[1], wl_range[2])                               
 
-            elif isinstance(wl_range, int) or isinstance(wl_range, list):
-                df_sp = df_sp.loc[wl_range]
+            elif isinstance(wl_range, list):
+                wavelengths = wl_range                               
 
+            elif isinstance(wl_range, int):
+                wl_range = [wl_range]
+                wavelengths = wl_range  
+
+            else:
+                wavelengths = df_sp.index          
+                
+            df_sp = df_sp.loc[wavelengths]
+
+            
+            # Smooth the data
+            doses = df_sp.columns
+            df_sp = pd.DataFrame(savgol_filter(df_sp.T.values, window_length=smoothing[0], polyorder=smoothing[1]).T, columns=doses, index=wavelengths)
             
             # Set the dose values 
             if isinstance(dose_values, tuple):
                 if len(dose_values) == 2:
                     dose_values = (dose_values[0],dose_values[1],1)
                 
-                doses = np.arange(dose_values[0], dose_values[1], dose_values[2])
+                wanted_doses = np.arange(dose_values[0], dose_values[1], dose_values[2])
                 
             elif isinstance(dose_values, int) or isinstance(dose_values, float):            
-                doses = [dose_values]
+                wanted_doses = [dose_values]
 
             elif isinstance(dose_values, list):
-                doses = dose_values
+                wanted_doses = dose_values
 
             else:
-                doses = df_sp.columns
+                wanted_doses = sorted(set(df_sp.columns.get_level_values(0)))
 
 
-            # interpolate the reflectance values according to the wanted dose values
-            interp = RegularGridInterpolator((df_sp.index,df_sp.columns), df_sp.values)
+            def multiindex_2Dinterpolation(df, dose_unit, wanted_x, wanted_y, level_name='value'):
+                interpolator = RegularGridInterpolator((df.index, df.columns.get_level_values(0)), df.values, method='linear')
 
-            pw, px = np.meshgrid(df_sp.index, doses, indexing='ij')     
-            interp_data = interp((pw, px))    
-            df_sp_interp = pd.DataFrame(interp_data, index=df_sp.index, columns=doses)  
+                # Create a meshgrid of the new points
+                new_wv_grid, new_ev_grid = np.meshgrid(wanted_y, wanted_x, indexing='ij')
+
+                # Flatten the grid arrays and combine them into coordinate pairs
+                new_points = np.array([new_wv_grid.ravel(), new_ev_grid.ravel()]).T
+
+                # Interpolate the data at the new points
+                interpolated_values = interpolator(new_points)
+
+                # Reshape the interpolated values to match the new grid shape
+                interpolated_values = interpolated_values.reshape(len(wanted_y), len(wanted_x))
+
+                # Create a new DataFrame with the interpolated data
+                new_columns = pd.MultiIndex.from_product([wanted_x, [level_name]], names=[dose_units[dose_unit], 'value'])
+                interpolated_df = pd.DataFrame(interpolated_values, index=wanted_y, columns=new_columns)
+
+                interpolated_df.index.name = 'wavelength_nm'
+                
+                return interpolated_df
+                
+            if sorted(set(df_sp.columns.get_level_values(1))) == ['mean', 'std']:
+                df_sp_n = df_sp.xs(key='mean', axis=1, level=1)
+                df_sp_s = df_sp.xs(key='std', axis=1, level=1)
+                
+                interpolated_df_sp_n = multiindex_2Dinterpolation(df_sp_n, dose_unit, wanted_doses, df_sp.index, 'mean')   #.T[::2].T
+                interpolated_df_sp_s = multiindex_2Dinterpolation(df_sp_s, dose_unit, wanted_doses, df_sp.index, 'std')    #.T[::2].T
+                interpolated_df_sp = pd.concat([interpolated_df_sp_n,interpolated_df_sp_s], axis=1).sort_index(axis=1)                
+                
+                
+            else:
+                interpolated_df_sp = multiindex_2Dinterpolation(df_sp, dose_unit, wanted_doses, df_sp.index)
 
             # append the spectral data
-            data_sp.append(df_sp_interp)
+            data_sp.append(interpolated_df_sp) 
 
         return data_sp
     
@@ -636,7 +677,7 @@ class MFT(object):
         return interpolated_data       
     
 
-    def compute_delta(self, coordinates:Optional[list] = ['dE00'], dose_unit:Optional[list] = ['He'], rate:Optional[bool] = False):
+    def compute_delta(self, coordinates:Optional[list] = ['dE00'], dose_unit:Optional[list] = 'He', rate:Optional[bool] = False):
         """Retrieve the CIE delta values for a given set of colorimetric coordinates corresponding to the given microfading analyses.
 
         Parameters
@@ -658,13 +699,57 @@ class MFT(object):
             It returns a a list of pandas dataframes where each column corresponds to a light energy dose or a desired coordinate.
         """
 
-        doses_dic = {'He': 'He_MJ/m2', 'Hv': 'Hv_Mlxh', 't': 't_sec'} 
-        doses_labels = [doses_dic[x] for x in dose_unit]
+        # create a dictionary to store the light dose units
+        dose_units = {'He':'He_MJ/m2', 'Hv':'Hv_Mlxh', 't': 't_sec'}
 
-        wanted_data = []
-        
+        #doses_dic = {'He': 'He_MJ/m2', 'Hv': 'Hv_Mlxh', 't': 't_sec'} 
+        #doses_labels = [doses_dic[x] for x in dose_unit]
 
-        if self.stdev == False: 
+        #wanted_data = []
+
+        # Retrieve the data        
+        cielab_data = self.read_files(sheets=['CIELAB'])
+        cielab_data = [x[0] for x in cielab_data]
+
+        # Create an empty list with all the colorimetric data
+        all_data = []
+              
+        # Compute the delta LabCh values and add the data into the list all_data  
+        for data in cielab_data:
+
+            # for data with std values
+            if sorted(set(data.columns.get_level_values(1))) == ['mean', 'std']:
+                data_dLabCh = delta_coord = [unumpy.uarray(d[coord, 'mean'], d[coord, 'std']) - unumpy.uarray(d[coord, 'mean'], d[coord, 'std'])[0] for coord in ['L*', 'a*', 'b*', 'C*', 'h'] for d in [data]]
+
+                delta_means = [unumpy.nominal_values(x) for x in delta_coord]
+                delta_stds = [unumpy.std_devs(x) for x in delta_coord]
+
+                delta_coord_mean = [(f'd{coord}', 'mean') for coord in ['L*', 'a*', 'b*', 'C*', 'h']]
+                delta_coord_std = [(f'd{coord}', 'std') for coord in ['L*', 'a*', 'b*', 'C*', 'h']]
+
+                for coord_mean,delta_mean,coord_std,delta_std in zip(delta_coord_mean,delta_means, delta_coord_std,delta_stds):                    
+                    data[coord_mean] = delta_mean
+                    data[coord_std] = delta_std
+
+                    all_data.append(data)          
+                
+            # for data without std values
+            else:
+                data_LabCh = data[['L*','a*','b*','C*','h']]
+                data_dLabCh = data_LabCh - data_LabCh.iloc[0,:]
+                data_dLabCh = data_dLabCh.rename(columns={'L*': 'dL*', 'a*': 'da*' ,'b*': 'db*','C*': 'dC*','h': 'dh'}, level=0)
+                all_data.append(pd.concat([data,data_dLabCh], axis=1))
+
+        # Select the wanted dose_unit and coordinate        
+        wanted_data = [x[[dose_units[dose_unit]] + coordinates] for x in all_data]        
+        wanted_data = [x.set_index(x.columns[0]) for x in wanted_data]  
+
+        return wanted_data
+
+
+        '''
+
+        if wanted_data == 'a': 
             
             doses = self.get_data(data=doses_labels) 
             data = self.get_data(data=coordinates)        
@@ -677,7 +762,7 @@ class MFT(object):
                         values_delta = values - values[0]   
 
                         el_data[col] = values_delta
-                        el_data.rename(columns={col:f'd{col}'}, inplace=True)
+                        el_data.rename(columns={col:f'd{col}'}, inplace=True, level=0)
                 
                 if rate:   
                     
@@ -706,6 +791,7 @@ class MFT(object):
         
         
         return wanted_data
+        '''
 
 
     def compute_fitting(self, plot:Optional[bool] = False, return_data:Optional[bool] = False, dose_unit:Optional[str] = 'Hv', coordinate:Optional[str] = 'dE00', equation:Optional[str] = 'c0*(x**c1)', initial_params:Optional[List[float]] = [0.1, 0.0], x_range:Optional[Tuple[int]] = (0, 5.1, 0.1), save: Optional[bool] = False, path_fig: Optional[str] = 'cwd') -> Union[None, Tuple[np.ndarray, np.ndarray]]:
@@ -1853,7 +1939,7 @@ class MFT(object):
         return plotting.swatches_circle(data=data_srgb, data_type='srgb', light_doses=light_doses, fontsize=fontsize, save=save, path_fig=path_fig)
 
 
-    def plot_delta(self, coordinates:Optional[list] = ['dE00'], dose_unit:Optional[str] = ['He'], labels = 'default', initial_values:Optional[bool] = False, colors:Union[str,list] = None, lw:Union[int,list] = 'default', title:Optional[str] = None, fontsize:Optional[int] = 24, legend_fontsize:Optional[int] = 24, legend_title:Optional[str] = None, save:Optional[bool] = False, path_fig:Optional[str] = 'cwd'):
+    def plot_delta(self, coordinates:Optional[list] = ['dE00'], dose_unit:Optional[str] = 'He', legend_labels = 'default', initial_values:Optional[bool] = False, colors:Union[str,list] = None, lw:Union[int,list] = 'default', title:Optional[str] = None, fontsize:Optional[int] = 24, legend_fontsize:Optional[int] = 24, legend_title:Optional[str] = None, save:Optional[bool] = False, path_fig:Optional[str] = 'cwd'):
         """Plot the delta values of choosen colorimetric coordinates related to the microfading analyses.
 
         Parameters
@@ -1902,7 +1988,7 @@ class MFT(object):
 
 
         # Retrieve the data
-        list_data = [x.T.values for x in self.compute_delta(coordinates=coordinates, dose_unit=dose_unit)] 
+        list_data = [x.reset_index().T.values for x in self.compute_delta(coordinates=coordinates, dose_unit=dose_unit)] 
         
         # Retrieve the metadata
         info = self.get_metadata()
@@ -1916,14 +2002,14 @@ class MFT(object):
         meas_nbs = [x.split('.')[-1] for x in ids]
 
         # Set the labels values
-        if labels == 'default':                       
-            labels = [f'{x}-{y}' for x,y in zip(meas_nbs, group_descriptions)] 
+        if legend_labels == 'default':                       
+            legend_labels = [f'{x}-{y}' for x,y in zip(meas_nbs, group_descriptions)] 
 
-        elif labels == '':
-            labels = []
+        elif legend_labels == '':
+            legend_labels = []
         
-        elif isinstance(labels, list):
-            labels = labels
+        elif isinstance(legend_labels, list):
+            legend_labels = legend_labels
             '''
             labels_list = []
             for i,Id in enumerate(self.get_meas_ids):
@@ -1937,7 +2023,12 @@ class MFT(object):
 
         # Add the initial values of the colorimetric coordinates
         if initial_values:
-            initial_values = [x for x in list_data]
+            initial_values = {}
+            for coord in coordinates:
+                if coord in ['dL*', 'da*', 'db*', 'dC*', 'dh']:
+                    initial_value = self.get_cielab(coordinates=[coord[1:]])[0][coord[1:]].iloc[0,:].values[0]
+                    initial_values[coord[1:]] = initial_value
+
 
         # Set the color of the lines according to the sample
         if colors == 'sample':
@@ -1967,17 +2058,17 @@ class MFT(object):
 
             if path_fig == 'cwd':
                 path_fig = f'{os.getcwd()}/{filename}' 
-       
         
-        plotting.delta(data=list_data, x_unit=dose_unit, y_unit=coordinates, labels=labels, initial_values=initial_values, colors=colors, lw=lw, title=title, fontsize=fontsize, legend_fontsize=legend_fontsize, legend_title=legend_title, save=save, path_fig=path_fig)
+        #return list_data
+        plotting.delta(data=list_data, dose_unit=[dose_unit], coordinates=coordinates, initial_values=initial_values, colors=colors, lw=lw, title=title, fontsize=fontsize, legend_labels=legend_labels, legend_fontsize=legend_fontsize, legend_title=legend_title, save=save, path_fig=path_fig)
 
 
-    def plot_sp(self, stds:Optional[bool] = False, spectra:Optional[str] = 'i', dose_unit:Optional[str] = 'He', dose_values:Union[int, float, list, tuple] = 'all', spectral_mode:Optional[str] = 'rfl', labels:Union[str,list] = 'default', title:Optional[str] = None, fontsize:Optional[int] = 24, fontsize_legend:Optional[int] = 24, legend_title='', wl_range:Optional[tuple] = None, colors:Union[str,list] = None, lw:Union[int, list] = 2, ls:Union[str, list] = '-', save=False, path_fig='cwd', derivation=False, smooth=False, smooth_params=[10,1], report:Optional[bool] = False):
+    def plot_sp(self, stdev:Optional[bool] = False, spectra:Optional[str] = 'i', dose_unit:Optional[str] = 'He', dose_values:Union[int, float, list, tuple] = 'all', spectral_mode:Optional[str] = 'rfl', legend_labels:Union[str,list] = 'default', title:Optional[str] = None, fontsize:Optional[int] = 24, fontsize_legend:Optional[int] = 24, legend_title='', wl_range:Optional[tuple] = None, colors:Union[str,list] = None, lw:Union[int, list] = 2, ls:Union[str, list] = '-', save=False, path_fig='cwd', derivation=False, smoothing=(1,0), report:Optional[bool] = False):
         """Plot the reflectance spectra corresponding to the associated microfading analyses.
 
         Parameters
         ----------
-        stds : list, bool
+        stdev : bool, optional
             Whether to show the standard deviation values, by default False
 
         spectra : Optional[str], optional
@@ -1997,7 +2088,7 @@ class MFT(object):
             When 'rfl', it returns the reflectance spectra
             When 'abs', it returns the absorption spectra using the following equation: A = -log(R)
 
-        labels : Union[str, list], optional
+        legend_labels : Union[str, list], optional
             A list of labels respective to each element given in the data parameter that will be shown in the legend. When the list is empty there is no legend displayed, by default 'default'
             When 'default', each label will composed of the Id number of the number followed by a short description
 
@@ -2065,64 +2156,66 @@ class MFT(object):
         ids = [x for x in self.get_meas_ids if 'BW' not in x]
         meas_nbs = [x.split('.')[-1] for x in ids]
 
+        # Define the colour of the curves
+        if colors == 'sample':
+            colors = self.get_sRGB().iloc[0,:].values.clip(0,1).reshape(len(self.files),-1)
+
         # Define the labels
-        if labels == 'default':
-            labels = [f'{x}-{y}' for x,y in zip(self.get_meas_ids,group_descriptions)]
+        if legend_labels == 'default':
+            legend_labels = [f'{x}-{y}' for x,y in zip(self.get_meas_ids,group_descriptions)]
             legend_title = 'Measurement $n^o$'
 
         # Select the spectral data
-        if spectra == 'i':
-            data_sp_all = self.get_spectra(wl_range=wl_range)
-            data_sp = [pd.DataFrame(x.iloc[:,0]) for x in data_sp_all]
+        if spectra == 'i':            
+            data_sp_all = self.get_spectra(wl_range=wl_range, smoothing=smoothing)
+            data_sp = [x[x.columns.get_level_values(0)[0]] for x in data_sp_all]            
 
             text = 'Initial spectra'
 
         elif spectra == 'f':
-            data_sp_all = self.get_spectra(wl_range=wl_range)
-            data_sp = [pd.DataFrame(x.iloc[:,-1]) for x in data_sp_all]
+            data_sp_all = self.get_spectra(wl_range=wl_range, smoothing=smoothing)
+            data_sp =[x[x.columns.get_level_values(0)[-1]] for x in data_sp_all] 
 
             text = 'Final spectra'
 
         elif spectra == 'i+f':
-            data_sp_all = self.get_spectra(wl_range=wl_range)
-            data_sp = [x.iloc[:,[0] + [-1]] for x in data_sp_all]
+            data_sp_all = self.get_spectra(wl_range=wl_range, smoothing=smoothing)
+            data_sp = [x[x.columns.get_level_values(0)[[0]+[-1]]] for x in data_sp_all]            
 
             ls = ['-', '--'] * len(data_sp)
             lw = [3,2] * len(data_sp)
             colors = [colors, 'k'] * len(data_sp)
 
-            meas_labels = [f'{x}-{y}' for x,y in zip(self.get_meas_ids,group_descriptions)]
+            if legend_labels == 'default':
+                meas_labels = [f'{x}-{y}' for x,y in zip(self.get_meas_ids,group_descriptions)]
+            else:
+                meas_labels = legend_labels
             none_labels = [None] * len(meas_labels)
-            labels = [item for pair in zip(meas_labels, none_labels) for item in pair]
+            legend_labels = [item for pair in zip(meas_labels, none_labels) for item in pair]
 
             text = 'Initial and final spectra (black dashed lines)'
 
         elif spectra == 'doses':
-            data_sp = self.get_spectra(wl_range=wl_range, dose_unit=dose_unit,dose_values=dose_values)
+            data_sp = self.get_spectra(wl_range=wl_range, dose_unit=dose_unit,dose_values=dose_values, smoothing=smoothing)
 
             
             dose_units = {'He': 'MJ/m2', 'Hv': 'Mlxh', 't': 'sec'}
             legend_title = f'Light dose values'
-            labels = [f'{str(x)} {dose_units[dose_unit]}' for x in dose_values] * len(data_sp)
+            legend_labels = [f'{str(x)} {dose_units[dose_unit]}' for x in dose_values] * len(data_sp)
 
             text = ''
             
             ls_list = ['-','--','-.',':','-','--','-.',':','-','--','-.',':',]
             ls = ls_list[:len(dose_values)] * len(data_sp)        
             srgb_i = self.get_sRGB().iloc[0,:].values.reshape(-1, 3) 
-            colors = np.repeat(srgb_i, 3, axis=0)          
+            colors = np.repeat(srgb_i, 3, axis=0).clip(0,1)          
 
         else:
             print(f'"{spectra}" is not an adequate value. Enter a value for the parameter "spectra" among the following list: "i", "f", "i+f", "doses".')
             return
             
         indices = [x.index for x in data_sp]        
-        columns = [x.columns for x in data_sp] 
-
-
-        # Whether to smooth the data
-        if smooth:
-                data_sp = [pd.DataFrame(savgol_filter(x.T, window_length=smooth_params[0], polyorder=smooth_params[1]).T, index=idx, columns=cols) for x,idx,cols in zip(data_sp,indices,columns)]       
+        columns = [x.columns for x in data_sp]   
                         
         # whether to compute the absorption spectra
         if spectral_mode == 'abs':
@@ -2130,24 +2223,35 @@ class MFT(object):
         
         # Reset the index
         data = [x.reset_index() for x in data_sp]
-               
+        
         # Whether to compute the first derivative
         if derivation:
             data = [pd.concat([x.iloc[:,0], pd.DataFrame(np.gradient(x.iloc[:,1:], axis=0))], axis=1) for x in data]
 
-        
+        # Compile the spectra to plot inside a list
         wanted_data = []
-
+        
         for el in data:
             data_indexed = el.set_index(el.columns[0])
             data_values = [ (data_indexed.index,x) for x in data_indexed.T.values]
             wanted_data = wanted_data + data_values
-
         
-        return plotting.spectra(data=wanted_data, stds=[], spectral_mode=spectral_mode, labels=labels, title=title, fontsize=fontsize, fontsize_legend=fontsize_legend, legend_title=legend_title, x_range=wl_range, colors=colors, lw=lw, ls=ls, text=text, save=save, path_fig=path_fig, derivation=derivation)
+        wanted_data = [x.iloc[:,0:2].T.values for x in data]
+
+        # Add the std values
+        if stdev:            
+            try:
+                wanted_std = [x.iloc[:,2].T.values for x in data]
+            except IndexError:
+                wanted_std = []
+            
+        else:
+            wanted_std = []
+
+        return plotting.spectra(data=wanted_data, stds=wanted_std, spectral_mode=spectral_mode, legend_labels=legend_labels, title=title, fontsize=fontsize, fontsize_legend=fontsize_legend, legend_title=legend_title, x_range=wl_range, colors=colors, lw=lw, ls=ls, text=text, save=save, path_fig=path_fig, derivation=derivation)
        
 
-    def plot_sp_delta(self,spectra:Optional[tuple] = ('i','f'), dose_unit:Optional[str] = 'Hv', wl_range:Union[int,float,list,tuple] = 'all', spectral_mode:Optional[str] = 'rfl'):
+    def plot_sp_delta(self,spectra:Optional[tuple] = ('i','f'), dose_unit:Optional[str] = 'Hv', wl_range:Union[int,float,list,tuple] = 'all', spectral_mode:Optional[str] = 'rfl', derivation=False, smooth=False):
 
         if spectra == ('i','f'):
 
@@ -2178,7 +2282,7 @@ class MFT(object):
             wanted_data = [(w,np.array(y)-np.array(x)) for w,x,y in zip(wavelengths,sp1,sp2)]   
                  
     
-        plotting.spectra(data=wanted_data, spectral_mode=spectral_mode)
+        plotting.spectra(data=wanted_data, spectral_mode=spectral_mode, x_range=wl_range, derivation=derivation)
 
 
     def set_illuminant(self, illuminant:Optional[str] = 'D65', observer:Optional[str] = '10'):
