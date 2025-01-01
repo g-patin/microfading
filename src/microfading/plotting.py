@@ -43,11 +43,11 @@ ls_dic = {
         'dE00': '-',
         'dE94': ':',
         'dR_vis': '-.',  
-        'L*' : '-',
-        'a*' : '--',
+        'L*' : '--',
+        'a*' : ':',
         'b*' : '-.', 
-        'C*' : ':', 
-        'h' : '--', 
+        'C*' : '-.', 
+        'h' : ':', 
         'dL*' : '-.',
         'da*' : '--',
         'db*' : '-.',
@@ -163,8 +163,12 @@ def CIELAB(data, stds=None, colors=None, fontsize=24, legend_labels=[], title=No
     fig, ax = plt.subplots(2,2, figsize=figure_sizes[legend_position], gridspec_kw=dict(width_ratios=[1, 2], height_ratios=[2, 1]))
     Lb, ab, AB, aL = ax[0, 0], ax[0, 1], ax[1, 0], ax[1, 1]
     
-    # define labels
-    if len(legend_labels) == 0:
+    # define labels 
+    if legend_labels == None:
+        legend_labels = ['none'] * len(data)        
+    elif legend_labels == 'none':        
+        legend_labels = ['none'] * len(data)    
+    elif len(legend_labels) == 0:
         legend_labels = ['none'] * len(data)
         
     # define std values
@@ -273,7 +277,7 @@ def CIELAB(data, stds=None, colors=None, fontsize=24, legend_labels=[], title=No
     if title != None:
         plt.suptitle(title, fontsize=title_fontsize)
 
-        
+    
 
     if legend_labels[0] != 'none' and len(legend_labels) < 19:
         if legend_position == 'in':
@@ -361,6 +365,7 @@ def delta(data: list, yerr=None, dose_unit:Optional[list] = ['He'], coordinates:
         for ele in data:
             yerr.append([np.zeros(len(x)) for x in ele])
 
+    
     # define the color of the lines
     if colors is None:
         colors = [[colors] * len(coordinates)] * len(data)
@@ -415,11 +420,15 @@ def delta(data: list, yerr=None, dose_unit:Optional[list] = ['He'], coordinates:
     else:
         list_ls = [[ls_dic[x] for x in coordinates]] * len(data)
 
-        if isinstance(initial_values, list):
+        if len(initial_values) > 0:            
+            print(initial_values)
             dy_unit = [f'd{x}' if x in ['L*','a*','b*','C*','h'] else x for x in coordinates]
             dy_unit = [labels_eq[x] for x in dy_unit]
             #y_unit = [f'{x} ({x[1:]} init$ = {i})' for x,i in zip(y_unit, initial_values)]
             dy_unit = [f'{x} (${c[0]}^*_i$ = {i})' for x,c,i in zip(dy_unit,coordinates, initial_values)]
+
+            #dy_unit = [f'{x} (${c[0]}^*_i$ = {i})' if x in ['L*','a*','b*','C*','h'] else x for x in zip(initial_values.keys(), initial_values.values())]
+            dy_unit = [f'{labels_eq[x]} (${x[1]}^*_i$ = {np.round(initial_values[x[1:]],1)})' if x in ['dL*','da*','db*','dC*','dh'] else labels_eq[x] for x in coordinates]
 
         else:
             dy_unit = [f'd{x}' if x in ['L*','a*','b*','C*','h'] else x for x in coordinates]        
@@ -443,13 +452,13 @@ def delta(data: list, yerr=None, dose_unit:Optional[list] = ['He'], coordinates:
             plt.rcParams['axes.prop_cycle'] = ("cycler('ls', ['-', '--', ':', '-.'])")
             ax1.set_prop_cycle(ls = ["-","--","-.",":"])
 
-        # 
+        
         for d,s,label,ls,lw,color in zip(data,yerr,legend_labels,list_ls,list_lw,colors):
 
             x = d[0]            
 
             for y,s_val,l,ls_val,lw_val,c in zip(d[1:],s,label,ls,lw,color):
-
+               
                 if ls == 'random':
                     ax1.plot(x, y, lw=lw_val, color=c, label=l)
                 else:
@@ -690,7 +699,7 @@ def spectra(data, stds=[], spectral_mode:Optional[str] = 'rfl', legend_labels=[]
     plt.show()
 
 
-def swatches_circle(data, data_type:Optional[str] = 'Lab', light_doses: Optional[list] = [0.5,1,2,5,15], JND:Optional[list] = [], fontsize: Optional[int] = 24, save:Optional[bool] = False, path_fig:Optional[str] = 'cwd', title:Optional[bool] = True, background_grey: Optional [float] = 0.85):
+def swatches_circle(data, data_type:Optional[str] = 'Lab', light_doses: Optional[list] = [0.5,1,2,5,15], JND:Optional[list] = [], dE:Optional[bool] = True, fontsize: Optional[int] = 24, save:Optional[bool] = False, path_fig:Optional[str] = 'cwd', title:Optional[str] = None, background_grey: Optional [float] = 0.85):
 
     if list(set([len(x) for x in data]))[0] == len(JND):
         xlabel = 'Just noticeable difference (JND)'
@@ -702,53 +711,94 @@ def swatches_circle(data, data_type:Optional[str] = 'Lab', light_doses: Optional
         print('Plotting aborted ! The length of data values is not equal to the length of light_doses or JND values.')
         return
     
-    if data_type.lower() == 'lab':
-        data_srgb = data
-
+    if data_type.lower() == 'lab':          
+        data_srgb = [colour.XYZ_to_sRGB(colour.Lab_to_XYZ(x), D65).clip(0, 1) for x in data]
     else:
         data_srgb = data
+    
+    if dE:
+        if data_type.lower() == 'lab':
+            dE_values = [np.round(colour.delta_E(x[0],x[1:]),1) for x in data]                      
 
+        else:
+            print('Plot aborted. Please provide the Lab values instead.')
+            return None
+    else:
+        dE_values = [[''] * (len(light_doses)-1)] * len(data_srgb)
 
-    for data in data_srgb:
+    if isinstance(title, list):
+        title = title
+    
+    elif title == None:
+        title = [''] * len(data_srgb)
+    
+    elif isinstance(title, str):
+        title = [title] * len(data_srgb)   
+    
+    nb = 1
 
-        N = len(data)
+    for d_srgb,dE_val, title_value in zip(data_srgb, dE_values, title):
+
+        N = len(d_srgb)
         fig, ax = plt.subplots(1,1, figsize=((N-1)*5,6))        
 
         ax.set_facecolor((background_grey,background_grey,background_grey))
         fig.patch.set_facecolor((background_grey, background_grey, background_grey))
 
-        cp_init = matplotlib.patches.Rectangle((0.05, 0.01), 0.9, 0.9, edgecolor='None', fc=data[0], lw=2)
+        if isinstance(title, str):
+            title_space = 0.05
+        else:
+            title_space = 0
+
+        if dE:
+            y = 1
+            h = 0.7 + title_space
+        else:
+            y =0.9
+            h = 0.6 + title_space
+
+        cp_init = matplotlib.patches.Rectangle((0.05, 0.0), 0.9, y, edgecolor='None', fc=d_srgb[0], lw=2)
         ax.add_patch(cp_init)
 
         i = 0
-        for d in data[1:]:
-            cp = matplotlib.patches.Ellipse(xy=(1/N + i, 0.5), width=0.6/(N-1), height=0.6, edgecolor='None', fc=d, lw=2)
+        for d in d_srgb[1:]:
+            cp = matplotlib.patches.Ellipse(xy=(1/N + i, 0.5), width=0.6/(N-1), height=h, edgecolor='None', fc=d, lw=2)
             ax.add_patch(cp)
             i = i + (1/N)
 
-        ax.xaxis.set_ticks_position(position='both')
+        ax.xaxis.set_ticks_position(position='bottom')
         ax.set_xticks(np.linspace(0,1,N+1)[1:-1])        
         ax.set_xticklabels(light_doses[1:])
         ax.set_yticks([])
 
         ax.xaxis.set_tick_params(labelsize=fontsize)    
         ax.set_xlabel('Exposure dose $H_v$ (Mlxh)', fontsize=fontsize)
+
+        ax.set_title(title_value, fontsize=fontsize+2)
+
+        if dE:
+            ax_top = ax.secondary_xaxis('top')
+            ax_top.set_xlabel('$\Delta E^*_{00}$ values', fontsize=fontsize)
+            ax_top.set_xticks(np.linspace(0,1,N+1)[1:-1]) 
+            ax_top.set_xticklabels(dE_val)
+            ax_top.xaxis.set_tick_params(labelsize=fontsize) 
+            ax_top.spines['top'].set_visible(False) 
         
         ax.spines['top'].set_visible(False)
         ax.spines['right'].set_visible(False)
         ax.spines['bottom'].set_visible(False)
         ax.spines['left'].set_visible(False)
         
-        ax.grid(False)
+        ax.grid(False)       
 
         plt.tight_layout()
-
+            
         if save == True:
             if path_fig == 'cwd':
-                path_fig = f'{os.getcwd()}/MFT_SW.png'                    
+                path_fig = f'{os.getcwd()}/MFT_{str(nb).zfill(2)}_SW.png'  
+                nb = nb + 1  
+                             
                 
             fig.savefig(path_fig,dpi=300, facecolor=(background_grey, background_grey, background_grey)) 
-
         
-
         plt.show()
