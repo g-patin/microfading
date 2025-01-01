@@ -15,6 +15,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 from uncertainties import ufloat, ufloat_fromstr, unumpy
 from pathlib import Path
+import itertools
 import importlib.resources as pkg_resources
 import xarray as xr
 from scipy.interpolate import RegularGridInterpolator
@@ -400,7 +401,7 @@ def process_rawdata(files: list, device: str, filenaming:Optional[str] = 'none',
 
 class MFT(object):
 
-    def __init__(self, files:list, BWS:Optional[bool] = True, stdev:Optional[bool] = False) -> None:
+    def __init__(self, files:list, BWS:Optional[bool] = True) -> None:
         """Instantiate a Microfading (MFT) class object in order to manipulate and visualize microfading analysis data.
 
         Parameters
@@ -410,13 +411,10 @@ class MFT(object):
 
         BWS : bool, optional
             When False, it ignores the measurements performed on BWS samples if included. 
-
-        stdev: bool, optional
-            Indicate whether the input files contains standard deviation values, by default False
+        
         """
         self.files = files
-        self.BWS = BWS
-        self.stdev = stdev
+        self.BWS = BWS        
 
         if self.BWS == False:
             self.files = [x for x in self.files if 'BW' not in x.name]
@@ -453,7 +451,11 @@ class MFT(object):
             When 'rfl', it returns the reflectance spectra
             When 'abs', it returns the absorption spectra using the following equation: A = -log(R)
 
-            
+        smoothing : list of two integers, optional
+            Whether to smooth the reflectance data using the Savitzky-Golay filter from the Scipy package, by default [1,0]
+            The first integer corresponds to the window length and should be less than or equal to the size of a reflectance spectrum. The second integer corresponds to the polyorder parameter which is used to fit the samples. The polyorder value must be less than the value of the window length.
+
+
         Returns
         -------
         A list of pandas dataframes
@@ -677,7 +679,7 @@ class MFT(object):
         return interpolated_data       
     
 
-    def compute_delta(self, coordinates:Optional[list] = ['dE00'], dose_unit:Optional[list] = 'He', rate:Optional[bool] = False):
+    def compute_delta(self, coordinates:Optional[list] = ['dE00'], dose_unit:Optional[list] = 'He', dose_values:Union[int, float, list, tuple] = 'all', derivation:Optional[bool] = False):
         """Retrieve the CIE delta values for a given set of colorimetric coordinates corresponding to the given microfading analyses.
 
         Parameters
@@ -686,121 +688,50 @@ class MFT(object):
             List of colorimetric coordinates, by default ['dE00']
             Any of the following coordinates can be added to the list: 'dE76', 'dE00', 'dR_vis' , 'L*', 'a*', 'b*', 'C*', 'h'.
 
-        dose_unit : list, optional
-            List of light energy doses, by default ['He']
-            Any of the following units can be added to the list: 'He', 'Hv', 't'. Where 'He' corresponds to radiant energy (MJ/m2), 'Hv' to exposure dose (Mlxh), and 't' to times (sec)
+        dose_unit : str, optional
+            Define the light energy dose, by default 'He'
+            Any of the following units can be entered: 'He', 'Hv', 't'. Where 'He' corresponds to radiant energy (MJ/m2), 'Hv' to exposure dose (Mlxh), and 't' to times (sec)
 
-        rate : bool, optional
+        dose_values : Union[int, float, list, tuple], optional
+            Dose values for which the colourimetric values will be returned, by default 'all'
+            When 'all', it returns the colourimetric values for all the dose values available in the given input data files.
+            A single dose value (an integer or a float number) can be entered.
+            A list of dose values, as integer or float, can also be entered.
+            A tuple of three values (min, max, step) will be used in a numpy.arange() function to return an array of dose values. 
+
+        derivation : bool, optional
             Whether to return the first derivative values of the desired coordinates, by default False
 
         Returns
         -------
         A list of pandas dataframes
             It returns a a list of pandas dataframes where each column corresponds to a light energy dose or a desired coordinate.
-        """
-
-        # create a dictionary to store the light dose units
-        dose_units = {'He':'He_MJ/m2', 'Hv':'Hv_Mlxh', 't': 't_sec'}
-
-        #doses_dic = {'He': 'He_MJ/m2', 'Hv': 'Hv_Mlxh', 't': 't_sec'} 
-        #doses_labels = [doses_dic[x] for x in dose_unit]
-
-        #wanted_data = []
+        """          
 
         # Retrieve the data        
         cielab_data = self.read_files(sheets=['CIELAB'])
-        cielab_data = [x[0] for x in cielab_data]
+        cielab_data = [x[0] for x in cielab_data]       
 
-        # Create an empty list with all the colorimetric data
-        all_data = []
-              
-        # Compute the delta LabCh values and add the data into the list all_data  
-        for data in cielab_data:
+        # Rename the LabCh coordinates to dL*, da*, db*, dC*, dh
+        coordinates = [f'd{x}' if x in ['L*','a*','b*','C*','h'] else x for x in coordinates]
 
-            # for data with std values
-            if sorted(set(data.columns.get_level_values(1))) == ['mean', 'std']:
-                data_dLabCh = delta_coord = [unumpy.uarray(d[coord, 'mean'], d[coord, 'std']) - unumpy.uarray(d[coord, 'mean'], d[coord, 'std'])[0] for coord in ['L*', 'a*', 'b*', 'C*', 'h'] for d in [data]]
+        # Compute the delta values
+        deltas = self.get_cielab(coordinates=coordinates, dose_unit=dose_unit, dose_values=dose_values)
 
-                delta_means = [unumpy.nominal_values(x) for x in delta_coord]
-                delta_stds = [unumpy.std_devs(x) for x in delta_coord]
+        # Whether to compute the first derivation 
+        if derivation:
+            deltas = [pd.DataFrame(np.gradient(x.T.values, x.index, axis=1).T, columns=x.columns, index=x.index) for x in deltas]
 
-                delta_coord_mean = [(f'd{coord}', 'mean') for coord in ['L*', 'a*', 'b*', 'C*', 'h']]
-                delta_coord_std = [(f'd{coord}', 'std') for coord in ['L*', 'a*', 'b*', 'C*', 'h']]
-
-                for coord_mean,delta_mean,coord_std,delta_std in zip(delta_coord_mean,delta_means, delta_coord_std,delta_stds):                    
-                    data[coord_mean] = delta_mean
-                    data[coord_std] = delta_std
-
-                    all_data.append(data)          
-                
-            # for data without std values
-            else:
-                data_LabCh = data[['L*','a*','b*','C*','h']]
-                data_dLabCh = data_LabCh - data_LabCh.iloc[0,:]
-                data_dLabCh = data_dLabCh.rename(columns={'L*': 'dL*', 'a*': 'da*' ,'b*': 'db*','C*': 'dC*','h': 'dh'}, level=0)
-                all_data.append(pd.concat([data,data_dLabCh], axis=1))
-
-        # Select the wanted dose_unit and coordinate        
-        wanted_data = [x[[dose_units[dose_unit]] + coordinates] for x in all_data]        
-        wanted_data = [x.set_index(x.columns[0]) for x in wanted_data]  
-
-        return wanted_data
+        return deltas       
 
 
-        '''
-
-        if wanted_data == 'a': 
-            
-            doses = self.get_data(data=doses_labels) 
-            data = self.get_data(data=coordinates)        
-                        
-            
-            for el_data,el_dose in zip(data,doses):
-                for col in el_data.columns:
-                    if col in ['L*','a*','b*','C*','h']:
-                        values = el_data[col]
-                        values_delta = values - values[0]   
-
-                        el_data[col] = values_delta
-                        el_data.rename(columns={col:f'd{col}'}, inplace=True, level=0)
-                
-                if rate:   
-                    
-                    step_dose = el_dose.iloc[:,0].values[2]-el_dose.iloc[:,0].values[1]
-
-                    el_data = pd.DataFrame(np.gradient(el_data.T.values, step_dose, axis=1).T, columns=el_data.columns)
-
-                wanted_data.append(pd.concat([el_dose, el_data], axis=1))
-
-
-        else:
-
-            data = self.get_data(data=coordinates)[0] - self.get_data(data=coordinates)[0].iloc[0,:]
-            doses = self.get_data(data=doses_labels)
-            wanted_data = [pd.concat([doses[0],data], axis=1)]
-            
-            new_columns = []
-            for i in wanted_data:
-                for col in i.columns:
-                    if col[1] in ['L*','a*','b*','C*','h']:
-                        new_columns.append((col[0], f'd{col[1]}'))
-                    else:
-                        new_columns.append(col)
-
-                i.columns = pd.MultiIndex.from_tuples(new_columns, names=i.columns.names)          
-        
-        
-        return wanted_data
-        '''
-
-
-    def compute_fitting(self, plot:Optional[bool] = False, return_data:Optional[bool] = False, dose_unit:Optional[str] = 'Hv', coordinate:Optional[str] = 'dE00', equation:Optional[str] = 'c0*(x**c1)', initial_params:Optional[List[float]] = [0.1, 0.0], x_range:Optional[Tuple[int]] = (0, 5.1, 0.1), save: Optional[bool] = False, path_fig: Optional[str] = 'cwd') -> Union[None, Tuple[np.ndarray, np.ndarray]]:
+    def compute_fitting(self, plot:Optional[bool] = True, return_data:Optional[bool] = False, dose_unit:Optional[str] = 'Hv', coordinate:Optional[str] = 'dE00', equation:Optional[str] = 'c0*(x**c1)', initial_params:Optional[List[float]] = [0.1, 0.0], x_range:Optional[Tuple[int]] = (0, 5.1, 0.1), save: Optional[bool] = False, path_fig: Optional[str] = 'cwd') -> Union[None, Tuple[np.ndarray, np.ndarray]]:
         """Fit the values of a given colourimetric coordinates. 
 
         Parameters
         ----------
         plot : bool, optional
-            Whether to show the fitted data, by default False
+            Whether to show the fitted data, by default True
 
         return_data : bool, optional
             Whether to return the fitted data, by default False
@@ -809,8 +740,8 @@ class MFT(object):
             Unit of the light energy dose, by default 'He'
             Any of the following units can be used: 'He', 'Hv', 't'. Where 'He' corresponds to radiant energy (MJ/m2), 'Hv' to exposure dose (Mlxh), and 't' to times (sec)
 
-        coordinates : string, optional
-            Select the desired colourimetric coordinates from the following list: ['L*', 'a*','b*', 'C*', 'h', 'dL*', 'da*','db*', 'dC*', 'dh', 'dE76', 'dE00', 'dR_vis'], by default 'dE00'
+        coordinate : string, optional
+            Select the desired colourimetric coordinate from the following list: ['L*', 'a*','b*', 'C*', 'h', 'dL*', 'da*','db*', 'dC*', 'dh', 'dE76', 'dE00', 'dR_vis'], by default 'dE00'
 
         equation : str, optional
             Mathematical equation used to fit the coordinate values, by default 'c0*(x**c1)'.
@@ -1160,8 +1091,7 @@ class MFT(object):
 
         elif data == 'sp':
             if xarray == False:                
-                [data_sp.append(x[0]) for x in all_files]   
-                #data_sp = [x.set_index(x.columns[0]) for x in data_sp]                         
+                [data_sp.append(x[0]) for x in all_files]                                           
             else:                
                 data_sp = [x.sp for x in all_data]
                 
@@ -1241,8 +1171,8 @@ class MFT(object):
         Parameters
         ----------
         dose_unit : Optional[str], optional
-            Unit of the light dose energy, by default ['He']
-            Any of the following units can be added to the list: 'He', 'Hv', 't'. Where 'He' corresponds to radiant energy (MJ/m2), 'Hv' to exposure dose (Mlxh), and 't' to times (sec)
+            Unit of the light dose energy, by default 'Hv'
+            Any of the following units can be entered: 'He', 'Hv', 't'. Where 'He' corresponds to radiant energy (MJ/m2), 'Hv' to exposure dose (Mlxh), and 't' to times (sec)
 
         JND_dE : float, optional
             The dE00 value corresponding to one JND, by default 1.5
@@ -1294,7 +1224,7 @@ class MFT(object):
         return times_years
 
 
-    def get_Lab(self, illuminant:Optional[str] = 'D65', observer:Optional[str] = '10'):
+    def get_Lab(self, illuminant:Optional[str] = 'D65', observer:Optional[str] = '10', dose_unit: Optional[str] = 'He', dose_values:Union[int, float, list, tuple] = 'all'):
         """
         Retrieve the CIE L*a*b* values.
 
@@ -1305,6 +1235,17 @@ class MFT(object):
  
         observer : (str|int, optional)
             Reference *observer* in degree ('10' or '2'). by default '10'.
+
+        dose_unit : Optional[str], optional
+            Unit of the light dose energy, by default ['He']
+            Any of the following units can be entered: 'He', 'Hv', 't'. Where 'He' corresponds to radiant energy (MJ/m2), 'Hv' to exposure dose (Mlxh), and 't' to times (sec)
+
+        dose_values : Union[int, float, list, tuple], optional
+            Dose values for which the colourimetric values will be returned, by default 'all'
+            When 'all', it returns the colourimetric values for all the dose values available in the given input data files.
+            A single dose value (an integer or a float number) can be entered.
+            A list of dose values, as integer or float, can also be entered.
+            A tuple of three values (min, max, step) will be used in a numpy.arange() function to return an array of dose values. 
 
             
         Returns
@@ -1327,52 +1268,17 @@ class MFT(object):
         ccs_ill = colour.CCS_ILLUMINANTS[observers[observer]][illuminant]
 
         meas_ids = self.get_meas_ids               
-        df_sp = self.get_data(data='sp')
-        try:
-            df_Lab_std = [x.xs('std', level=1, axis=1) for x in self.get_data(data='Lab')]
-        except IndexError:
-            df_Lab_std = [x for x in self.get_data(data='Lab')]
+        df_sp = self.get_spectra(dose_unit=dose_unit, dose_values=dose_values)   
+        df_sp_nominal = [
+            df.loc[:, pd.IndexSlice[:, 'mean']] if 'mean' in df.columns.get_level_values(1)
+            else df.loc[:, pd.IndexSlice[:, 'value']]
+            for df in df_sp
+        ]
 
         df_Lab = []
 
-        print(df_sp.shape)
-        print(df_Lab_std.shape)
-
-        for df, meas_id, Lab_std in zip(df_sp, meas_ids, df_Lab_std):   
+        for df, meas_id in zip(df_sp_nominal, meas_ids):   
             
-            cols = [('L*','n'), ('L*', 's'), ('a*', 'n'), ('a*','s'), ('b*', 'n'), ('b*', 's')]
-            df_Lab = pd.DataFrame(columns=cols)
-            df_Lab.columns = pd.MultiIndex.from_tuples(df_Lab.columns, names=['coordinate','value'])
-
-            for i, col in enumerate(df.columns.get_level_values(0)):
-                sp_n = df[col].iloc[:,0]  
-                wl = df.index
-                sd = colour.SpectralDistribution(sp_n,wl)
-
-                XYZ = colour.sd_to_XYZ(sd,cmfs_observers[observer], illuminant=illuminants[illuminant])        
-                Lab_n = np.round(colour.XYZ_to_Lab(XYZ/100,ccs_ill),3)  
-                Lab_s = Lab_std.iloc[i,:].values
-
-                
-
-                Lab = [item for pair in zip(Lab_n, Lab_s) for item in pair]
-
-                             
-                #df_Lab = pd.concat([df_Lab, pd.DataFrame(Lab, index=['L*','a*','b*']).T], axis=0)
-                #df_Lab.index = np.arange(0,df_Lab.shape[0])
-                new_row = pd.DataFrame(
-                    Lab,
-                    index=pd.MultiIndex.from_tuples([('L*', 'n'),('L*', 's'), ('a*', 'n'),('a*', 's'), ('b*', 'n'),('b*', 's')], names=('coordinate', 'value')),
-                    columns=['Column1']
-                ).T
-
-                df_Lab = pd.concat([df_Lab, new_row])
-
-                
-
-        #print(Lab[0])
-        return df_Lab
-        for df, meas_id in zip(df_sp, meas_ids):            
             Lab_values = pd.DataFrame(index=['L*','a*','b*']).T           
             
             for col in df.columns:
@@ -1386,10 +1292,11 @@ class MFT(object):
                 Lab_values = pd.concat([Lab_values, pd.DataFrame(Lab, index=['L*','a*','b*']).T], axis=0)
                 Lab_values.index = np.arange(0,Lab_values.shape[0])
 
-            Lab_values.columns = pd.MultiIndex.from_product([[meas_id], Lab_values.columns])
+            Lab_values.columns = pd.MultiIndex.from_product([[meas_id], Lab_values.columns])  
             df_Lab.append(Lab_values)
 
-        return pd.concat(df_Lab, axis=1)
+        return pd.concat(df_Lab, axis=1)           
+    
     
 
     def get_doses(self, dose_unit:Union[str,list] = 'all', max_doses:Optional[bool] = False):
@@ -1773,7 +1680,14 @@ class MFT(object):
             return df_info, df_cl_final, df_sp_final
   
 
-    def make_plots(self, plots=['CIELAB', 'SP', 'SW', 'dE', 'dLab']):
+    def plots(self, plots=['CIELAB', 'SP', 'SW', 'dE', 'dLab']):
+        """Create plots
+
+        Parameters
+        ----------
+        plots : list, optional
+            _description_, by default ['CIELAB', 'SP', 'SW', 'dE', 'dLab']
+        """
 
         for plot in plots:
             if plot == 'CIELAB':
@@ -1789,8 +1703,6 @@ class MFT(object):
                 self.plot_delta()
 
   
-
-
     def plot_bars(self, BWS_lines:Optional[bool] = True, coordinate:Optional[str] = 'dE00', dose_unit:Optional[str] = 'Hv', dose_value:Union[int, float] = 0.5, fontsize:Optional[int] = 24, colors=None):
 
         # ['L*','a*','b*','C*','h','dL*','da*','db*','dC*','dh','dE76','dE00','dR_vis']
@@ -1839,7 +1751,7 @@ class MFT(object):
 
 
 
-    def plot_CIELAB(self, stds=[], dose_unit:Optional[str] = 'He', dose_values:Union[int, float, list, tuple] = 'all', title:Optional[str] = None, fontsize:Optional[int] = 24, legend_labels:Union[str,list] = 'default', legend_position:Optional[str] = 'in', legend_fontsize:Optional[int] = 24, legend_title:Optional[str] = None, save:Optional[bool] = False, path_fig:Optional[str] = 'cwd'):
+    def plot_CIELAB(self, stds=[], dose_unit:Optional[str] = 'He', dose_values:Union[int, float, list, tuple] = 'all', title:Optional[str] = None, fontsize:Optional[int] = 20, legend_labels:Union[str,list] = 'default', legend_position:Optional[str] = 'in', legend_fontsize:Optional[int] = 20, legend_title:Optional[str] = None, save:Optional[bool] = False, path_fig:Optional[str] = 'cwd'):
         """Plot the Lab values related to the microfading analyses.
 
         Parameters
@@ -1912,47 +1824,178 @@ class MFT(object):
         return plotting.CIELAB(data=data_Lab, legend_labels=legend_labels, title=title, fontsize=fontsize, legend_fontsize=legend_fontsize, legend_position=legend_position, legend_title=legend_title, save=save, path_fig=path_fig)
 
 
-    def plot_swatches_circle(self, light_doses: Optional[list] = [0.5,1,2,5,15], JND:Optional[list] = [1,2,3,5,10], fontsize: Optional[int] = 24, equation:Optional[str] = 'c0*(x**c1) + c2', initial_params:Optional[List[float]] = [0.1, 0.1], save:Optional[bool] = False, path_fig:Optional[str] = 'cwd', title:Optional[bool] = True, MFT_nb:Optional[bool] = True, report:Optional[bool] = False):  
+    def plot_swatches_circle(self, light_doses: Optional[list] = [0,0.5,1,2,5,15], JND:Optional[list] = [1,2,3,5,10], dE:Optional[bool] = True, fontsize: Optional[int] = 24, equation:Optional[str] = 'c0*(x**c1) + c2', initial_params:Optional[List[float]] = [0.1, 0.1], save:Optional[bool] = False, path_fig:Optional[str] = 'cwd', title:Optional[str] = None, report:Optional[bool] = False): 
+        """Plot the microfading data with circular colored patches. 
 
-        d65 = colour.CCS_ILLUMINANTS["cie_10_1964"]["D65"]
+        Parameters
+        ----------
+        light_doses : list, optional
+            Light doses in Mlxh for which a coloured patches will be created, by default [0,0.5,1,2,5,1]
+            There has been at least two numerical values in the list. The first value corresponds to the color background of the plot and is usually set to 0. The other values will be plotted as circular patches.
 
-        x_range=(0, light_doses[-1]+0.05, 0.05)        
-        Lab = self.get_cielab(coordinates=['L*','a*','b*'], dose_unit='Hv') 
-        data_srgb = []    
+        JND : list, optional
+            Whether to plot circular patches of just noticeable differences, by default [1,2,3,5,10]
+            NOT YET IMPLEMENTED
 
+        dE : bool, optional
+            Whether to include the dE00 value between the background and each circular patche, by default True
+
+        fontsize : int, optional
+            Fontsize of the plot (title, ticks, and labels), by default 24        
+
+        equation : str, optional
+            Mathematical equation used to fit the coordinate values, by default 'c0*(x**c1) + c2'.
+            Any others mathematical can be given. The following equation can also be used for fitting microfading data: '((x) / (c0 + (c1*x)))'.
+
+        initial_params : List[float], optional
+            Initial guesses of the 'c' parameters given in the equation (c0, c1, c2, etc.), by default [0.1, 0.0]
+            In the default values, only c0 and c1 are provided ; c2 is retrieved from the initial value of each colorimetric coordinate plot.
+
+        save : bool, optional
+            Whether to save the figure, by default False
+
+        path_fig : str, optional
+            Absolute path required to save the figure, by default 'cwd'
+            When 'cwd', it will save the figure in the current working directory.
+
+        title : str, optional
+            Whether to add a title to the plot, by default None, by default None        
+
+        report : bool, optional
+            _description_, by default False
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
+       
+
+        if title == 'default':
+            title = list(self.get_meas_ids)
+
+        x_range=(0, light_doses[-1]+0.05, 0.05)   
+        x_values = np.arange(*x_range)     
+        Lab = self.get_cielab(coordinates=['L*','a*','b*'], dose_unit='Hv')          
+        data_Lab = [] 
+
+        # Define the function to fit
+        def fit_function(x, *params):
+            param_dict = {f'c{i}': param for i, param in enumerate(params)}
+            param_dict['x'] = x
+            return eval(equation, globals(), param_dict) 
+
+        
+        
         for el in Lab:
 
-            df_Lab_extrapolated = pd.DataFrame(index=np.arange(x_range[0], x_range[1], x_range[2])) 
-            for c in ['L*','a*','b*']:
-                    
-                initial_value = el[c][0]
-                extrapolated_values = self.compute_fitting(return_data=True, x_range=x_range, dose_unit='Hv', coordinate=c, initial_params=[0.1,0.1,initial_value], equation=equation)
+            x = el.index.values
+            df_Lab_extrapolated = pd.DataFrame(index=x_values) 
 
-                df_Lab_extrapolated[c] = extrapolated_values[1]
-
+            for c in ['L*','a*','b*']:                    
                 
+                y = el[c].values.flatten()
+                initial_value = y[0]
+                initial_params=initial_params + [initial_value]
+
+                def fit_function(x, *params):
+                    param_dict = {f'c{i}': param for i, param in enumerate(params)}
+                    param_dict['x'] = x
+                    return eval(equation, globals(), param_dict) 
+
+                #bounds = ([-np.inf] * len(initial_params), [np.inf, 1]) if len(initial_params) == 2 else ([-np.inf] * len(initial_params), [np.inf, 1, np.inf])
+
+                # perform the curve fitting
+                optimized_params, _ = curve_fit(fit_function, x, y, p0=initial_params) # bounds=bounds)
+                
+                # generate fitted y data
+                fitted_y = fit_function(x_values, *optimized_params)
+                #return fitted_y
+
+                # Calculate R-squared value
+                residuals = y - fit_function(x, *optimized_params)
+                ss_res, ss_tot = np.sum(residuals**2), np.sum((y - np.mean(y))**2)        
+                r_squared = np.round(1 - (ss_res / ss_tot), 3)
+
+                #print(f'1st, {c}, R_sq = {r_squared}')
+
+                if r_squared < 0.1:
+
+                    initial_params=[0,0.1, initial_value]
+
+                    def fit_function(x, *params):
+                        param_dict = {f'c{i}': param for i, param in enumerate(params)}
+                        param_dict['x'] = x
+                        return eval(equation, globals(), param_dict) 
+                    
+                    # perform the curve fitting
+                    optimized_params, _ = curve_fit(fit_function, x, y, p0=initial_params) # bounds=bounds)
+                    
+                    # generate fitted y data
+                    fitted_y = fit_function(x_values, *optimized_params)
+
+                    # Calculate R-squared value
+                    residuals = y - fit_function(x, *optimized_params)
+                    ss_res, ss_tot = np.sum(residuals**2), np.sum((y - np.mean(y))**2)        
+                    r_squared = np.round(1 - (ss_res / ss_tot), 3)
+
+                    #print(f'2nd, {c}, R_sq = {r_squared}')
+
+                    if r_squared < 0.1:
+                        initial_params=[-0.1,0.1, initial_value]
+
+                        def fit_function(x, *params):
+                            param_dict = {f'c{i}': param for i, param in enumerate(params)}
+                            param_dict['x'] = x
+                            return eval(equation, globals(), param_dict) 
+                        
+                        # perform the curve fitting
+                        optimized_params, _ = curve_fit(fit_function, x, y, p0=initial_params) # bounds=bounds)
+                        
+                        # generate fitted y data
+                        fitted_y = fit_function(x_values, *optimized_params)
+
+                        # Calculate R-squared value
+                        residuals = y - fit_function(x, *optimized_params)
+                        ss_res, ss_tot = np.sum(residuals**2), np.sum((y - np.mean(y))**2)        
+                        r_squared = np.round(1 - (ss_res / ss_tot), 3)
+                    
+
+                #extrapolated_values = self.compute_fitting(return_data=True, x_range=x_range, dose_unit='Hv', coordinate=c, initial_params=[0.1,0.1,initial_value], equation=equation)
+
+                df_Lab_extrapolated[c] = fitted_y
+
+
+
+            #return df_Lab_extrapolated  
             df_Lab_extrapolated.index = np.round(df_Lab_extrapolated.index,2)
-            wanted_Lab = df_Lab_extrapolated.loc[light_doses]
-            wanted_srgb = colour.XYZ_to_sRGB(colour.Lab_to_XYZ(wanted_Lab), d65).clip(0, 1)
-            data_srgb.append(wanted_srgb)
+            wanted_Lab = df_Lab_extrapolated.loc[light_doses].values
+            #wanted_srgb = colour.XYZ_to_sRGB(colour.Lab_to_XYZ(wanted_Lab), d65).clip(0, 1)
+            #data_srgb.append(wanted_srgb)
+            data_Lab.append(wanted_Lab)
+            #print(wanted_Lab)
         
-        return plotting.swatches_circle(data=data_srgb, data_type='srgb', light_doses=light_doses, fontsize=fontsize, save=save, path_fig=path_fig)
+        
+            plotting.swatches_circle(data=[wanted_Lab], data_type='Lab', light_doses=light_doses, dE=dE, fontsize=fontsize, save=save, title=title, path_fig=path_fig)
 
 
-    def plot_delta(self, coordinates:Optional[list] = ['dE00'], dose_unit:Optional[str] = 'He', legend_labels = 'default', initial_values:Optional[bool] = False, colors:Union[str,list] = None, lw:Union[int,list] = 'default', title:Optional[str] = None, fontsize:Optional[int] = 24, legend_fontsize:Optional[int] = 24, legend_title:Optional[str] = None, save:Optional[bool] = False, path_fig:Optional[str] = 'cwd'):
+    def plot_delta(self, stds:Optional[bool] = True, coordinates:Optional[list] = ['dE00'], dose_unit:Optional[str] = 'He', legend_labels:Union[str, list] = 'default', initial_values:Optional[bool] = False, colors:Union[str,list] = None, lw:Union[int,list] = 'default', title:Optional[str] = None, fontsize:Optional[int] = 24, legend_fontsize:Optional[int] = 24, legend_title:Optional[str] = None, xlim:Optional[tuple] = None, save:Optional[bool] = False, path_fig:Optional[str] = 'cwd'):
         """Plot the delta values of choosen colorimetric coordinates related to the microfading analyses.
 
         Parameters
         ----------
+        stds : bool, optional
+            Whether to show the standard deviation values if any, by default True.
+
         coordinates : list, optional
             List of colorimetric coordinates, by default ['dE00']
             Any of the following coordinates can be added to the list: 'dE76', 'dE00', 'dR_vis' , 'L*', 'a*', 'b*', 'C*', 'h'.
 
-        dose_unit : a list of str, optional
-            Unit of the light energy dose, by default ['He']
+        dose_unit : str, optional
+            Unit of the light energy dose, by default 'He'
             Any of the following units can be used: 'He', 'Hv', 't'. Where 'He' corresponds to radiant energy (MJ/m2), 'Hv' to exposure dose (Mlxh), and 't' to times (sec)
 
-        labels : Union[str, list], optional
+        legend_labels : Union[str, list], optional
             A list of labels respective to each element given in the data parameter that will be shown in the legend. When the list is empty there is no legend displayed, by default 'default'
             When 'default', each label will composed of the Id number of the number followed by a short description
 
@@ -1966,17 +2009,20 @@ class MFT(object):
             A single value (an integer) can be entered and applied to all the lines.
             A list of integers can also be entered. With a single coordinate, the list should have the same length as measurement files. With multiple coordinates, the list should have the same length as coordinates.
 
-        title : Optional[str], optional
+        title : str, optional
             Whether to add a title to the plot, by default None
 
-        fontsize : Optional[int], optional
+        fontsize : int, optional
             Fontsize of the plot (title, ticks, and labels), by default 24
 
-        legend_fontsize : Optional[int], optional
+        legend_fontsize : int, optional
             Fontsize of the legend, by default 24
 
-        legend_title : Optional[str], optional
+        legend_title : str, optional
             Add a title above the legend, by default ''
+
+        xlim : tuple, optional
+            A tuple of two integers that define the left and right limits of the x-axis , by default None.
 
         save : bool, optional
             Whether to save the figure, by default False
@@ -1986,9 +2032,37 @@ class MFT(object):
             When 'cwd', it will save the figure in the current working directory.
         """
 
-
         # Retrieve the data
-        list_data = [x.reset_index().T.values for x in self.compute_delta(coordinates=coordinates, dose_unit=dose_unit)] 
+        if xlim == None:
+            dose_values = 'all'
+        elif isinstance(xlim, tuple):
+            dose_values = (xlim[0], xlim[1], 0.05)
+                
+        all_data = self.compute_delta(coordinates=coordinates, dose_unit=dose_unit, dose_values=dose_values)
+        nominal_data = []
+        stdev_data = []
+
+        for data in all_data:
+
+            if sorted(set(data.columns.get_level_values(1))) == ['mean', 'std']:
+                nominal = data.xs(key='mean', axis=1, level=1)
+                if stds:
+                    stdev = data.xs(key='std', axis=1, level=1)   
+                else:
+                    stdev = nominal.copy()   
+                    stdev.iloc[:,:] = 0         
+
+            else:
+                                
+                nominal = data
+                stdev = data.copy()
+                stdev.iloc[:,:] = 0
+                
+
+            nominal_data.append(nominal.reset_index().T.values)
+            stdev_data.append(stdev.T.values)
+
+        
         
         # Retrieve the metadata
         info = self.get_metadata()
@@ -2022,35 +2096,33 @@ class MFT(object):
             '''
 
         # Add the initial values of the colorimetric coordinates
-        if initial_values:
-            initial_values = {}
+        
+        if initial_values:  
+            initial_values = {}          
             for coord in coordinates:
                 if coord in ['dL*', 'da*', 'db*', 'dC*', 'dh']:
                     initial_value = self.get_cielab(coordinates=[coord[1:]])[0][coord[1:]].iloc[0,:].values[0]
                     initial_values[coord[1:]] = initial_value
+        else:
+            initial_values = {}  
 
+        if len(meas_nbs) > 1:
+            initial_values = {}
 
         # Set the color of the lines according to the sample
         if colors == 'sample':
-
-            Lab = self.get_cielab(coordinates=['L*', 'a*', 'b*'])
-            if self.stdev == True:                
-                Lab = [df.loc[:, pd.IndexSlice[:,'mean']] for df in Lab]                       
-
-            Lab_initial = [x.iloc[0,:].values for x in Lab]
-            colors = list(colour.XYZ_to_sRGB(colour.Lab_to_XYZ(Lab_initial), self.set_illuminant()[0]).clip(0, 1))
+            colors = list(self.get_sRGB(dose_values=0).values.reshape(len(meas_nbs),-1))
             colors = colors * len(coordinates)
         
         # Whether to add a title or not
         if title == 'default':
-            technique = 'MFT'            
+            title = 'MFT'            
         elif title == 'none':
             title = None
         else:
             title = title 
 
         # Define the saving folder in case the figure should be saved
-
         filename = ''
         if save:
             if path_fig == 'default':
@@ -2059,8 +2131,8 @@ class MFT(object):
             if path_fig == 'cwd':
                 path_fig = f'{os.getcwd()}/{filename}' 
         
-        #return list_data
-        plotting.delta(data=list_data, dose_unit=[dose_unit], coordinates=coordinates, initial_values=initial_values, colors=colors, lw=lw, title=title, fontsize=fontsize, legend_labels=legend_labels, legend_fontsize=legend_fontsize, legend_title=legend_title, save=save, path_fig=path_fig)
+        
+        plotting.delta(data=nominal_data, yerr=stdev_data, dose_unit=[dose_unit], coordinates=coordinates, initial_values=initial_values, colors=colors, lw=lw, title=title, fontsize=fontsize, legend_labels=legend_labels, legend_fontsize=legend_fontsize, legend_title=legend_title, save=save, path_fig=path_fig)
 
 
     def plot_sp(self, stdev:Optional[bool] = False, spectra:Optional[str] = 'i', dose_unit:Optional[str] = 'He', dose_values:Union[int, float, list, tuple] = 'all', spectral_mode:Optional[str] = 'rfl', legend_labels:Union[str,list] = 'default', title:Optional[str] = None, fontsize:Optional[int] = 24, fontsize_legend:Optional[int] = 24, legend_title='', wl_range:Optional[tuple] = None, colors:Union[str,list] = None, lw:Union[int, list] = 2, ls:Union[str, list] = '-', save=False, path_fig='cwd', derivation=False, smoothing=(1,0), report:Optional[bool] = False):
@@ -2159,7 +2231,7 @@ class MFT(object):
         # Define the colour of the curves
         if colors == 'sample':
             colors = self.get_sRGB().iloc[0,:].values.clip(0,1).reshape(len(self.files),-1)
-
+            
         # Define the labels
         if legend_labels == 'default':
             legend_labels = [f'{x}-{y}' for x,y in zip(self.get_meas_ids,group_descriptions)]
@@ -2181,10 +2253,12 @@ class MFT(object):
         elif spectra == 'i+f':
             data_sp_all = self.get_spectra(wl_range=wl_range, smoothing=smoothing)
             data_sp = [x[x.columns.get_level_values(0)[[0]+[-1]]] for x in data_sp_all]            
-
+            
             ls = ['-', '--'] * len(data_sp)
             lw = [3,2] * len(data_sp)
-            colors = [colors, 'k'] * len(data_sp)
+            black_lines = ['k'] * len(data_sp)
+            colors = list(itertools.chain.from_iterable(zip(colors, black_lines)))            
+            
 
             if legend_labels == 'default':
                 meas_labels = [f'{x}-{y}' for x,y in zip(self.get_meas_ids,group_descriptions)]
@@ -2212,11 +2286,8 @@ class MFT(object):
 
         else:
             print(f'"{spectra}" is not an adequate value. Enter a value for the parameter "spectra" among the following list: "i", "f", "i+f", "doses".')
-            return
-            
-        indices = [x.index for x in data_sp]        
-        columns = [x.columns for x in data_sp]   
-                        
+            return           
+                                
         # whether to compute the absorption spectra
         if spectral_mode == 'abs':
             data_sp = [np.log(x) * (-1) for x in data_sp]
@@ -2229,29 +2300,40 @@ class MFT(object):
             data = [pd.concat([x.iloc[:,0], pd.DataFrame(np.gradient(x.iloc[:,1:], axis=0))], axis=1) for x in data]
 
         # Compile the spectra to plot inside a list
-        wanted_data = []
-        
-        for el in data:
-            data_indexed = el.set_index(el.columns[0])
-            data_values = [ (data_indexed.index,x) for x in data_indexed.T.values]
-            wanted_data = wanted_data + data_values
-        
-        wanted_data = [x.iloc[:,0:2].T.values for x in data]
+        wanted_data = []  
+        wanted_std = []
 
+        # Set the wavelength column as index
+        data = [x.set_index(x.columns.get_level_values(0)[0]) for x in data]          
+             
         # Add the std values
         if stdev:            
-            try:
-                wanted_std = [x.iloc[:,2].T.values for x in data]
+            try:     
+                
+                values_data = [x.T.iloc[::2].values for x in data]
+                values_wl = [x.index for x in data]
+                for el1, wl in zip(values_data, values_wl):
+                    for el2 in el1:
+                        wanted_data.append((wl,el2))
+
+                values_std = [x.T.iloc[1::2].values for x in data]                
+                for el1 in values_std:
+                    for el2 in el1:
+                        wanted_std.append(el2)
             except IndexError:
                 wanted_std = []
             
         else:
+            for el in data:                
+                data_values = [ (el.index,x) for x in el.T.values]
+                wanted_data = wanted_data + data_values 
             wanted_std = []
 
+        
         return plotting.spectra(data=wanted_data, stds=wanted_std, spectral_mode=spectral_mode, legend_labels=legend_labels, title=title, fontsize=fontsize, fontsize_legend=fontsize_legend, legend_title=legend_title, x_range=wl_range, colors=colors, lw=lw, ls=ls, text=text, save=save, path_fig=path_fig, derivation=derivation)
        
 
-    def plot_sp_delta(self,spectra:Optional[tuple] = ('i','f'), dose_unit:Optional[str] = 'Hv', wl_range:Union[int,float,list,tuple] = 'all', spectral_mode:Optional[str] = 'rfl', derivation=False, smooth=False):
+    def plot_sp_delta(self,spectra:Optional[tuple] = ('i','f'), dose_unit:Optional[str] = 'Hv', legend_labels:Union[str,list] = 'default', title:Optional[str] = None, fontsize:Optional[int] = 24, legend_fontsize:Optional[int] = 24, legend_title='', wl_range:Union[int,float,list,tuple] = None, colors:Union[str,list] = None, spectral_mode:Optional[str] = 'rfl', derivation=False, smoothing=(1,0)):
 
         if spectra == ('i','f'):
 
@@ -2281,8 +2363,34 @@ class MFT(object):
             
             wanted_data = [(w,np.array(y)-np.array(x)) for w,x,y in zip(wavelengths,sp1,sp2)]   
                  
-    
-        plotting.spectra(data=wanted_data, spectral_mode=spectral_mode, x_range=wl_range, derivation=derivation)
+        # Retrieve the metadata
+        info = self.get_metadata()
+        object_info = info.loc['object_type'].values[0]
+        object_technique = info.loc['object_technique'][0]
+        group_nb = info.loc['group'].values[0]
+        group_descriptions = info.loc['group_description'].values
+        group_description = group_descriptions[0]
+        
+        
+        # Define the colour of the curves
+        if colors == 'sample':
+            colors = self.get_sRGB().iloc[0,:].values.clip(0,1).reshape(len(self.files),-1)
+
+        # Define the labels
+        if legend_labels == 'default':
+            legend_labels = [f'{x}-{y}' for x,y in zip(self.get_meas_ids,group_descriptions)]
+            legend_title = 'Measurement $n^o$'
+             
+        # Whether to compute the first derivative
+        if derivation:
+            pass  # to implement
+            #wanted_data = [x.reset_index() for x in wanted_data]
+            #wanted_data = [pd.concat([x.iloc[:,0], pd.DataFrame(np.gradient(x.iloc[:,1:], axis=0))], axis=1) for x in wanted_data]
+            #wanted_data = [x.set_index(x.columns.get_level_values(0)[0]) for x in wanted_data] 
+
+        
+        #return wanted_data
+        plotting.spectra(data=wanted_data, spectral_mode=spectral_mode, x_range=wl_range, colors=colors, fontsize_legend=legend_fontsize, legend_labels=legend_labels, legend_title=legend_title, title=title, fontsize=fontsize, derivation=derivation)
 
 
     def set_illuminant(self, illuminant:Optional[str] = 'D65', observer:Optional[str] = '10'):
@@ -2353,7 +2461,7 @@ class MFT(object):
         return sp_derivation
     
 
-    def get_sRGB(self, illuminant='D65', observer='10'):
+    def get_sRGB(self, illuminant='D65', observer='10', dose_unit: Optional[str] = 'He', dose_values:Union[int, float, list, tuple] = 'all', clip:Optional[bool] = True):
         """Compute the sRGB values. 
 
         Parameters
@@ -2363,6 +2471,20 @@ class MFT(object):
  
         observer : (str|int, optional)
             Reference *observer* in degree ('10' or '2'). by default '10'.
+
+        dose_unit : Optional[str], optional
+            Unit of the light dose energy, by default ['He']
+            Any of the following units can be entered: 'He', 'Hv', 't'. Where 'He' corresponds to radiant energy (MJ/m2), 'Hv' to exposure dose (Mlxh), and 't' to times (sec)
+
+        dose_values : Union[int, float, list, tuple], optional
+            Dose values for which the colourimetric values will be returned, by default 'all'
+            When 'all', it returns the colourimetric values for all the dose values available in the given input data files.
+            A single dose value (an integer or a float number) can be entered.
+            A list of dose values, as integer or float, can also be entered.
+            A tuple of three values (min, max, step) will be used in a numpy.arange() function to return an array of dose values. 
+
+        clip : Optional[bool], optional
+            Whether to constraint the srgb values between 0 and 1.
 
         Returns
         -------
@@ -2383,12 +2505,19 @@ class MFT(object):
         
         ccs_ill = colour.CCS_ILLUMINANTS[observers[observer]][illuminant]
 
-        meas_ids = self.get_meas_ids                
-        df_sp = self.get_data(data='sp')       
+        meas_ids = self.get_meas_ids 
+
+        df_sp = self.get_spectra(dose_unit=dose_unit, dose_values=dose_values)   
+        df_sp_nominal = [
+            df.loc[:, pd.IndexSlice[:, 'mean']] if 'mean' in df.columns.get_level_values(1)
+            else df.loc[:, pd.IndexSlice[:, 'value']]
+            for df in df_sp
+        ] 
+
         df_srgb = []
         
 
-        for df, meas_id in zip(df_sp, meas_ids):
+        for df, meas_id in zip(df_sp_nominal, meas_ids):
             
             srgb_values = pd.DataFrame(index=['R','G','B']).T            
 
@@ -2404,7 +2533,12 @@ class MFT(object):
                 srgb_values.index = np.arange(0,srgb_values.shape[0])
 
             srgb_values.columns = pd.MultiIndex.from_product([[meas_id], srgb_values.columns])
+            
+            if clip:
+                srgb_values = srgb_values.clip(0,1)
+
             df_srgb.append(srgb_values)
+
 
         return pd.concat(df_srgb, axis=1)
 
@@ -2421,7 +2555,7 @@ class MFT(object):
         return wavelengths
 
 
-    def get_XYZ(self, illuminant:Optional[str] = 'D65', observer:Union[str,int] = '10'):
+    def get_XYZ(self, illuminant:Optional[str] = 'D65', observer:Union[str,int] = '10', dose_unit: Optional[str] = 'He', dose_values:Union[int, float, list, tuple] = 'all'):
         """Compute the XYZ values. 
 
         Parameters
@@ -2431,6 +2565,17 @@ class MFT(object):
  
         observer : (str|int, optional)
             Reference *observer* in degree ('10' or '2'). by default '10'.
+
+        dose_unit : Optional[str], optional
+            Unit of the light dose energy, by default ['He']
+            Any of the following units can be entered: 'He', 'Hv', 't'. Where 'He' corresponds to radiant energy (MJ/m2), 'Hv' to exposure dose (Mlxh), and 't' to times (sec)
+
+        dose_values : Union[int, float, list, tuple], optional
+            Dose values for which the colourimetric values will be returned, by default 'all'
+            When 'all', it returns the colourimetric values for all the dose values available in the given input data files.
+            A single dose value (an integer or a float number) can be entered.
+            A list of dose values, as integer or float, can also be entered.
+            A tuple of three values (min, max, step) will be used in a numpy.arange() function to return an array of dose values. 
 
         Returns
         -------
@@ -2448,11 +2593,17 @@ class MFT(object):
             }
         
         meas_ids = self.get_meas_ids                
-        df_sp = self.get_data(data='sp')       
+        df_sp = self.get_spectra(dose_unit=dose_unit, dose_values=dose_values)   
+        df_sp_nominal = [
+            df.loc[:, pd.IndexSlice[:, 'mean']] if 'mean' in df.columns.get_level_values(1)
+            else df.loc[:, pd.IndexSlice[:, 'value']]
+            for df in df_sp
+        ] 
+          
         df_XYZ = []
         
 
-        for df, meas_id in zip(df_sp, meas_ids):
+        for df, meas_id in zip(df_sp_nominal, meas_ids):
             
             XYZ_values = pd.DataFrame(index=['X','Y','Z']).T
 
@@ -2472,7 +2623,7 @@ class MFT(object):
         return pd.concat(df_XYZ, axis=1)
 
 
-    def get_xy(self, illuminant:Optional[str] = 'D65', observer:Union[str, int] = '10'):
+    def get_xy(self, illuminant:Optional[str] = 'D65', observer:Union[str, int] = '10', dose_unit: Optional[str] = 'He', dose_values:Union[int, float, list, tuple] = 'all'):
         """Compute the xy values. 
 
         Parameters
@@ -2482,6 +2633,17 @@ class MFT(object):
  
         observer : (str|int, optional)
             Reference *observer* in degree ('10' or '2'). by default '10'.
+
+        dose_unit : Optional[str], optional
+            Unit of the light dose energy, by default ['He']
+            Any of the following units can be entered: 'He', 'Hv', 't'. Where 'He' corresponds to radiant energy (MJ/m2), 'Hv' to exposure dose (Mlxh), and 't' to times (sec)
+
+        dose_values : Union[int, float, list, tuple], optional
+            Dose values for which the colourimetric values will be returned, by default 'all'
+            When 'all', it returns the colourimetric values for all the dose values available in the given input data files.
+            A single dose value (an integer or a float number) can be entered.
+            A list of dose values, as integer or float, can also be entered.
+            A tuple of three values (min, max, step) will be used in a numpy.arange() function to return an array of dose values. 
 
         Returns
         -------
@@ -2499,11 +2661,16 @@ class MFT(object):
             }
         
         meas_ids = self.get_meas_ids                
-        df_sp = self.get_data(data='sp')       
+        df_sp = self.get_spectra(dose_unit=dose_unit, dose_values=dose_values)   
+        df_sp_nominal = [
+            df.loc[:, pd.IndexSlice[:, 'mean']] if 'mean' in df.columns.get_level_values(1)
+            else df.loc[:, pd.IndexSlice[:, 'value']]
+            for df in df_sp
+        ]     
         df_xy = []
         
 
-        for df, meas_id in zip(df_sp, meas_ids):
+        for df, meas_id in zip(df_sp_nominal, meas_ids):
             
             xy_values = pd.DataFrame(index=['x','y']).T           
 
