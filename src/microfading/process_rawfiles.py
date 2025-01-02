@@ -1,3 +1,4 @@
+import os
 import pandas as pd
 import numpy as np
 import colour
@@ -9,10 +10,11 @@ from scipy.interpolate import RegularGridInterpolator
 
 
 from . import databases
-from . import MFT_info_template
+from . import MFT_info_dictionaries
+from . import MFT_info_templates
 
 
-def MFT_fotonowy(files: list, filenaming:Optional[str] = 'none', folder:Optional[str] = '.', db:Optional[bool] = False, comment:Optional[str] = '', authors:Optional[str] = 'XX', interpolation:Optional[str] = 'He', step:Optional[float | int] = 0.1, average:Optional[int] = 20, background:Optional[str] = 'black'):
+def MFT_fotonowy(files: list, filenaming:Optional[str] = 'none', folder:Optional[str] = '.', db:Optional[bool] = False, comment:Optional[str] = '', device_nb:Optional[str] = 'default', authors:Optional[str] = 'XX', white_reference:Optional[bool] = 'default', interpolation:Optional[str] = 'He', step:Optional[float | int] = 0.1, average:Optional[int] = 20, background:Optional[str] = 'black', delete_files:Optional[bool] = True):
 
             
     # check whether the objects and projects databases have been created
@@ -22,7 +24,7 @@ def MFT_fotonowy(files: list, filenaming:Optional[str] = 'none', folder:Optional
         if DB.folder_db is None or DB.folder_db == 'folder_path':
             return 'Databases have not been created. Please, create databases by running the function "create_DB" from the microfading package.'
         
-        else:            
+        else:     
             db_projects, db_objects = DB.get_db()
     
     else:
@@ -261,7 +263,7 @@ def MFT_fotonowy(files: list, filenaming:Optional[str] = 'none', folder:Optional
                 "authors",
                 "date_time",
                 "comment",
-                "[PROJECT INFO]"] + list(db_projects.columns) + ["[OBJECT INFO]"] + list(db_objects.columns) + MFT_info_template.device_info + MFT_info_template.analysis_info + MFT_info_template.beam_info
+                "[PROJECT INFO]"] + list(db_projects.columns) + ["[OBJECT INFO]"] + list(db_objects.columns) + MFT_info_templates.device_info + MFT_info_templates.analysis_info + MFT_info_templates.beam_info
 
                 df_authors = DB.get_persons()                
                 if '-' in authors or ' - ' in authors:                     
@@ -280,16 +282,48 @@ def MFT_fotonowy(files: list, filenaming:Optional[str] = 'none', folder:Optional
                 date = date_time.date()
                 project_id = raw_file_cl.stem.split(' ')[0]
                 object_id = raw_file_cl.stem.split(' ')[1]
+                group = raw_file_cl.stem.split(' ')[2]
+                group_description = raw_file_cl.stem.split(' ')[3].split('_')[0]
                 project_info = list(db_projects.query(f'project_id == "{project_id}"').values[0])
                 object_info = list(db_objects.query(f'object_id == "{object_id}"').values[0])
 
 
                 # device info values
-                device = 'Fotonowy-MFT'
                 LED_nb = df_info.loc['LED'].values[0]
+
+                df_devices = DB.get_devices()                
+                if device_nb in df_devices['Id'].values:
+                    df_devices = df_devices.set_index('Id')                    
+                    device_name = df_devices.loc[device_nb]['name']
+                    device_description = df_devices.loc[device_nb]['description']
+
+                elif device_nb == 'default':
+                    device_nb = 'none'
+                    device_name = 'unnamed'
+                    device_description = 'Fotonowy-MFT'
+
+                else:
+                    print(f'The device you entered ({device_nb}) has not been registered. Please first register the device, by using the function mf.register_devices().')
+                    return
+
+                df_WR = DB.get_white_references()
+                if white_reference in df_WR['Id'].values:
+                    df_WR = df_WR.set_index('Id')
+                    WR_nb = white_reference
+                    WR_description = df_WR.loc[white_reference]['description']
+                elif white_reference == 'default':
+                    WR_nb = 'none'
+                    WR_description = 'Fotonowy fotolon PTFE'
+                elif white_reference == 'unknown':
+                    WR_nb = 'none'
+                    WR_description = 'unknown'
+                else:
+                    print(f'The white reference you entered ({white_reference}) has not been registered. Please first register the white reference, by using the function mf.register_references().')
+                    return
+                
                 device_info = [
                     " ",
-                    device, 
+                    f'{device_nb}_{device_name}_{device_description}', 
                     'none',
                     'none',
                     'none',
@@ -303,27 +337,24 @@ def MFT_fotonowy(files: list, filenaming:Optional[str] = 'none', folder:Optional
                     'none',
                     'none',
                     'none',
-                    'Fotonowy fotolon PTFE'
+                    f'{WR_nb}_{WR_description}'   
                 ]
 
 
                 # analysis info values
                 
-                meas_nb = '01'
+                meas_nb = raw_file_cl.stem.split('_')[1]
                 meas_id = f'MF.{object_id}.{meas_nb}'
                 spec_comp = 'SCE_excluded'
 
                 int_time = df_info.loc['Sample integration time [ms]'].values[0]
-                fwhm = MFT_info_template.beam_FWHM[LED_nb]
+                fwhm = MFT_info_dictionaries.beam_FWHM[LED_nb]
 
                 area = pi * (((fwhm/1e6)/2)**2)
                 power = np.round((irr * area) * 1e3, 3)
                 lum = np.round(area * (ill * 1e6),3)
-                current = int(df_info.loc['Curr'].values[0].split(' ')[0])
-                
-                group = ""
-                group_description = ""
-                
+                current = int(df_info.loc['Curr'].values[0].split(' ')[0])               
+                                
 
                 analysis_info = [
                     " ",
@@ -362,10 +393,10 @@ def MFT_fotonowy(files: list, filenaming:Optional[str] = 'none', folder:Optional
                     comment,
                     " "] + project_info + [" "] + object_info + device_info + analysis_info + beam_info
 
-                df_info = pd.DataFrame({'parameters':info_parameters})
-                df_info["values"] = pd.Series(info_values)
+                df_info = pd.DataFrame({'parameter':info_parameters})
+                df_info["value"] = pd.Series(info_values)
             
-            df_info = df_info.set_index('parameters')
+            df_info = df_info.set_index('parameter')
 
             # define the output filename
             if filenaming == 'none':
@@ -374,11 +405,11 @@ def MFT_fotonowy(files: list, filenaming:Optional[str] = 'none', folder:Optional
             elif filenaming == 'auto':
                 group = stemName.split('_')[2]
                 group_description = stemName.split('_')[3]
-                object_type = df_info.loc['object_type']['values']
+                object_type = df_info.loc['object_type']['value']
                 filename = f'{project_id}_{meas_id}_{group}_{group_description}_{object_type}_{date}'
 
             elif isinstance(filenaming, list):                
-                filename = "_".join([df_info.loc[x]['values'] for x in filenaming])
+                filename = "_".join([df_info.loc[x]['value'].split("_")[0] if "_" in df_info.loc[x]['value'] else df_info.loc[x]['value'] for x in filenaming])
                
                
             # export the dataframes to an excel file
@@ -393,6 +424,15 @@ def MFT_fotonowy(files: list, filenaming:Optional[str] = 'none', folder:Optional
                 else:
                     df_sp.to_excel(writer, sheet_name="spectra", index=True, index_label=f'wl-nm_{abs_scales_name[interpolation].replace("_", "-")}')
 
+            
+            ###### DELETE FILE #######        
+            
+            if delete_files:
+                meas_raw_files = [file for file in Path(os.getcwd()).iterdir() if str(raw_file_counts).replace('-spect_convert.txt', '') in file.name]            
+                [os.remove(file) for file in meas_raw_files]
+            
+            print(f'{raw_file_cl} has been successfully processed !')
+            
             return 
         
 
