@@ -19,7 +19,9 @@ import itertools
 import importlib.resources as pkg_resources
 import xarray as xr
 from scipy.interpolate import RegularGridInterpolator
+import ipywidgets as ipw
 from ipywidgets import *
+from IPython.display import display, clear_output
 
 # underlying modules of the  microfading package
 from . import plotting
@@ -62,8 +64,8 @@ def DB():
     
     else:
         db_files = ['DB_projects.csv', 'DB_objects.csv','institutions.txt', 'persons.txt','object_types.txt', 'object_techniques.txt', 'object_supports.txt', 'object_creators.txt']
-
-        if all(list(map(os.path.isfile, db_files))):
+        
+        if all(list(map(os.path.isfile, [str(Path(DB.folder_db)/x) for x in db_files]))):
             print(f'All the databases were created and can be found in the following directory: {DB.folder_db}')
 
         else:
@@ -272,11 +274,37 @@ def get_persons():
     Returns
     -------
     pandas dataframe
-        It returns the list of persons inside a pandas dataframe with three columns: 'name', 'surname', 'initials
+        It returns the list of persons inside a pandas dataframe with three columns: 'name', 'surname', 'initials'
     """
 
     DB = databases.DB()
     return DB.get_persons()
+
+
+def get_devices():
+    """Retrieve the list of microfading devices that have been registered in the MFT_devices.txt file.
+
+    Returns
+    -------
+    pandas dataframe
+        It returns the list of devices inside a pandas dataframe with four columns: 'Id', 'name', 'description', 'process_function'
+    """
+
+    DB = databases.DB()    
+    return DB.get_devices()
+
+
+def get_white_references():
+    """Retrieve the list of white standard references that have been registered in the white_references.txt file.
+
+    Returns
+    -------
+    pandas dataframe
+        It returns the list of references inside a pandas dataframe with two columns: 'Id', 'description'
+    """
+
+    DB = databases.DB()    
+    return DB.get_white_references()
 
 
 def add_new_institution():
@@ -343,7 +371,155 @@ def update_DB_projects(new: str, old:Optional[str] = None):
     DB.update_db_projects(new=new, old=old) 
 
 
-def process_rawdata(files: list, device: str, filenaming:Optional[str] = 'none', db:Optional[bool] = False, comment:Optional[str] = '', authors:Optional[str] = 'XX', interpolation:Optional[str] = 'He', step:Optional[float | int] = 0.1):
+def register_devices():
+    """
+    Register microfading devices.
+    """
+
+    DB = databases.DB()
+
+    style = {"description_width": "initial"}
+    MFT_process_functions = ['MFT_fotonowy']
+    
+    # Define ipython widgets
+    nb_widget = ipw.Text(        
+        value='',
+        placeholder='Id number of the device or just a number',
+        description='Id',
+        style=style,               
+    )
+
+    name_widget = ipw.Text(        
+        value='',
+        placeholder='One word description',
+        description='Name',
+        style=style,               
+    )
+
+    description_widget = ipw.Text(        
+        value='',
+        placeholder='One line device description',
+        description='Description',
+        style=style,               
+    )
+
+    MFT_function_widget = ipw.Dropdown(        
+        value=MFT_process_functions[0],
+        options=MFT_process_functions,
+        description='Process function name',
+        style=style,               
+    )
+
+    registering = ipw.Button(
+        description='Register the device',
+        disabled=False,
+        button_style='', # 'success', 'info', 'warning', 'danger' or ''
+        tooltip='Click me', 
+        style=style,           
+    )      
+
+    button_record_output = ipw.Output()
+
+    def button_record_pressed(b):
+        """
+        Save the device info in the MFT_devices.txt file.
+        """
+
+        button_record_output.clear_output(wait=True)
+
+        device_id = nb_widget.value.strip()
+        device_name = name_widget.value.strip()
+        device_description = description_widget.value.strip()
+        MFT_function = MFT_function_widget.value.strip()
+
+        df_devices = pd.read_csv(f'{DB.folder_db}/MFT_devices.txt')
+        device_Ids = df_devices['Id'].values
+
+        if device_id not in device_Ids:
+
+            df_devices = pd.concat([df_devices, pd.DataFrame(data=[device_id,device_name,device_description,MFT_function], index=['Id','name','description','process_function']).T])
+            df_devices.to_csv(f'{DB.folder_db}/MFT_devices.txt', index=False)
+
+            with button_record_output:
+                print(f'Device registered in the following file: {DB.folder_db}/MFT_devices.txt')
+
+        else:
+            with button_record_output:
+                print('The Id number you entered is already assigned to another device. Please choose another Id number.')
+            
+
+    registering.on_click(button_record_pressed)
+
+    display(ipw.VBox([nb_widget,name_widget,description_widget,MFT_function_widget]))
+    display(ipw.HBox([registering,button_record_output]))
+
+
+def register_references():
+    """
+    Register white standard references.
+    """
+
+    DB = databases.DB()
+    style = {"description_width": "initial"}
+
+    # Define ipython widgets
+    nb_widget = ipw.Text(        
+        value='',
+        placeholder='Id number of the item or just a number',
+        description='Id',               
+    )
+
+    description_widget = ipw.Text(        
+        value='',
+        placeholder='One line device description',
+        description='Description',               
+    )   
+
+    registering = ipw.Button(
+        description='Register the item',
+        disabled=False,
+        button_style='', # 'success', 'info', 'warning', 'danger' or ''
+        tooltip='Click me', 
+        style=style,           
+    )      
+
+    button_record_output = ipw.Output()
+
+    def button_record_pressed(b):
+        """
+        Save the reference info in the white_references.txt file.
+        """
+
+        button_record_output.clear_output(wait=True)
+
+        reference_id = nb_widget.value.strip()        
+        reference_description = description_widget.value.strip()
+        
+
+        df_references = pd.read_csv(f'{DB.folder_db}/white_references.txt')
+        reference_Ids = df_references['Id'].values
+
+        if reference_id not in reference_Ids:
+
+            df_references = pd.concat([df_references, pd.DataFrame(data=[reference_id,reference_description], index=['Id','description']).T])
+            df_references.to_csv(f'{DB.folder_db}/white_references.txt', index=False)
+
+            with button_record_output:
+                print(f'Item registered in the following file: {DB.folder_db}/white_references.txt')
+
+        else:
+            with button_record_output:
+                print('The Id number you entered is already assigned to another white reference. Please choose another Id number.')
+            
+
+    registering.on_click(button_record_pressed) 
+
+    display(ipw.VBox([nb_widget,description_widget]))
+    display(ipw.HBox([registering,button_record_output]))
+
+
+
+def process_rawdata(files: list, device: str, filenaming:Optional[str] = 'none', folder:Optional[str] = '.', db:Optional[bool] = False, comment:Optional[str] = '', authors:Optional[str] = 'XX', white_reference:Optional[str] = 'default', interpolation:Optional[str] = 'He', step:Optional[float | int] = 0.1, delete_files:Optional[bool] = True):
     """Process the microfading raw files created by the software that performed the microfading analysis. 
 
     Parameters
@@ -352,35 +528,41 @@ def process_rawdata(files: list, device: str, filenaming:Optional[str] = 'none',
         A list of string that corresponds to the absolute path of the raw files.
     
     device : str
-        Define the  microfading that has been used to generate the raw files ('fotonowy', 'sMFT').
+        Define the  microfading that has been used to generate the raw files ('fotonowy_default', 'sMFT_default').
     
-    filenaming : Optional[str | list], optional
+    filenaming : [str | list], optional
         Define the filename of the output excel file, by default 'none' 
         When 'none', it uses the filename of the raw files
         When 'auto', it creates a filename based on the info provided by the databases
         A list of parameters provided in the info sheet of the excel output can be used to create a filename   
+
+    folder : str, optional
+        Folder where the final data files should be saved, by default '.'
     
-    db : Optional[bool], optional
+    db : bool, optional
         Whether to make use of the databases, by default False
         When True, it will populate the info sheet in the interim file (the output excel file) with the data found in the databases.
         Make sure that the databases were created and that the information about about the project and the objects were recorded.
     
-    comment : Optional[str], optional
+    comment : str, optional
         Whether to include a comment in the final excel file, by default ''
     
-    authors : Optional[str], optional
+    authors : str, optional
         Initials of the persons that performed and processed the microfading measurements, by default 'XX' (unknown).
         Make sure that you registered the persons in the persons.txt file (see function 'add_new_person').
         If there are several persons, use a dash to connect the initials (e.g: 'JD-MG-OL').
     
-    interpolation : Optional[str], optional
+    interpolation : str, optional
         Whether to perform the interpolation ('He', 'Hv', 't') or not ('none'), by default 'He'
         'He' performs interpolation based on the radiant exposure (MJ/m2)
         'Hv' performs interpolation based on the exposure dose (Mlxh)
         't' performs interpolation based on the exposure duration (sec)
     
-    step : Optional[float  |  int], optional
+    step : [float  |  int], optional
         Interpolation step related to the scale previously mentioned ('He', 'Hv', 'time'), by default 0.1
+
+    delete_files : bool, optional
+        Whether to delete the raw files
 
     Returns
     -------
@@ -388,12 +570,21 @@ def process_rawdata(files: list, device: str, filenaming:Optional[str] = 'none',
         It returns an excel file composed of three tabs (info, CIELAB, spectra).
     """
 
-    if device.lower() == 'fotonowy':
-        return process_rawfiles.MFT_fotonowy(files=files, filenaming=filenaming, db=db, comment=comment, authors=authors, interpolation=interpolation, step=step)
-    
-    elif device == 'sMFT':
-        print('in construction !!')
-        return
+    if "_" in device:
+        device_type = device.split('_')[0]
+        device_nb = device.split('_')[1]
+
+        if device_type.lower() == 'fotonowy':
+            return process_rawfiles.MFT_fotonowy(files=files, filenaming=filenaming, folder=folder, db=db, comment=comment, device_nb=device_nb, authors=authors, white_reference=white_reference, interpolation=interpolation, step=step, delete_files=delete_files)
+        
+        elif device_type == 'sMFT':
+            print('in construction !!')
+            return
+        
+    else:
+        device_nb = 'default'
+        if device.lower() == 'fotonowy':            
+            return process_rawfiles.MFT_fotonowy(files=files, filenaming=filenaming, folder=folder, db=db, comment=comment, device_nb=device_nb, authors=authors, white_reference=white_reference, interpolation=interpolation, step=step, delete_files=delete_files) 
     
 
 
