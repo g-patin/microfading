@@ -602,6 +602,14 @@ class DB:
         print(f'DB_projects.csv and DB_objects.csv created in the following folder: {folder_path}')
 
         # create several text files
+
+        with open(Path(folder_path) / 'MFT_devices.txt', 'w') as f:
+            f.write('Id,name,description,process_function\n')
+            
+        with open(Path(folder_path) / 'White_references.txt', 'w') as f:
+            f.write('Id,description\n')
+            f.write('WR1,Fotonowy-fotolon-PTFE\n')
+
         with open(Path(folder_path) / 'object_creators.txt', 'w') as f:
             f.write('surname,name')
 
@@ -745,6 +753,28 @@ class DB:
         
         else:
             print(f'The file {Path(self.folder_db) / "institutions.txt"} is not existing. Make sure to create one by running the function "create_DB" from the microfading package.')
+            return
+
+
+    def get_devices(self):
+
+        if (Path(self.folder_db) / 'MFT_devices.txt').exists():
+            df_devices = pd.read_csv(Path(self.folder_db) / 'MFT_devices.txt')
+            return df_devices
+        
+        else:
+            print(f'The file {Path(self.folder_db) / "MFT_devices.txt"} is not existing. Make sure to create one by running the function "create_DB" from the microfading package.')
+            return
+        
+
+    def get_white_references(self):
+
+        if (Path(self.folder_db) / 'white_references.txt').exists():
+            df_references = pd.read_csv(Path(self.folder_db) / 'white_references.txt')
+            return df_references
+        
+        else:
+            print(f'The file {Path(self.folder_db) / "white_references.txt"} is not existing. Make sure to create one by running the function "create_DB" from the microfading package.')
             return
 
     
