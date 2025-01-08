@@ -45,7 +45,7 @@
     
       <link rel="stylesheet" href="../assets/_mkdocstrings.css">
     
-      <link rel="stylesheet" href="../custom.css">
+      <link rel="stylesheet" href="../css/custom.css">
     
     <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
@@ -662,8 +662,49 @@
   <h1>Get started</h1>
 
 <p>In this section, we will give you all the essential information to correctly start using the <code>microfading</code> package. </p>
-<p>The whole package is based on microfading data files that you either obtained yourself when performing microfading measurements obtained from someone. If you don't have any microfading files, the package has a function to load microfading files, so that you can still play with the functionalities  of the package (see [get_datasets](</p>
-<p>rawfiles - interimfiles - mf instance - (visualisation, retrieve data, further calculations)</p>
+<ol>
+<li>
+<p><strong>Do you have microfading data files?</strong></p>
+<p>The whole package is based on microfading data files that you either obtained yourself when performing microfading measurements or obtained from someone else. They consists of excel files with a specific structure organizing the data inside the files. Check the <a href="https://g-patin.github.io/microfading/datafiles/">datafiles section</a> for more information about it. </p>
+<p>If you don't have any microfading files, the package has a function to load microfading files, so that you can use these files to play with the functionalities of the package (see <a href="https://g-patin.github.io/microfading/get_datasets/">get_datasets</a> section).  </p>
+<p>If you have files, the following lines of code shows how you can retrieve them in the jupyter notebook:
+&nbsp;</p>
+</li>
+</ol>
+<div class="highlight"><pre><span></span><code><span class="c1"># I use this package to select files on my local computer</span>
+<span class="kn">from</span> <span class="nn">glob</span> <span class="kn">import</span> <span class="n">glob</span> 
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><span class="c1"># I use the command &#39;cd &lt;path&gt;&#39; to change directly and be in the folder where the microfading files are.</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><span class="n">cd</span> <span class="o">/</span><span class="n">home</span><span class="o">/</span><span class="n">username</span><span class="o">/</span><span class="n">Documents</span><span class="o">/</span><span class="n">MFT</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><span class="c1"># Using the glob method, I selected all the files that contains the expression &#39;BW1&#39; and &#39;MFT&#39; in the filename.</span>
+<span class="n">files</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">glob</span><span class="p">(</span><span class="s1">&#39;*BW1*MFT*&#39;</span><span class="p">))</span>
+<span class="n">files</span>
+</code></pre></div>
+<div class="output-area">
+<pre>[PosixPath('/home/username/Documents/MFT/2024-144_MF.BWS002.G01_avg_BW1_model_2024-07-30_MFT2.xlsx'),
+PosixPath('/home/username/Documents/MFT/2024-144_MF.BWS003.G01_avg_BW1_model_2024-08-02_MFT2.xlsx')]
+</pre>
+</div>
+
+<ol>
+<li>
+<p><strong>Central role of the <code>MFT</code> class</strong></p>
+<p>Once you have selected microfading files and encapsulated them inside a python list, you will need to create an instance of the <code>MFT</code> class passing the variable for your microfading files as argument (see code below). All the functions provided by the package can only be accessed through the <code>MFT</code> class.<br />
+&nbsp;</p>
+</li>
+</ol>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span> <span class="nn">microfading</span> <span class="k">as</span> <span class="nn">mf</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><span class="n">m</span> <span class="o">=</span> <span class="n">mf</span><span class="o">.</span><span class="n">MFT</span><span class="p">(</span><span class="n">files</span><span class="o">=</span><span class="n">files</span><span class="p">)</span>
+</code></pre></div>
+<ol>
+<li>
+<p><strong>Three keywords function: get, plot, compute</strong></p>
+<p>Once you created an instance of the <code>MFT</code> class, you can access the methods. The name of each method start by a verb: get, plot, or compute. Enter one of these verbs and use the auto-completion tool (<code>Shift + Tab</code>) to display a list of available methods. Each method can be run without passing any arguments, this will output the default value of the method. To adjust the output of the method to your needs, you will need to pass in specific arguments. </p>
+</li>
+</ol>
 
 
 
