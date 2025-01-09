@@ -13,7 +13,17 @@
     white-space: nowrap; /* Prevent text from wrapping */ 
     min-height: 20px;
     font-family: Helvetica;
-    font-size: 5;
-       
+    font-size: 5;       
 }
 
+.img-small {
+    width: 400px;
+}
+
+.img-medium {
+    width: 500px;
+}
+
+.img-large {
+    width: 700px;
+}

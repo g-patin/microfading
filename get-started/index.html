@@ -9,10 +9,10 @@
       
       
       
-        <link rel="prev" href="../data-visualization/">
+        <link rel="prev" href="../microfading/">
       
       
-        <link rel="next" href="../retrieve-test-datasets/">
+        <link rel="next" href="../databases-management/">
       
       
       <link rel="icon" href="../assets/images/favicon.png">
@@ -282,6 +282,35 @@
                 
   
   
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  <span class="md-ellipsis">
+    Get started
+  </span>
+  
+
+      </a>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
   
   
     <li class="md-nav__item">
@@ -378,35 +407,6 @@
   
 
       </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-    
-  
-  
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
-        
-  
-  <span class="md-ellipsis">
-    Get started
-  </span>
-  
-
-      </a>
-      
     </li>
   
 
@@ -661,16 +661,14 @@
 
   <h1>Get started</h1>
 
-<p>In this section, we will give you all the essential information to correctly start using the <code>microfading</code> package. </p>
+<p>In this section, we will give you all the essential information to correctly start using the <code>microfading</code> package.</p>
 <ol>
 <li>
 <p><strong>Do you have microfading data files?</strong></p>
 <p>The whole package is based on microfading data files that you either obtained yourself when performing microfading measurements or obtained from someone else. They consists of excel files with a specific structure organizing the data inside the files. Check the <a href="https://g-patin.github.io/microfading/datafiles/">datafiles section</a> for more information about it. </p>
 <p>If you don't have any microfading files, the package has a function to load microfading files, so that you can use these files to play with the functionalities of the package (see <a href="https://g-patin.github.io/microfading/get_datasets/">get_datasets</a> section).  </p>
-<p>If you have files, the following lines of code shows how you can retrieve them in the jupyter notebook:
+<p>If you have files, the following lines of code shows how you can import them in the jupyter notebook:
 &nbsp;</p>
-</li>
-</ol>
 <div class="highlight"><pre><span></span><code><span class="c1"># I use this package to select files on my local computer</span>
 <span class="kn">from</span> <span class="nn">glob</span> <span class="kn">import</span> <span class="n">glob</span> 
 </code></pre></div>
@@ -678,31 +676,43 @@
 </code></pre></div>
 <div class="highlight"><pre><span></span><code><span class="n">cd</span> <span class="o">/</span><span class="n">home</span><span class="o">/</span><span class="n">username</span><span class="o">/</span><span class="n">Documents</span><span class="o">/</span><span class="n">MFT</span>
 </code></pre></div>
-<div class="highlight"><pre><span></span><code><span class="c1"># Using the glob method, I selected all the files that contains the expression &#39;BW1&#39; and &#39;MFT&#39; in the filename.</span>
+<div class="highlight"><pre><span></span><code><span class="c1"># Using the glob method, I select the files that contain the words &#39;BW1&#39; and &#39;MFT&#39; in the filename.</span>
 <span class="n">files</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">glob</span><span class="p">(</span><span class="s1">&#39;*BW1*MFT*&#39;</span><span class="p">))</span>
 <span class="n">files</span>
 </code></pre></div>
-<div class="output-area">
+<p><div class="output-area">
 <pre>[PosixPath('/home/username/Documents/MFT/2024-144_MF.BWS002.G01_avg_BW1_model_2024-07-30_MFT2.xlsx'),
 PosixPath('/home/username/Documents/MFT/2024-144_MF.BWS003.G01_avg_BW1_model_2024-08-02_MFT2.xlsx')]
 </pre>
 </div>
-
-<ol>
+&nbsp;</p>
+</li>
 <li>
 <p><strong>Central role of the <code>MFT</code> class</strong></p>
 <p>Once you have selected microfading files and encapsulated them inside a python list, you will need to create an instance of the <code>MFT</code> class passing the variable for your microfading files as argument (see code below). All the functions provided by the package can only be accessed through the <code>MFT</code> class.<br />
 &nbsp;</p>
-</li>
-</ol>
 <div class="highlight"><pre><span></span><code><span class="kn">import</span> <span class="nn">microfading</span> <span class="k">as</span> <span class="nn">mf</span>
 </code></pre></div>
-<div class="highlight"><pre><span></span><code><span class="n">m</span> <span class="o">=</span> <span class="n">mf</span><span class="o">.</span><span class="n">MFT</span><span class="p">(</span><span class="n">files</span><span class="o">=</span><span class="n">files</span><span class="p">)</span>
+<p><div class="highlight"><pre><span></span><code><span class="n">m</span> <span class="o">=</span> <span class="n">mf</span><span class="o">.</span><span class="n">MFT</span><span class="p">(</span><span class="n">files</span><span class="o">=</span><span class="n">files</span><span class="p">)</span>
 </code></pre></div>
-<ol>
+&nbsp;</p>
+</li>
 <li>
 <p><strong>Three keywords function: get, plot, compute</strong></p>
-<p>Once you created an instance of the <code>MFT</code> class, you can access the methods. The name of each method start by a verb: get, plot, or compute. Enter one of these verbs and use the auto-completion tool (<code>Shift + Tab</code>) to display a list of available methods. Each method can be run without passing any arguments, this will output the default value of the method. To adjust the output of the method to your needs, you will need to pass in specific arguments. </p>
+<p>Once you have created an instance of the <code>MFT</code> class, you can access the functions. The name of each function starts by a verb: get, plot, or compute. Enter one of these verbs and use the auto-completion tool (<code>Shift + Tab</code>) to display a list of available functions.</p>
+<figure>
+<p><img align="left" alt="Alt text" class="img-medium" src="../images/mf_functions.png" /></p>
+<figcaption>
+<p>List of all the plotting functions.</p>
+</figcaption>
+</figure>
+<p>The functions can be run without passing any arguments, this will output the default values. To adjust the output to your needs, you will need to modify the values of the arguments. For instance, the function <code>get_cielab()</code> returns the <span class="arithmatex">\(\Delta E_{00}\)</span> values by default. If you want to retrieve other CIELAB coordinates, you will need to pass in a new value for the argument <em>coordinates</em> (see code below). To know the role of each argument in a function and which values can you pass in, you will need to read the documentation. The latter can either be access in the jupyter notebook or in the <a href="https://g-patin.github.io/microfading/references/">References section</a> of this website.</p>
+<figure>
+<p><img align="left" alt="Alt text" class="img-large" src="../images/mf_functions_arguments.png" /></p>
+<figcaption>
+<p>Play with the argument values of functions </p>
+</figcaption>
+</figure>
 </li>
 </ol>
 
@@ -767,6 +777,8 @@ PosixPath('/home/username/Documents/MFT/2024-144_MF.BWS003.G01_avg_BW1_model_202
     
     
       <script src="../assets/javascripts/bundle.56dfad97.min.js"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
       
     
   </body>
