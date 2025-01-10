@@ -192,6 +192,47 @@ def create_DB(folder:str):
     DB.create_db(folder_path=folder)
 
 
+def get_objects(project_id:Union[str,list] = 'all'):
+    """Retrieve object Id numbers according to project Id.
+
+    Parameters
+    ----------
+    project_id : Union[str,list], optional
+        The Id number of projects for which the objects should be retrieved, by default 'all'
+        You can enter a string if there is only a single project, or a list of strings if there are several projects.
+        When 'all', it returns all the objects registered in the DB_objects.csv
+
+    Returns
+    -------
+    a dictionary
+        It returns a dictionary where the keys are the project Id number and the values are the object Id number given inside a list. If there is only one project id, then it directly returns the list of objects.
+    """
+    # instantiate a DB class object
+    DB = databases.DB() 
+
+    db_objects = DB.get_db(db='objects')
+    projects_objects = {}
+
+    if project_id == 'all':
+        pass
+    elif isinstance(project_id, str):
+        project_id = [project_id]
+        db_objects = db_objects[db_objects['project_id'].isin(project_id)]
+    elif isinstance(project_id, list):
+        db_objects = db_objects[db_objects['project_id'].isin(project_id)]
+    
+    project_ids = sorted(set(db_objects['project_id'].values))
+    for Id in project_ids:
+        df_project = db_objects[db_objects['project_id'] == Id]
+        objects = sorted(set(df_project['object_id'].values))
+        projects_objects[Id] = objects   
+
+    if len(project_id) == 1:
+        projects_objects = projects_objects[project_id[0]]
+
+    return projects_objects
+
+
 def get_path_DB():
     """Retrieve the absolute path of the folder where the databases are located.
 
@@ -916,7 +957,7 @@ class MFT(object):
         return deltas       
 
 
-    def compute_fitting(self, plot:Optional[bool] = True, return_data:Optional[bool] = False, dose_unit:Optional[str] = 'Hv', coordinate:Optional[str] = 'dE00', equation:Optional[str] = 'c0*(x**c1)', initial_params:Optional[List[float]] = [0.1, 0.0], x_range:Optional[Tuple[int]] = (0, 5.1, 0.1), save: Optional[bool] = False, path_fig: Optional[str] = 'cwd') -> Union[None, Tuple[np.ndarray, np.ndarray]]:
+    def compute_fitting(self, plot:Optional[bool] = True, return_data:Optional[bool] = False, dose_unit:Optional[str] = 'Hv', coordinate:Optional[str] = 'dE00', equation:Optional[str] = 'c0*(x**c1)', initial_params:Optional[List[float]] = [[0.1, 0.0]], x_range:Optional[Tuple[int]] = (0, 5.1, 0.1), save: Optional[bool] = False, path_fig: Optional[str] = 'cwd') -> Union[None, Tuple[np.ndarray, np.ndarray]]:
         """Fit the values of a given colourimetric coordinates. 
 
         Parameters
@@ -991,12 +1032,14 @@ class MFT(object):
         # Emtpy list to store the optimized parameters
         fitted_parameters = []
 
-        for d in wanted_data:
+        initial_params = initial_params * len(self.files)
+
+        for d, i in zip(wanted_data,initial_params):
             # retrieve the x(light dose) and y(coordinate) values
             x, y = d.index, d.iloc[:,0]
                   
             # perform the curve fitting
-            optimized_params, _ = curve_fit(fit_function, x, y, p0=initial_params, ) # bounds=bounds
+            optimized_params, _ = curve_fit(fit_function, x, y, p0=i, ) # bounds=bounds
             
             # generate fitted y data
             fitted_y = fit_function(x_values, *optimized_params)
@@ -1387,7 +1430,7 @@ class MFT(object):
         """
 
         H_step = 0.01
-        dE_fitted = self.compute_fitting(dose_unit='Hv', x_range=(0,5.1,H_step), return_data=True)[1]
+        dE_fitted = self.compute_fitting(dose_unit='Hv', x_range=(0,5.1,H_step), return_data=True, plot=False)[1]
         dE_rate = np.gradient(dE_fitted.T.values, H_step, axis=1)
         dE_rate_mean = [np.mean(x[-20:]) for x in dE_rate]
         dE_rate_std = [np.std(x[-20:]) for x in dE_rate]
@@ -1537,8 +1580,18 @@ class MFT(object):
         info = self.get_metadata()        
         return info.loc['meas_id'].values
 
+    @property
+    def get_objects(self):
+        """Return the object id numbers corresponding to the input files.
+        """
 
-    def compute_mean(self, return_data:Optional[bool] = True, criterion:Optional[str] = 'group', save:Optional[bool] = False, folder:Optional[str] = 'default', filename:Optional[str] = 'default'):
+        df_info = self.get_metadata(labels=['object_id'])
+        objects = sorted(set(df_info.values[0]))
+
+        return objects
+
+
+    def compute_mean(self, return_data:Optional[bool] = True, criterion:Optional[str] = 'group', save:Optional[bool] = False, folder:Optional[str] = '.', filename:Optional[str] = 'default'):
         """Compute mean and standard deviation values of several microfading measurements.
 
         Parameters
@@ -1612,7 +1665,8 @@ class MFT(object):
         data_sp = self.get_data(data='sp')
 
         # Get the energy dose step
-        H_values = [x.columns.astype(float) for x in data_sp]       
+        #H_values = [x.columns.astype(float) for x in data_sp]       
+        H_values = [x.values.flatten() for x in self.get_doses(dose_unit='He')]
         step_H = sorted(set([x[2] - x[1] for x in H_values]))[0]
         highest_He = np.max([x[-1] for x in H_values])
 
@@ -1646,8 +1700,8 @@ class MFT(object):
 
         ###### COLORIMETRIC DATA #######
 
-        data_cl = self.get_data(data='dE')
-        columns_cl = data_cl[0].columns
+        data_cl = self.get_data(data='cl')
+        columns_cl = data_cl[0].columns.get_level_values(0)
 
         # Average the colorimetric data    
         cl = mean_std_with_nan(data_cl)
@@ -1655,13 +1709,14 @@ class MFT(object):
         cl_std = cl[1]
 
         # Create a multi-index pandas DataFrame
-        cl_tuples = [(x, measurement) for x in data_cl[0].columns for measurement in ['mean', 'std']]
+        cl_tuples = [(x, measurement) for x in data_cl[0].columns.get_level_values(0) for measurement in ['mean', 'std']]
         multiindex_cols = pd.MultiIndex.from_tuples(cl_tuples, names=['coordinates', 'Measurement'])
         
         data_df_cl = np.empty((cl_mean.shape[0], cl_mean.shape[1] * 2))       
         data_df_cl[:, 0::2] = cl_mean
         data_df_cl[:, 1::2] = cl_std
         df_cl_final = pd.DataFrame(data_df_cl,columns=multiindex_cols, )
+        
         df_cl_final.drop([('He_MJ/m2','std'), ('Hv_Mlxh','std'), ('t_sec','std')], axis=1, inplace=True)
         
         mapper = {('He_MJ/m2', 'mean'): ('He_MJ/m2', 'value'), ('Hv_Mlxh', 'mean'): ('Hv_Mlxh', 'value'), ('t_sec', 'mean'): ('t_sec', 'value')}
@@ -1899,7 +1954,8 @@ class MFT(object):
         # ['L*','a*','b*','C*','h','dL*','da*','db*','dC*','dh','dE76','dE00','dR_vis']
 
         all_data = self.get_cielab(coordinates=[coordinate], dose_unit=dose_unit)
-        return all_data
+        print('Not yet fully implemented !!')
+        return
 
         max_doses = [x.values[0] for x in self.get_doses(dose_unit=dose_unit, max_doses=True)]
 
@@ -1942,7 +1998,7 @@ class MFT(object):
 
 
 
-    def plot_CIELAB(self, stds=[], dose_unit:Optional[str] = 'He', dose_values:Union[int, float, list, tuple] = 'all', title:Optional[str] = None, fontsize:Optional[int] = 20, legend_labels:Union[str,list] = 'default', legend_position:Optional[str] = 'in', legend_fontsize:Optional[int] = 20, legend_title:Optional[str] = None, save:Optional[bool] = False, path_fig:Optional[str] = 'cwd'):
+    def plot_CIELAB(self, stds=[], dose_unit:Optional[str] = 'He', dose_values:Union[int, float, list, tuple] = 'all', colors:Union[str,list] = None, title:Optional[str] = None, fontsize:Optional[int] = 20, legend_labels:Union[str,list] = 'default', legend_position:Optional[str] = 'in', legend_fontsize:Optional[int] = 20, legend_title:Optional[str] = None, save:Optional[bool] = False, path_fig:Optional[str] = 'cwd'):
         """Plot the Lab values related to the microfading analyses.
 
         Parameters
@@ -2007,12 +2063,22 @@ class MFT(object):
         ids = [x for x in self.get_meas_ids if 'BW' not in x]
         meas_nbs = [x.split('.')[-1] for x in ids]
 
+        # Define the colour of the curves
+        if colors == 'sample':
+            pass           
+
+        elif isinstance(colors, str):
+            colors = [colors] * len(self.files)
+
+        elif colors == None:
+            colors = [None] * len(self.files)
+        
         # Define the labels
         if legend_labels == 'default':
             legend_labels = [f'{x}-{y}' for x,y in zip(self.get_meas_ids,group_descriptions)]
             legend_title = 'Measurement $n^o$'
 
-        return plotting.CIELAB(data=data_Lab, legend_labels=legend_labels, title=title, fontsize=fontsize, legend_fontsize=legend_fontsize, legend_position=legend_position, legend_title=legend_title, save=save, path_fig=path_fig)
+        return plotting.CIELAB(data=data_Lab, legend_labels=legend_labels, colors=colors, title=title, fontsize=fontsize, legend_fontsize=legend_fontsize, legend_position=legend_position, legend_title=legend_title, save=save, path_fig=path_fig)
 
 
     def plot_swatches_circle(self, light_doses: Optional[list] = [0,0.5,1,2,5,15], JND:Optional[list] = [1,2,3,5,10], dE:Optional[bool] = True, fontsize: Optional[int] = 24, equation:Optional[str] = 'c0*(x**c1) + c2', initial_params:Optional[List[float]] = [0.1, 0.1], save:Optional[bool] = False, path_fig:Optional[str] = 'cwd', title:Optional[str] = None, report:Optional[bool] = False): 
@@ -2268,7 +2334,7 @@ class MFT(object):
 
         # Set the labels values
         if legend_labels == 'default':                       
-            legend_labels = [f'{x}-{y}' for x,y in zip(meas_nbs, group_descriptions)] 
+            legend_labels = [f'{x}-{y}' for x,y in zip(ids, group_descriptions)] 
 
         elif legend_labels == '':
             legend_labels = []
@@ -2326,7 +2392,7 @@ class MFT(object):
         plotting.delta(data=nominal_data, yerr=stdev_data, dose_unit=[dose_unit], coordinates=coordinates, initial_values=initial_values, colors=colors, lw=lw, title=title, fontsize=fontsize, legend_labels=legend_labels, legend_fontsize=legend_fontsize, legend_title=legend_title, save=save, path_fig=path_fig)
 
 
-    def plot_sp(self, stdev:Optional[bool] = False, spectra:Optional[str] = 'i', dose_unit:Optional[str] = 'He', dose_values:Union[int, float, list, tuple] = 'all', spectral_mode:Optional[str] = 'rfl', legend_labels:Union[str,list] = 'default', title:Optional[str] = None, fontsize:Optional[int] = 24, fontsize_legend:Optional[int] = 24, legend_title='', wl_range:Optional[tuple] = None, colors:Union[str,list] = None, lw:Union[int, list] = 2, ls:Union[str, list] = '-', save=False, path_fig='cwd', derivation=False, smoothing=(1,0), report:Optional[bool] = False):
+    def plot_sp(self, stdev:Optional[bool] = False, spectra:Optional[str] = 'i', dose_unit:Optional[str] = 'He', dose_values:Union[int, float, list, tuple] = 'all', spectral_mode:Optional[str] = 'R', legend_labels:Union[str,list] = 'default', title:Optional[str] = None, fontsize:Optional[int] = 24, fontsize_legend:Optional[int] = 24, legend_title='', wl_range:Optional[tuple] = None, colors:Union[str,list] = None, lw:Union[int, list] = 2, ls:Union[str, list] = '-', save=False, path_fig='cwd', derivation=False, smoothing=(1,0), report:Optional[bool] = False):
         """Plot the reflectance spectra corresponding to the associated microfading analyses.
 
         Parameters
@@ -2348,8 +2414,8 @@ class MFT(object):
             When 'all', it takes the values found in the data. 
 
         spectral_mode : string, optional
-            When 'rfl', it returns the reflectance spectra
-            When 'abs', it returns the absorption spectra using the following equation: A = -log(R)
+            When 'R', it returns the reflectance spectra            
+            When 'A', it returns the absorption spectra using the following equation: A = -log(R)
 
         legend_labels : Union[str, list], optional
             A list of labels respective to each element given in the data parameter that will be shown in the legend. When the list is empty there is no legend displayed, by default 'default'
@@ -2422,6 +2488,12 @@ class MFT(object):
         # Define the colour of the curves
         if colors == 'sample':
             colors = self.get_sRGB().iloc[0,:].values.clip(0,1).reshape(len(self.files),-1)
+
+        elif isinstance(colors, str):
+            colors = [colors] * len(self.files)
+
+        elif colors == None:
+            colors = [None] * len(self.files)
             
         # Define the labels
         if legend_labels == 'default':
@@ -2448,8 +2520,9 @@ class MFT(object):
             ls = ['-', '--'] * len(data_sp)
             lw = [3,2] * len(data_sp)
             black_lines = ['k'] * len(data_sp)
+            print(colors)
             colors = list(itertools.chain.from_iterable(zip(colors, black_lines)))            
-            
+            print(colors)
 
             if legend_labels == 'default':
                 meas_labels = [f'{x}-{y}' for x,y in zip(self.get_meas_ids,group_descriptions)]
@@ -2524,7 +2597,7 @@ class MFT(object):
         return plotting.spectra(data=wanted_data, stds=wanted_std, spectral_mode=spectral_mode, legend_labels=legend_labels, title=title, fontsize=fontsize, fontsize_legend=fontsize_legend, legend_title=legend_title, x_range=wl_range, colors=colors, lw=lw, ls=ls, text=text, save=save, path_fig=path_fig, derivation=derivation)
        
 
-    def plot_sp_delta(self,spectra:Optional[tuple] = ('i','f'), dose_unit:Optional[str] = 'Hv', legend_labels:Union[str,list] = 'default', title:Optional[str] = None, fontsize:Optional[int] = 24, legend_fontsize:Optional[int] = 24, legend_title='', wl_range:Union[int,float,list,tuple] = None, colors:Union[str,list] = None, spectral_mode:Optional[str] = 'rfl', derivation=False, smoothing=(1,0)):
+    def plot_sp_delta(self,spectra:Optional[tuple] = ('i','f'), dose_unit:Optional[str] = 'Hv', legend_labels:Union[str,list] = 'default', title:Optional[str] = None, fontsize:Optional[int] = 24, legend_fontsize:Optional[int] = 24, legend_title='', wl_range:Union[int,float,list,tuple] = None, colors:Union[str,list] = None, spectral_mode:Optional[str] = 'dR', derivation=False, smoothing=(1,0)):
 
         if spectra == ('i','f'):
 
@@ -2566,6 +2639,12 @@ class MFT(object):
         # Define the colour of the curves
         if colors == 'sample':
             colors = self.get_sRGB().iloc[0,:].values.clip(0,1).reshape(len(self.files),-1)
+
+        elif isinstance(colors, str):
+            colors = [colors] * len(self.files)
+
+        elif colors == None:
+            colors = [None] * len(self.files)
 
         # Define the labels
         if legend_labels == 'default':
@@ -2880,10 +2959,5 @@ class MFT(object):
             df_xy.append(xy_values)
 
         return pd.concat(df_xy, axis=1)
-
-
-
-
-    
 
     
