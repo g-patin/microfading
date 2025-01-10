@@ -564,7 +564,7 @@ def delta(data: list, yerr=None, dose_unit:Optional[list] = ['He'], coordinates:
         return plt, ax1, ax2
 
 
-def spectra(data, stds=[], spectral_mode:Optional[str] = 'rfl', legend_labels=[], title='none', fontsize=24, fontsize_legend:Optional[int] = 22, legend_title='', x_range=(), colors:Union[str, list] = None, lw:Optional[int] = 2, ls:Union[str, list] = '-', text:Optional[str] = '', save=False, path_fig='cwd', derivation=False, *args, **kwargs):
+def spectra(data, stds=[], spectral_mode:Optional[str] = 'R', legend_labels=[], title='none', fontsize=24, fontsize_legend:Optional[int] = 22, legend_title='', x_range=(), colors:Union[str, list] = None, lw:Optional[int] = 2, ls:Union[str, list] = '-', text:Optional[str] = '', save=False, path_fig='cwd', derivation=False, *args, **kwargs):
     """
     Description: Plot the reflectance spectrum of one or several datasets.
 
@@ -575,8 +575,9 @@ def spectra(data, stds=[], spectral_mode:Optional[str] = 'rfl', legend_labels=[]
         _ std (list, optional): A list of standard variation values respective to each element given in the data parameter. Defaults to [].
 
         spectral_mode : string, optional
-            When 'rfl', it returns the reflectance spectra
-            When 'abs', it returns the absorption spectra using the following equation: A = -log(R)
+            When 'R', it diplays the y-axis label for reflectance spectra
+            When 'dR', it displays the y-axis label for the difference in reflectance values
+            When 'A', it displays the y-axis label for absorption spectra using the following equation: A = -log(R)
 
         _ labels (list, optional): A list of labels respective to each element given in the data parameter that will be shown in the legend. When the list is empty there is no legend displayed. Defaults to [].
         
@@ -623,7 +624,7 @@ def spectra(data, stds=[], spectral_mode:Optional[str] = 'rfl', legend_labels=[]
     # Set the linewidth
     if isinstance(lw, int):        
         lw = [lw] * len(data)
-    #print(stds)
+    
     # Set the std values
     if len(stds) == 0:        
         stds = [np.zeros(len(x[1])) for x in data]
@@ -663,11 +664,13 @@ def spectra(data, stds=[], spectral_mode:Optional[str] = 'rfl', legend_labels=[]
     
     ax.set_xlabel('Wavelength $\lambda$ (nm)', fontsize = fontsize)
 
-    if derivation == False and spectral_mode == 'rfl':
+    if derivation == False and spectral_mode.lower() == 'r':
         ax.set_ylabel('Reflectance factor', fontsize = fontsize)
-    elif derivation == False and spectral_mode == 'abs':
+    elif derivation == False and spectral_mode.lower() == 'dr':
+        ax.set_ylabel('Reflectance difference', fontsize = fontsize)
+    elif derivation == False and spectral_mode.lower() == 'a':
         ax.set_ylabel('Absorbance', fontsize = fontsize)
-    elif derivation == True and spectral_mode == 'abs':
+    elif derivation == True and spectral_mode.lower() == 'a':
         ax.set_ylabel(r'$\frac{dA}{d\lambda}$', fontsize = fontsize+10)
     else:
         ax.set_ylabel(r'$\frac{dR}{d\lambda}$', fontsize = fontsize+10)
@@ -693,9 +696,15 @@ def spectra(data, stds=[], spectral_mode:Optional[str] = 'rfl', legend_labels=[]
     if text != '':
         props = dict(boxstyle='round', facecolor='white', alpha=0.7)
         ax.text(0.01,0.05,text,transform=ax.transAxes,fontsize=fontsize-6,verticalalignment='top', bbox=props)
-            
 
     plt.tight_layout()
+
+    if save == True:
+        if path_fig == 'cwd':
+            path_fig = f'{os.getcwd()}/SP.png'                    
+            
+        fig.savefig(path_fig,dpi=300, facecolor='white')       
+
     plt.show()
 
 
