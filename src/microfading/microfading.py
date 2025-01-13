@@ -348,6 +348,14 @@ def get_white_references():
     return DB.get_white_references()
 
 
+def add_new_creator():
+    """Record a new object creator inside the object_creators.txt file.
+    """
+
+    DB = databases.DB()    
+    return DB.add_new_creator()
+
+
 def add_new_institution():
     """Record a new institution inside the institutions.txt file.
     """

@@ -16,6 +16,69 @@ class DB:
         self.folder_db = Path(self.load_folder_db())
 
 
+    def add_new_creator(self):
+        """Record a new object creator in the object_creators.txt file
+        """
+
+        # Function to update the text file if the initials are unique
+        def update_text_file(file_path, name, surname):            
+            
+            
+            df_creators = self.get_creators()
+            df_creators = pd.concat([df_creators, pd.DataFrame(data=[name,surname], index=['name','surname']).T])
+            df_creators = df_creators.sort_values(by='surname')
+            df_creators.to_csv(self.folder_db/'object_creators.txt',index=False)
+               
+            print(f"Added: {surname}, {name}")
+
+        # Define ipython widgets
+        name_widget = ipw.Text(        
+            value='',
+            placeholder='Enter a name (optional)',
+            description='Name',               
+        )
+
+        surname_widget = ipw.Text(        
+            value='',
+            placeholder='Enter a surname',
+            description='Surname',             
+        )
+
+        recording = ipw.Button(
+            description='Create record',
+            disabled=False,
+            button_style='', # 'success', 'info', 'warning', 'danger' or ''
+            tooltip='Click me',            
+        )        
+        
+
+        button_record_output = ipw.Output()
+
+        def button_record_pressed(b):
+            """
+            Save the creator info in the objet_creators.txt file.
+            """
+
+            button_record_output.clear_output(wait=True)
+
+            name = name_widget.value.strip()
+            surname = surname_widget.value.strip()
+
+            with button_record_output:
+
+                if surname: # ensure the surname field is complete
+                    update_text_file(self.folder_db / 'object_creators.txt', name, surname)
+                else:
+                    
+                    print("Please enter at least a surname.")
+
+
+        recording.on_click(button_record_pressed)
+
+        display(surname_widget,name_widget)
+        display(ipw.HBox([recording, button_record_output]))
+
+
     def add_new_institution(self):        
         """Record a new institution in the insitutions.txt file
         """
@@ -101,7 +164,7 @@ class DB:
         existing_columns = list(db_objects.columns)
 
         creators_file = pd.read_csv(self.folder_db / 'object_creators.txt')
-        creators = [f'{x[0]}, {x[1]}' for x in creators_file.values]
+        creators = [f'{x[0]}, {x[1]}' if isinstance(x[1],str) else x[0] for x in creators_file.values]
         
         types_file = open(self.folder_db / r'object_types.txt', 'r').read()
         types = types_file.split("\n")        
@@ -280,10 +343,9 @@ class DB:
                 button_record_output.clear_output(wait=True)
 
                 db_objects_file = self.folder_db / 'DB_objects.csv'
-                db_objects = pd.read_csv(db_objects_file)                
-
-                creators_file = open(self.folder_db  / r'object_creators.txt', 'r').read().splitlines()
-                creators = creators_file 
+                db_objects = pd.read_csv(db_objects_file)            
+                                
+                creators = [f'{x[0]}, {x[1]}' if isinstance(x[1],str) else x[0] for x in self.get_creators().values]
 
                 owners_file = open(self.folder_db  / r'institutions.txt', 'r').read().splitlines()
                 owners = owners_file             
@@ -316,7 +378,10 @@ class DB:
                 if object_creator.value not in creators:                    
 
                     creator_surname = object_creator.value.split(',')[0].strip()
-                    creator_name = object_creator.value.split(',')[1].strip()
+                    try:
+                        creator_name = object_creator.value.split(',')[1].strip()
+                    except IndexError:
+                        creator_name = ''
                     
                     df_creators = pd.read_csv(self.folder_db / 'object_creators.txt')
                     df_creators = pd.concat([df_creators, pd.DataFrame(data=[creator_surname,creator_name], index=['surname','name']).T])
