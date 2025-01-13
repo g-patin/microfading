@@ -408,8 +408,16 @@ def MFT_fotonowy(files: list, filenaming:Optional[str] = 'none', folder:Optional
                 object_type = df_info.loc['object_type']['value']
                 filename = f'{project_id}_{meas_id}_{group}_{group_description}_{object_type}_{date}'
 
-            elif isinstance(filenaming, list):                
-                filename = "_".join([df_info.loc[x]['value'].split("_")[0] if "_" in df_info.loc[x]['value'] else df_info.loc[x]['value'] for x in filenaming])
+            elif isinstance(filenaming, list):
+
+                if 'date' in filenaming:
+                    new_df_info = df_info.copy()
+                    new_df_info.loc['date'] = str(df_info.loc['date_time']['value'].date())                    
+
+                    filename = "_".join([new_df_info.loc[x]['value'].split("_")[0] if "_" in new_df_info.loc[x]['value'] else new_df_info.loc[x]['value'] for x in filenaming])                    
+
+                else:                                  
+                    filename = "_".join([df_info.loc[x]['value'].split("_")[0] if "_" in df_info.loc[x]['value'] else df_info.loc[x]['value'] for x in filenaming])
                
                
             # export the dataframes to an excel file
