@@ -568,7 +568,7 @@ def register_references():
 
 
 
-def process_rawdata(files: list, device: str, filenaming:Optional[str] = 'none', folder:Optional[str] = '.', db:Optional[bool] = False, comment:Optional[str] = '', authors:Optional[str] = 'XX', white_reference:Optional[str] = 'default', interpolation:Optional[str] = 'He', step:Optional[float | int] = 0.1, delete_files:Optional[bool] = True):
+def process_rawdata(files: list, device: str, filenaming:Optional[str] = 'none', folder:Optional[str] = '.', db:Optional[bool] = False, comment:Optional[str] = '', authors:Optional[str] = 'XX', white_reference:Optional[str] = 'default', interpolation:Optional[str] = 'He', step:Optional[float | int] = 0.1, delete_files:Optional[bool] = True, return_filename:Optional[bool] = True):
     """Process the microfading raw files created by the software that performed the microfading analysis. 
 
     Parameters
@@ -624,7 +624,7 @@ def process_rawdata(files: list, device: str, filenaming:Optional[str] = 'none',
         device_nb = device.split('_')[1]
 
         if device_type.lower() == 'fotonowy':
-            return process_rawfiles.MFT_fotonowy(files=files, filenaming=filenaming, folder=folder, db=db, comment=comment, device_nb=device_nb, authors=authors, white_reference=white_reference, interpolation=interpolation, step=step, delete_files=delete_files)
+            return process_rawfiles.MFT_fotonowy(files=files, filenaming=filenaming, folder=folder, db=db, comment=comment, device_nb=device_nb, authors=authors, white_reference=white_reference, interpolation=interpolation, step=step, delete_files=delete_files, return_filename=return_filename)
         
         elif device_type == 'sMFT':
             print('in construction !!')
@@ -633,7 +633,7 @@ def process_rawdata(files: list, device: str, filenaming:Optional[str] = 'none',
     else:
         device_nb = 'default'
         if device.lower() == 'fotonowy':            
-            return process_rawfiles.MFT_fotonowy(files=files, filenaming=filenaming, folder=folder, db=db, comment=comment, device_nb=device_nb, authors=authors, white_reference=white_reference, interpolation=interpolation, step=step, delete_files=delete_files) 
+            return process_rawfiles.MFT_fotonowy(files=files, filenaming=filenaming, folder=folder, db=db, comment=comment, device_nb=device_nb, authors=authors, white_reference=white_reference, interpolation=interpolation, step=step, delete_files=delete_files, return_filename=return_filename) 
     
 
 
@@ -1593,10 +1593,21 @@ class MFT(object):
         """Return the object id numbers corresponding to the input files.
         """
 
-        df_info = self.get_metadata(labels=['object_id'])
-        objects = sorted(set(df_info.values[0]))
+        metadata_parameters = self.get_metadata().index
 
-        return objects
+        if 'object_id' in metadata_parameters:
+
+            df_info = self.get_metadata(labels=['object_id'])
+            objects = sorted(set(df_info.values[0]))
+
+            return objects
+                   
+        else:
+            print(f'The info tab of the microfading interim file(s) {self.files} does not contain an object_id parameter.')
+            return None
+            
+            
+            
 
 
     def compute_mean(self, return_data:Optional[bool] = True, criterion:Optional[str] = 'group', save:Optional[bool] = False, folder:Optional[str] = '.', filename:Optional[str] = 'default'):
@@ -2062,14 +2073,15 @@ class MFT(object):
 
         # Retrieve the metadata
         info = self.get_metadata()
-        object_info = info.loc['object_type'].values[0]
-        object_technique = info.loc['object_technique'][0]
-        group_nb = info.loc['group'].values[0]
-        group_descriptions = info.loc['group_description'].values
-        group_description = group_descriptions[0]
+        ids = [x for x in self.get_meas_ids if 'BW' not in x] 
 
-        ids = [x for x in self.get_meas_ids if 'BW' not in x]
-        meas_nbs = [x.split('.')[-1] for x in ids]
+        if 'group_description' in info.index:                
+            group_descriptions = info.loc['group_description'].values
+
+        else:
+            group_descriptions = [''] * len(self.files)
+               
+        
 
         # Define the colour of the curves
         if colors == 'sample':
@@ -2331,14 +2343,15 @@ class MFT(object):
         
         # Retrieve the metadata
         info = self.get_metadata()
-        object_info = info.loc['object_type'].values[0]
-        object_technique = info.loc['object_technique'][0]
-        group_nb = info.loc['group'].values[0]
-        group_descriptions = info.loc['group_description'].values
-        group_description = group_descriptions[0]
-
         ids = [x for x in self.get_meas_ids]
         meas_nbs = [x.split('.')[-1] for x in ids]
+
+        if 'group_description' in info.index:                
+            group_descriptions = info.loc['group_description'].values
+
+        else:
+            group_descriptions = [''] * len(self.files)
+               
 
         # Set the labels values
         if legend_labels == 'default':                       
@@ -2410,16 +2423,20 @@ class MFT(object):
 
         spectra : Optional[str], optional
             Define which spectra to display, by default 'i'
-            Use 'i' for initial spectral, 'f' for final spectra, 'i+f' for initial and final spectra, or 'all' for all the spectra.
+            'i' for initial spectral, 
+            'f' for final spectra,
+            'i+f' for initial and final spectra, 
+            'all' for all the spectra, 
+            'doses' for spectra at different dose values indicated by the dose_unit and dose_values parameters
 
         dose_unit : str, optional
             Unit of the light energy dose, by default 'He'
-            Any of the following units can be used: 'He', 'Hv', 't'. Where 'He' corresponds to radiant energy (MJ/m2), 'Hv' to exposure dose (Mlxh), and 't' to times (sec)
+            Any of the following units can be used: 'He', 'Hv', 't'. Where 'He' corresponds to radiant energy (MJ/m2), 'Hv' to exposure dose (Mlxh), and 't' to times (sec). It only works if the 'spectra' parameters has been set to 'doses'.
 
         dose_values : Union[int, float, list, tuple], optional
             Values of the light dose energy, by default 'all'
             A single value (integer or float number), a list of multiple numerical values, or range values with a tuple (start, end, step) can be entered.
-            When 'all', it takes the values found in the data. 
+            When 'all', it takes the values found in the data. It only works if the 'spectra' parameters has been set to 'doses'.
 
         spectral_mode : string, optional
             When 'R', it returns the reflectance spectra            
@@ -2484,14 +2501,13 @@ class MFT(object):
 
         # Retrieve the metadata
         info = self.get_metadata()
-        object_info = info.loc['object_type'].values[0]
-        object_technique = info.loc['object_technique'][0]
-        group_nb = info.loc['group'].values[0]
-        group_descriptions = info.loc['group_description'].values
-        group_description = group_descriptions[0]
 
-        ids = [x for x in self.get_meas_ids if 'BW' not in x]
-        meas_nbs = [x.split('.')[-1] for x in ids]
+        if 'group_description' in info.index:                
+            group_descriptions = info.loc['group_description'].values
+
+        else:
+            group_descriptions = [''] * len(self.files)
+
 
         # Define the colour of the curves
         if colors == 'sample':
@@ -2527,10 +2543,9 @@ class MFT(object):
             
             ls = ['-', '--'] * len(data_sp)
             lw = [3,2] * len(data_sp)
-            black_lines = ['k'] * len(data_sp)
-            print(colors)
+            black_lines = ['k'] * len(data_sp)            
             colors = list(itertools.chain.from_iterable(zip(colors, black_lines)))            
-            print(colors)
+            
 
             if legend_labels == 'default':
                 meas_labels = [f'{x}-{y}' for x,y in zip(self.get_meas_ids,group_descriptions)]
@@ -2637,11 +2652,12 @@ class MFT(object):
                  
         # Retrieve the metadata
         info = self.get_metadata()
-        object_info = info.loc['object_type'].values[0]
-        object_technique = info.loc['object_technique'][0]
-        group_nb = info.loc['group'].values[0]
-        group_descriptions = info.loc['group_description'].values
-        group_description = group_descriptions[0]
+
+        if 'group_description' in info.index:                
+            group_descriptions = info.loc['group_description'].values
+
+        else:
+            group_descriptions = [''] * len(self.files)        
         
         
         # Define the colour of the curves
