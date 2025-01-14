@@ -14,7 +14,7 @@ from . import MFT_info_dictionaries
 from . import MFT_info_templates
 
 
-def MFT_fotonowy(files: list, filenaming:Optional[str] = 'none', folder:Optional[str] = '.', db:Optional[bool] = False, comment:Optional[str] = '', device_nb:Optional[str] = 'default', authors:Optional[str] = 'XX', white_reference:Optional[bool] = 'default', interpolation:Optional[str] = 'He', step:Optional[float | int] = 0.1, average:Optional[int] = 20, background:Optional[str] = 'black', delete_files:Optional[bool] = True):
+def MFT_fotonowy(files: list, filenaming:Optional[str] = 'none', folder:Optional[str] = '.', db:Optional[bool] = False, comment:Optional[str] = '', device_nb:Optional[str] = 'default', authors:Optional[str] = 'XX', white_reference:Optional[bool] = 'default', interpolation:Optional[str] = 'He', step:Optional[float | int] = 0.1, average:Optional[int] = 20, background:Optional[str] = 'black', delete_files:Optional[bool] = True, return_filename:Optional[bool] = True):
 
             
     # check whether the objects and projects databases have been created
@@ -234,7 +234,7 @@ def MFT_fotonowy(files: list, filenaming:Optional[str] = 'none', folder:Optional
 
             df_info = pd.DataFrame.from_dict(dic_infos).T 
             
-
+            
             if db == False:          
 
                 df_info.loc['duration_min'] = duration_min
@@ -249,8 +249,8 @@ def MFT_fotonowy(files: list, filenaming:Optional[str] = 'none', folder:Optional
                 df_info.loc['Curr'] = current
                 df_info = df_info.rename(index={'Curr': 'current_mA'})
 
-                df_info.index.name = 'parameters'
-                df_info.columns = ['values']  
+                df_info.index.name = 'parameter'
+                df_info.columns = ['value']  
                 df_info = df_info.reset_index()
 
             else:
@@ -347,7 +347,7 @@ def MFT_fotonowy(files: list, filenaming:Optional[str] = 'none', folder:Optional
                 meas_id = f'MF.{object_id}.{meas_nb}'
                 spec_comp = 'SCE_excluded'
 
-                int_time = df_info.loc['Sample integration time [ms]'].values[0]
+                int_time = np.int32(df_info.loc['Sample integration time [ms]'].values[0])
                 fwhm = MFT_info_dictionaries.beam_FWHM[LED_nb]
 
                 area = pi * (((fwhm/1e6)/2)**2)
@@ -367,7 +367,7 @@ def MFT_fotonowy(files: list, filenaming:Optional[str] = 'none', folder:Optional
                     average, 
                     duration_min, 
                     interval_sec,
-                    "1",
+                    1,
                     "D65",
                     "10deg",
                 ]
@@ -394,7 +394,7 @@ def MFT_fotonowy(files: list, filenaming:Optional[str] = 'none', folder:Optional
                     " "] + project_info + [" "] + object_info + device_info + analysis_info + beam_info
 
                 df_info = pd.DataFrame({'parameter':info_parameters})
-                df_info["value"] = pd.Series(info_values)
+                df_info["value"] = pd.Series(info_values)            
             
             df_info = df_info.set_index('parameter')
 
@@ -441,7 +441,13 @@ def MFT_fotonowy(files: list, filenaming:Optional[str] = 'none', folder:Optional
             
             print(f'{raw_file_cl} has been successfully processed !')
             
-            return 
+
+            ###### DELETE FILE #######
+            if return_filename:
+                return Path(folder) / f'{filename}.xlsx'
+            else:
+                return None
+            
         
 
 
