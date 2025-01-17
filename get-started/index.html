@@ -65,6 +65,11 @@
     <label class="md-overlay" for="__drawer"></label>
     <div data-md-component="skip">
       
+        
+        <a href="#1-do-you-have-microfading-data-files" class="md-skip">
+          Skip to content
+        </a>
+      
     </div>
     <div data-md-component="announce">
       
@@ -292,6 +297,17 @@
       
       
       
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    Get started
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
       <a href="./" class="md-nav__link md-nav__link--active">
         
   
@@ -301,6 +317,59 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-do-you-have-microfading-data-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Do you have microfading data files?
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-central-role-of-the-mft-class" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. Central role of the MFT class
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-three-keywords-function-get-plot-compute" class="md-nav__link">
+    <span class="md-ellipsis">
+      3. Three keywords function: get, plot, compute
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-use-the-databases" class="md-nav__link">
+    <span class="md-ellipsis">
+      4. Use the databases
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
       
     </li>
   
@@ -646,6 +715,50 @@
   
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-do-you-have-microfading-data-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Do you have microfading data files?
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-central-role-of-the-mft-class" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. Central role of the MFT class
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-three-keywords-function-get-plot-compute" class="md-nav__link">
+    <span class="md-ellipsis">
+      3. Three keywords function: get, plot, compute
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-use-the-databases" class="md-nav__link">
+    <span class="md-ellipsis">
+      4. Use the databases
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -662,10 +775,8 @@
   <h1>Get started</h1>
 
 <p>In this section, we will give you all the essential information to correctly start using the <code>microfading</code> package.</p>
-<ol>
-<li>
-<p><strong>Do you have microfading data files?</strong></p>
-<p>The whole package is based on microfading data files that you either obtained yourself when performing microfading measurements or obtained from someone else. They consists of excel files with a specific structure organizing the data inside the files. Check the <a href="https://g-patin.github.io/microfading/datafiles/">datafiles section</a> for more information about it. </p>
+<h2 id="1-do-you-have-microfading-data-files">1. <strong>Do you have microfading data files?</strong><a class="headerlink" href="#1-do-you-have-microfading-data-files" title="Permanent link">&para;</a></h2>
+<p>The whole package is based on microfading data files that you either obtained yourself when performing microfading measurements or obtained from someone else. Each file corresponds to a single microfading measurement. The files consist of excel files with a specific structure organizing the data inside the files. Check the <a href="https://g-patin.github.io/microfading/datafiles/">datafiles section</a> for more information about it. </p>
 <p>If you don't have any microfading files, the package has a function to load microfading files, so that you can use these files to play with the functionalities of the package (see <a href="https://g-patin.github.io/microfading/get_datasets/">get_datasets</a> section).  </p>
 <p>If you have files, the following lines of code shows how you can import them in the jupyter notebook:
 &nbsp;</p>
@@ -680,25 +791,21 @@
 <span class="n">files</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">glob</span><span class="p">(</span><span class="s1">&#39;*BW1*MFT*&#39;</span><span class="p">))</span>
 <span class="n">files</span>
 </code></pre></div>
-<p><div class="output-area">
+<div class="output-area">
 <pre>[PosixPath('/home/username/Documents/MFT/2024-144_MF.BWS002.G01_avg_BW1_model_2024-07-30_MFT2.xlsx'),
 PosixPath('/home/username/Documents/MFT/2024-144_MF.BWS003.G01_avg_BW1_model_2024-08-02_MFT2.xlsx')]
 </pre>
 </div>
-&nbsp;</p>
-</li>
-<li>
-<p><strong>Central role of the <code>MFT</code> class</strong></p>
-<p>Once you have selected microfading files and encapsulated them inside a python list, you will need to create an instance of the <code>MFT</code> class passing the variable for your microfading files as argument (see code below). All the functions provided by the package can only be accessed through the <code>MFT</code> class.<br />
+<p>&nbsp;</p>
+<h2 id="2-central-role-of-the-mft-class">2. <strong>Central role of the <code>MFT</code> class</strong><a class="headerlink" href="#2-central-role-of-the-mft-class" title="Permanent link">&para;</a></h2>
+<p>Once you have selected microfading files and encapsulated them inside a python list, you will need to create an instance of the <code>MFT</code> class passing the variable for your microfading files as argument (see code below). Most of the functions provided by the package can only be accessed through the <code>MFT</code> class.<br />
 &nbsp;</p>
 <div class="highlight"><pre><span></span><code><span class="kn">import</span> <span class="nn">microfading</span> <span class="k">as</span> <span class="nn">mf</span>
 </code></pre></div>
 <p><div class="highlight"><pre><span></span><code><span class="n">m</span> <span class="o">=</span> <span class="n">mf</span><span class="o">.</span><span class="n">MFT</span><span class="p">(</span><span class="n">files</span><span class="o">=</span><span class="n">files</span><span class="p">)</span>
 </code></pre></div>
 &nbsp;</p>
-</li>
-<li>
-<p><strong>Three keywords function: get, plot, compute</strong></p>
+<h2 id="3-three-keywords-function-get-plot-compute">3. <strong>Three keywords function: get, plot, compute</strong><a class="headerlink" href="#3-three-keywords-function-get-plot-compute" title="Permanent link">&para;</a></h2>
 <p>Once you have created an instance of the <code>MFT</code> class, you can access the functions. The name of each function starts by a verb: get, plot, or compute. Enter one of these verbs and use the auto-completion tool (<code>Shift + Tab</code>) to display a list of available functions.</p>
 <figure>
 <p><img align="left" alt="Alt text" class="img-medium" src="../images/mf_functions.png" /></p>
@@ -713,8 +820,9 @@ PosixPath('/home/username/Documents/MFT/2024-144_MF.BWS003.G01_avg_BW1_model_202
 <p>Play with the argument values of functions </p>
 </figcaption>
 </figure>
-</li>
-</ol>
+<h2 id="4-use-the-databases">4. <strong>Use the databases</strong><a class="headerlink" href="#4-use-the-databases" title="Permanent link">&para;</a></h2>
+<p>If you are planning to perform microfading measurements more than once, we advise you to make use of the databases. This will allow you to save metadata about the microfaded object in the excel data file, which can ultimately be used to perform queries. For example, you could ask to retrieve all measurements performed on a given material or on objects created by a specific artist,etc. Unfortunately, such as a possibility has not been implemented yet.</p>
+<p>To start using the databases, you will first need to create them and fill them with some information. To learn how to create databases, see the <a href="https://g-patin.github.io/microfading/create-databases/">Create databases section</a>. To learn how to fill the databases and properly manage the, see the <a href="https://g-patin.github.io/microfading/databases-management/">Databases management section</a>. </p>
 
 
 

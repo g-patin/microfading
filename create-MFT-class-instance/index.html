@@ -65,6 +65,11 @@
     <label class="md-overlay" for="__drawer"></label>
     <div data-md-component="skip">
       
+        
+        <a href="#1-get-mft-data-files" class="md-skip">
+          Skip to content
+        </a>
+      
     </div>
     <div data-md-component="announce">
       
@@ -502,6 +507,17 @@
       
       
       
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    Create an MFT class instance
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
       <a href="./" class="md-nav__link md-nav__link--active">
         
   
@@ -511,6 +527,41 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-get-mft-data-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Get MFT data files
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-create-mft-class-instance" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. Create MFT class instance
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
       
     </li>
   
@@ -646,6 +697,32 @@
   
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-get-mft-data-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Get MFT data files
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-create-mft-class-instance" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. Create MFT class instance
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -662,21 +739,24 @@
   <h1>Create an MFT class instance</h1>
 
 <p>The functions provided by the microfading package only work on an instance of a microfading test class (MFT). The creation of an instance of a microfading class is a two-steps procedure and is described below:</p>
-<ol>
-<li>Retrieve a list of data files on which the functions provided by the class will be applied. The data files need to be constrained to a specific file structure (For more information about it, see the <a href="https://g-patin.github.io/microfading/datafiles">data files section</a>).</li>
-</ol>
-<p><div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span> <span class="nn">microfading</span> <span class="k">as</span> <span class="nn">mf</span>
+<h2 id="1-get-mft-data-files">1. <strong>Get MFT data files</strong><a class="headerlink" href="#1-get-mft-data-files" title="Permanent link">&para;</a></h2>
+<p>Retrieve a list of data files on which the functions provided by the class will be applied. The data files need to be constrained to a specific file structure (For more information about it, see the <a href="https://g-patin.github.io/microfading/datafiles">data files section</a>).</p>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span> <span class="nn">microfading</span> <span class="k">as</span> <span class="nn">mf</span>
 </code></pre></div>
 <div class="highlight"><pre><span></span><code><span class="c1"># Here we are using the test data, but you should use your own data files</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">files</span> <span class="o">=</span> <span class="n">mf</span><span class="o">.</span><span class="n">get_datasets</span><span class="p">()</span>
-</code></pre></div></p>
-<ol>
-<li>Create the instance using the files as the main parameter.</li>
-</ol>
-<div class="highlight"><pre><span></span><code><span class="o">&gt;&gt;&gt;</span> <span class="n">mf_data</span> <span class="o">=</span> <span class="n">mf</span><span class="o">.</span><span class="n">MFT</span><span class="p">(</span><span class="n">files</span><span class="o">=</span><span class="n">files</span><span class="p">)</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">mf_data</span>
-<span class="n">Microfading</span> <span class="n">data</span> <span class="k">class</span> <span class="err">- </span><span class="nc">Number</span> <span class="n">of</span> <span class="n">files</span> <span class="o">=</span> <span class="mi">5</span>
+<span class="n">files</span> <span class="o">=</span> <span class="n">mf</span><span class="o">.</span><span class="n">get_datasets</span><span class="p">()</span>
 </code></pre></div>
+<p>&nbsp;</p>
+<h2 id="2-create-mft-class-instance">2. <strong>Create MFT class instance</strong><a class="headerlink" href="#2-create-mft-class-instance" title="Permanent link">&para;</a></h2>
+<p>Create the instance using the files as the main parameter.</p>
+<div class="highlight"><pre><span></span><code><span class="n">mc</span> <span class="o">=</span> <span class="n">mf</span><span class="o">.</span><span class="n">MFT</span><span class="p">(</span><span class="n">files</span><span class="o">=</span><span class="n">files</span><span class="p">)</span> <span class="c1"># mc stands for microfading class</span>
+<span class="n">mc</span>
+</code></pre></div>
+<div class="output-area">
+<pre>
+Microfading data class - Number of files = 5
+</pre>
+</div>
 
 
 

@@ -362,15 +362,16 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#add-a-new-project" class="md-nav__link">
+  <a href="#addregister-functions" class="md-nav__link">
     <span class="md-ellipsis">
-      Add a new project
+      Add/Register functions
     </span>
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
+    <nav class="md-nav" aria-label="Add/Register functions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
   <a href="#add-a-new-object" class="md-nav__link">
     <span class="md-ellipsis">
       Add a new object
@@ -378,17 +379,23 @@
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#add-a-new-person" class="md-nav__link">
-    <span class="md-ellipsis">
-      Add a new person
-    </span>
-  </a>
+        
+      </ul>
+    </nav>
   
 </li>
       
         <li class="md-nav__item">
+  <a href="#update-functions" class="md-nav__link">
+    <span class="md-ellipsis">
+      Update functions
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Update functions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
   <a href="#update-project-parameters" class="md-nav__link">
     <span class="md-ellipsis">
       Update project parameters
@@ -396,13 +403,18 @@
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
+        
+          <li class="md-nav__item">
   <a href="#update-object-parameters" class="md-nav__link">
     <span class="md-ellipsis">
       Update object parameters
     </span>
   </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -749,15 +761,16 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#add-a-new-project" class="md-nav__link">
+  <a href="#addregister-functions" class="md-nav__link">
     <span class="md-ellipsis">
-      Add a new project
+      Add/Register functions
     </span>
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
+    <nav class="md-nav" aria-label="Add/Register functions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
   <a href="#add-a-new-object" class="md-nav__link">
     <span class="md-ellipsis">
       Add a new object
@@ -765,17 +778,23 @@
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#add-a-new-person" class="md-nav__link">
-    <span class="md-ellipsis">
-      Add a new person
-    </span>
-  </a>
+        
+      </ul>
+    </nav>
   
 </li>
       
         <li class="md-nav__item">
+  <a href="#update-functions" class="md-nav__link">
+    <span class="md-ellipsis">
+      Update functions
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Update functions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
   <a href="#update-project-parameters" class="md-nav__link">
     <span class="md-ellipsis">
       Update project parameters
@@ -783,13 +802,18 @@
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
+        
+          <li class="md-nav__item">
   <a href="#update-object-parameters" class="md-nav__link">
     <span class="md-ellipsis">
       Update object parameters
     </span>
   </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -811,23 +835,47 @@
   <h1>Databases management</h1>
 
 <p>The microfading package gives you the possibility to implement databases where the information related to the objects and projects can be stored. The main advantage of having databases is to connect metadata to the analytical data when processing raw files. </p>
-<p>This section implies that you have created the database files. If that is not the case, look at the section on how to <a href="https://g-patin.github.io/microfading/create-databases/">create empty databases</a>.</p>
+<p>This section implies that you have created the database files. If that is not the case, look at the section on how to <a href="https://g-patin.github.io/microfading/create-databases/">create empty databases</a>. If you want to know whether databases were already created, use the following function:</p>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span> <span class="nn">microfading</span> <span class="k">as</span> <span class="nn">mf</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><span class="n">mf</span><span class="o">.</span><span class="n">DB</span><span class="p">()</span>
+</code></pre></div>
+<div class="output-area">
+<pre>
+All the databases were created and can be found in the following directory: /home/john/Documents/MFT/databases
+</pre>
+</div>
+
+<p>&nbsp;</p>
 <p>The microfading packages contains several functions to manage the databases:</p>
 <ul>
-<li>Get functions: retrieve information contains in the databases</li>
-<li>Add functions: add a new item in the databases</li>
-<li>Update functions: modify the recording parameters of the databases</li>
+<li><strong>Get functions</strong>: retrieve information contains in the databases</li>
+<li><strong>Add or register functions</strong>: add a new item in the databases</li>
+<li><strong>Update functions</strong>: modify the recording parameters of the databases</li>
 </ul>
-<h2 id="get-functions">Get functions<a class="headerlink" href="#get-functions" title="Permanent link">&para;</a></h2>
-<p>There are 5 get functions:</p>
+<h2 id="get-functions"><strong>Get functions</strong><a class="headerlink" href="#get-functions" title="Permanent link">&para;</a></h2>
+<p>There are eight <em>get</em> functions:</p>
 <ul>
-<li><strong>get_path_DB()</strong> : returns the absolute path where the databases are stored on your local computer</li>
-<li><strong>get_DB()</strong> : returns the databases as pandas dataframes</li>
-<li><strong>get creators()</strong> : returns a list of names and surnames corresponding to the persons that created the microfaded objects.</li>
-<li><strong>get_institutions()</strong> : returns a list of institutions that own the microfaded objects.</li>
-<li><strong>get_persons()</strong> : returns a list of persons that performed the microfading analyses.</li>
+<li><code>get_path_DB()</code> : returns the absolute path where the databases are stored on your local computer</li>
+<li><code>get_DB()</code> : returns the databases as pandas dataframes</li>
+<li><code>get creators()</code> : returns a list of names and surnames corresponding to the persons that created the microfaded objects.</li>
+<li><code>get_institutions()</code> : returns a list of institutions that own the microfaded objects.</li>
+<li><code>get_objects()</code> : returns a list of the microfaded objects</li>
+<li><code>get_persons()</code> : returns a list of persons that performed the microfading analyses.</li>
+<li><code>get_devices()</code> : returns a list of the registered microfading devices.</li>
+<li><code>get_white_references()</code> : returns a list of the registered white standard references.</li>
 </ul>
-<h2 id="add-a-new-project">Add a new project<a class="headerlink" href="#add-a-new-project" title="Permanent link">&para;</a></h2>
+<h2 id="addregister-functions"><strong>Add/Register functions</strong><a class="headerlink" href="#addregister-functions" title="Permanent link">&para;</a></h2>
+<p>There are seven <em>add/register</em> functions:</p>
+<ul>
+<li><code>add_new_creator()</code> : record information about a new object creator (artist, institution, etc.).</li>
+<li><code>add_new_institution()</code> : record information about a new institution.</li>
+<li><code>add_new_object()</code> : record information about a new object.</li>
+<li><code>add_new_person()</code> : record information about a new person performing microfading measurements.</li>
+<li><code>add_new_project()</code> : record information about a new project.</li>
+<li><code>register_devices()</code> : register a new microfading device.</li>
+<li><code>register_references()</code> : register a new white standard reference.</li>
+</ul>
 <div class="highlight"><pre><span></span><code><span class="kn">import</span> <span class="nn">microfading</span> <span class="k">as</span> <span class="nn">mf</span>
 </code></pre></div>
 <div class="highlight"><pre><span></span><code><span class="n">mf</span><span class="o">.</span><span class="n">add_new_project</span><span class="p">()</span>
@@ -841,10 +889,15 @@
 
 <div class="highlight"><pre><span></span><code><span class="n">mf</span><span class="o">.</span><span class="n">add_new_project</span><span class="p">()</span>
 </code></pre></div>
-<h2 id="add-a-new-object">Add a new object<a class="headerlink" href="#add-a-new-object" title="Permanent link">&para;</a></h2>
-<h2 id="add-a-new-person">Add a new person<a class="headerlink" href="#add-a-new-person" title="Permanent link">&para;</a></h2>
-<h2 id="update-project-parameters">Update project parameters<a class="headerlink" href="#update-project-parameters" title="Permanent link">&para;</a></h2>
-<h2 id="update-object-parameters">Update object parameters<a class="headerlink" href="#update-object-parameters" title="Permanent link">&para;</a></h2>
+<h3 id="add-a-new-object">Add a new object<a class="headerlink" href="#add-a-new-object" title="Permanent link">&para;</a></h3>
+<h2 id="update-functions"><strong>Update functions</strong><a class="headerlink" href="#update-functions" title="Permanent link">&para;</a></h2>
+<p>There are two <em>update</em> functions:</p>
+<ul>
+<li><code>update_DB_objects()</code> : add new categories to the objects database.</li>
+<li><code>update_DB_projects()</code> : add new categories to the projects database.</li>
+</ul>
+<h3 id="update-project-parameters">Update project parameters<a class="headerlink" href="#update-project-parameters" title="Permanent link">&para;</a></h3>
+<h3 id="update-object-parameters">Update object parameters<a class="headerlink" href="#update-object-parameters" title="Permanent link">&para;</a></h3>
 
 
 

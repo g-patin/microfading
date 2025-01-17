@@ -664,14 +664,21 @@
 <p>Creating databases is an operation that only needs to be performed one time using the <code>create_DB()</code> function (see below). Inside a choosen folder on your local computer, it will create a few empty files (csv and txt) in which information about microfading projects and objects can be recorded. </p>
 <div class="highlight"><pre><span></span><code><span class="kn">import</span> <span class="nn">microfading</span> <span class="k">as</span> <span class="nn">mf</span>
 </code></pre></div>
-<div class="highlight"><pre><span></span><code><span class="n">folder</span> <span class="o">=</span> <span class="n">Enter</span> <span class="n">a</span> <span class="n">desired</span> <span class="n">folder</span> <span class="n">path</span> <span class="c1"># e.g: &quot;home/john/Documents/MFT/databases&quot;</span>
+<div class="highlight"><pre><span></span><code><span class="n">folder</span> <span class="o">=</span> <span class="n">Enter</span> <span class="n">a</span> <span class="n">desired</span> <span class="n">folder</span> <span class="n">path</span> <span class="k">as</span> <span class="n">a</span> <span class="n">string</span>
+<span class="c1"># e.g: &quot;home/john/Documents/MFT/databases&quot;</span>
+
 <span class="n">mf</span><span class="o">.</span><span class="n">create_DB</span><span class="p">(</span><span class="n">folder</span><span class="o">=</span><span class="n">folder</span><span class="p">)</span>
 </code></pre></div>
 <p>If you want to know whether databases were created or you want to know where are the databases located, use the <code>folder_DB()</code> function. It will return the path of the folder where the databases are located.</p>
 <div class="highlight"><pre><span></span><code><span class="kn">import</span> <span class="nn">microfading</span> <span class="k">as</span> <span class="nn">mf</span>
 </code></pre></div>
-<div class="highlight"><pre><span></span><code><span class="n">mf</span><span class="o">.</span><span class="n">folder_DB</span><span class="p">()</span>
+<div class="highlight"><pre><span></span><code><span class="n">mf</span><span class="o">.</span><span class="n">DB</span><span class="p">()</span>
 </code></pre></div>
+<div class="output-area">
+<pre>
+All the databases were created and can be found in the following directory: /home/john/Documents/MFT/databases
+</pre>
+</div>
 
 
 
