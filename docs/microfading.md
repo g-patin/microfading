@@ -1,6 +1,6 @@
 ## Definition
 
-Microfadeometry can be defined as an analytical technique that assesses the lightfastness properties of objects. It consists of an artificial accelerated light ageing system which operates at a micro-level scale and is combined with a colour measurement device.
+Microfadeometry can be defined as an analytical technique that assesses the lightfastness properties of objects. It consists of an *artificial accelerated light ageing system* which operates at a micro-level scale and is combined with a colour measurement device.
 
 - It is **artificial** because the technique does not use natural light sources, like the sun, but artificial (man-made) light sources. The two most common light sources are xenon arc lamps and LEDs.
 

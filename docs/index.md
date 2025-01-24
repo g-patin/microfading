@@ -24,9 +24,11 @@ The package provies computational tools to ease the manipulation of microfading 
 	- Transform microfading numerical data into colored swatches
 	- Interactive plotting
 - **Data manipulation**
+	- Perform specific query on spectral and colorimetric data
 	- Compute mean and standard deviation values
 	- Compute delta values
-	- Perform specific query on spectral and colorimetric data
+	- Data fitting and extrapolation
+	
 	
 
 ## Website structure
@@ -37,7 +39,7 @@ The package provies computational tools to ease the manipulation of microfading 
 
 If you are using this package for a publication, please cite the package as follows: 
 
-- Patin, G., 2025, *Microfading*, Python Package, v.1.2.2, [https://github.com/g-patin/microfading](https://github.com/g-patin/microfading)
+- Patin, G., 2025, *Microfading*, Python Package, v.1.2.4, [https://github.com/g-patin/microfading](https://github.com/g-patin/microfading)
 
 ## Contributions
 

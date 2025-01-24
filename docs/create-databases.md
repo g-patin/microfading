@@ -6,7 +6,9 @@ import microfading as mf
 
 
 ```python
-folder = Enter a desired folder path # e.g: "home/john/Documents/MFT/databases"
+folder = Enter a desired folder path as a string
+# e.g: "home/john/Documents/MFT/databases"
+
 mf.create_DB(folder=folder)
 ```
 
@@ -18,5 +20,12 @@ import microfading as mf
 
 
 ```python
-mf.folder_DB()
+mf.DB()
 ```
+
+<div class="output-area">
+<pre>
+All the databases were created and can be found in the following directory: /home/john/Documents/MFT/databases
+</pre>
+</div>
+
