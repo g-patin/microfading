@@ -14,12 +14,12 @@ from . import MFT_info_dictionaries
 from . import MFT_info_templates
 
 
-def MFT_fotonowy(files: list, filenaming:Optional[str] = 'none', folder:Optional[str] = '.', db:Optional[bool] = False, comment:Optional[str] = '', device_nb:Optional[str] = 'default', authors:Optional[str] = 'XX', white_reference:Optional[bool] = 'default', interpolation:Optional[str] = 'He', step:Optional[float | int] = 0.1, average:Optional[int] = 20, background:Optional[str] = 'black', delete_files:Optional[bool] = True, return_filename:Optional[bool] = True):
+def MFT_fotonowy(files: list, filenaming:Optional[str] = 'none', folder:Optional[str] = '.', db:Optional[bool] = False, comment:Optional[str] = '', device_nb:Optional[str] = 'default', authors:Optional[str] = 'XX', white_reference:Optional[bool] = 'default', interpolation:Optional[str] = 'He', step:Optional[float | int] = 0.1, average:Optional[int] = 20, observer:Optional[str] = 'default', illuminant:Optional[str] = 'default', background:Optional[str] = 'black', delete_files:Optional[bool] = True, return_filename:Optional[bool] = True):
 
             
     # check whether the objects and projects databases have been created
-    if db:
-        DB = databases.DB()
+    DB = databases.DB()
+    if db:        
 
         if DB.folder_db is None or DB.folder_db == 'folder_path':
             return 'Databases have not been created. Please, create databases by running the function "create_DB" from the microfading package.'
@@ -31,9 +31,31 @@ def MFT_fotonowy(files: list, filenaming:Optional[str] = 'none', folder:Optional
         filenaming = 'none'
    
     # define parameters for colorimetric calculations
-    D65 = colour.SDS_ILLUMINANTS["D65"]
-    d65 = colour.CCS_ILLUMINANTS["cie_10_1964"]["D65"]
-    cmfs = colour.colorimetry.MSDS_CMFS_STANDARD_OBSERVER["CIE 1964 10 Degree Standard Observer"] 
+    observers = {        
+        '10deg': 'cie_10_1964',
+        '2deg' : 'cie_2_1931',
+    }
+    
+    cmfs_observers = {
+        '10deg': colour.colorimetry.MSDS_CMFS_STANDARD_OBSERVER["CIE 1964 10 Degree Standard Observer"],
+        '2deg': colour.colorimetry.MSDS_CMFS_STANDARD_OBSERVER["CIE 1931 2 Degree Standard Observer"] 
+    }
+
+    if illuminant == 'default':
+        if isinstance(DB.get_colorimetry_info(), str):
+            illuminant = 'D65'
+        else:
+            illuminant = DB.get_colorimetry_info().loc['illuminant']['value']
+
+    if observer == 'default':
+        if isinstance(DB.get_colorimetry_info(), str):
+            observer = '10deg'
+        else:
+            observer = DB.get_colorimetry_info().loc['observer']['value']
+
+    illuminant_SDS = colour.SDS_ILLUMINANTS[illuminant]
+    illuminant_CCS = colour.CCS_ILLUMINANTS[observers[observer]][illuminant]
+    cmfs = cmfs_observers[observer]
 
     # wanted wavelength range
     wanted_wl = pd.Index(np.arange(380,781), name='wavelength_nm')
@@ -157,11 +179,11 @@ def MFT_fotonowy(files: list, filenaming:Optional[str] = 'none', folder:Optional
             # calculate the LabCh values
             for col in df_sp_interp.columns:
                 sd = colour.SpectralDistribution(df_sp_interp[col], wanted_wl)
-                XYZ.append(colour.sd_to_XYZ(sd, cmfs, illuminant=D65))        
+                XYZ.append(colour.sd_to_XYZ(sd, cmfs, illuminant=illuminant_SDS))        
 
             XYZ = np.array(XYZ)
 
-            Lab = np.array([colour.XYZ_to_Lab(d / 100, d65) for d in XYZ])
+            Lab = np.array([colour.XYZ_to_Lab(d / 100, illuminant_CCS) for d in XYZ])
             LCh = np.array([colour.Lab_to_LCHab(d) for d in Lab])
                     
             L = ['value']
@@ -189,7 +211,7 @@ def MFT_fotonowy(files: list, filenaming:Optional[str] = 'none', folder:Optional
             for col in df_sp_vis.columns:
                 sp = df_sp_vis[col]
                 dR_val = np.sum(np.absolute(sp*100-sp_initial)) / len(sp_initial)           
-                dR_vis.append(np.round(dR_val,2))      
+                dR_vis.append(np.round(dR_val,3))      
                         
             # create the colorimetric dataframe
             df_cl = pd.DataFrame({'L*': L,
@@ -232,11 +254,15 @@ def MFT_fotonowy(files: list, filenaming:Optional[str] = 'none', folder:Optional
                 value = i[i.index(':')+2:]              
                 dic_infos[key]=[value]
 
+            dic_infos.pop('Illuminant') # remove the Illuminant info
+            dic_infos['meas_id'] = f'{dic_infos["Object"][0]}_{dic_infos["Sample"][0]}'
             df_info = pd.DataFrame.from_dict(dic_infos).T 
             
             
             if db == False:          
 
+                df_info.loc['illuminant'] = illuminant
+                df_info.loc['observer'] = observer
                 df_info.loc['duration_min'] = duration_min
                 df_info.loc['interval_sec'] = interval_sec
                 df_info.loc['numDataPoints'] = numDataPoints 
@@ -368,8 +394,8 @@ def MFT_fotonowy(files: list, filenaming:Optional[str] = 'none', folder:Optional
                     duration_min, 
                     interval_sec,
                     1,
-                    "D65",
-                    "10deg",
+                    illuminant,
+                    observer,
                 ]
 
                 # beam info                

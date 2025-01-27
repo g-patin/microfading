@@ -115,7 +115,7 @@ def bars(data, stds=None, coordinate='dE00', colors=None, fontsize=24, legend_la
     plt.show()
 
 
-def CIELAB(data, stds=None, colors=None, fontsize=24, legend_labels=[], title=None, title_fontsize=24, line=False, legend_position='in', legend_fontsize=20, legend_title='', save=False, path_fig='cwd', start_value=False, dE=False, return_data=False, *args, **kwargs):
+def CIELAB(data, stds=None, colors=None, fontsize=24, legend_labels=[], title=None, title_fontsize=24, line=False, legend_position='in', legend_fontsize=20, legend_title='', save=False, path_fig='cwd', start_value=False, dE=False, obs_ill=None, return_data=False, *args, **kwargs):
     """Plot the CIELAB coordinates of one or several datasets.
 
     Parameters
@@ -226,8 +226,11 @@ def CIELAB(data, stds=None, colors=None, fontsize=24, legend_labels=[], title=No
             Lb.scatter(L[0], b[0], marker = 'x', color='k', s=120, **kwargs)
             ab.scatter(a[0], b[0], marker = 'x', color='k', s=120, **kwargs)
             plot_aL = aL.scatter(a[0], L[0], marker = 'x', color='k', s=120, **kwargs) 
-
-            aL.legend([plot_aL], ['Start'], fontsize=fontsize-5)
+            
+            if obs_ill == None:
+                aL.legend([plot_aL], [f'Start'], fontsize=fontsize-5)
+            else:
+                aL.legend([plot_aL], [f'Start\n{obs_ill}'], fontsize=fontsize-5)
 
             # plot the dE values or the a*b* values
             if dE:
@@ -285,7 +288,7 @@ def CIELAB(data, stds=None, colors=None, fontsize=24, legend_labels=[], title=No
 
         elif legend_position == 'out':            
             ab.legend(loc='upper left',fontsize=legend_fontsize, title=legend_title, bbox_to_anchor=(1, 1), title_fontsize=legend_fontsize)
-    
+         
 
     plt.tight_layout()
     
@@ -421,7 +424,7 @@ def delta(data: list, yerr=None, dose_unit:Optional[list] = ['He'], coordinates:
         list_ls = [[ls_dic[x] for x in coordinates]] * len(data)
 
         if len(initial_values) > 0:            
-            print(initial_values)
+            
             dy_unit = [f'd{x}' if x in ['L*','a*','b*','C*','h'] else x for x in coordinates]
             dy_unit = [labels_eq[x] for x in dy_unit]
             #y_unit = [f'{x} ({x[1:]} init$ = {i})' for x,i in zip(y_unit, initial_values)]

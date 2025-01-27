@@ -52,6 +52,7 @@ labels_eq = {
 
 #### DATABASES RELATED FUNCTIONS ####
 
+
 def DB():
     "Check whether the databases files were created."
 
@@ -335,6 +336,32 @@ def get_devices():
     return DB.get_devices()
 
 
+def get_colorimetry_info():
+    """Retrieve the colorimetric information (observer and illuminant) recorded in the db_config.json file of the microfading package.
+
+    Returns
+    -------
+    pandas dataframe or string
+        It returns the information inside a dataframe if they have been recorded.
+    """
+
+    DB = databases.DB()    
+    return DB.get_colorimetry_info()
+
+
+def get_lighting_conditions():
+    """Retrieve the exposure lighting conditions recorded in the db_config.json file of the microfading package.
+
+    Returns
+    -------
+    pandas dataframe or string
+        It returns the information inside a dataframe if they have been recorded.
+    """
+
+    DB = databases.DB()    
+    return DB.get_lighting_conditions()
+
+
 def get_white_references():
     """Retrieve the list of white standard references that have been registered in the white_references.txt file.
 
@@ -568,7 +595,7 @@ def register_references():
 
 
 
-def process_rawdata(files: list, device: str, filenaming:Optional[str] = 'none', folder:Optional[str] = '.', db:Optional[bool] = False, comment:Optional[str] = '', authors:Optional[str] = 'XX', white_reference:Optional[str] = 'default', interpolation:Optional[str] = 'He', step:Optional[float | int] = 0.1, delete_files:Optional[bool] = True, return_filename:Optional[bool] = True):
+def process_rawdata(files: list, device: str, filenaming:Optional[str] = 'none', folder:Optional[str] = '.', db:Optional[bool] = False, comment:Optional[str] = '', authors:Optional[str] = 'XX', white_reference:Optional[str] = 'default', interpolation:Optional[str] = 'He', step:Optional[float | int] = 0.1, observer:Optional[str] = 'default', illuminant:Optional[str] = 'default', delete_files:Optional[bool] = True, return_filename:Optional[bool] = True):
     """Process the microfading raw files created by the software that performed the microfading analysis. 
 
     Parameters
@@ -610,6 +637,14 @@ def process_rawdata(files: list, device: str, filenaming:Optional[str] = 'none',
     step : [float  |  int], optional
         Interpolation step related to the scale previously mentioned ('He', 'Hv', 'time'), by default 0.1
 
+    observer : str, optional
+        Reference CIE *observer* in degree ('10deg' or '2deg'). by default 'default'.
+        When 'default', it fetches the observer value recorded in the db_config.json file of the package. If no value has been recorded, then it sets the observer value to '10deg'. 
+
+    illuminant : (str, optional)  
+        Reference CIE *illuminant*. It can be any value of the following list: ['A', 'B', 'C', 'D50', 'D55', 'D60', 'D65', 'D75', 'E', 'FL1', 'FL2', 'FL3', 'FL4', 'FL5', 'FL6', 'FL7', 'FL8', 'FL9', 'FL10', 'FL11', 'FL12', 'FL3.1', 'FL3.2', 'FL3.3', 'FL3.4', 'FL3.5', 'FL3.6', 'FL3.7', 'FL3.8', 'FL3.9', 'FL3.10', 'FL3.11', 'FL3.12', 'FL3.13', 'FL3.14', 'FL3.15', 'HP1', 'HP2', 'HP3', 'HP4', 'HP5', 'LED-B1', 'LED-B2', 'LED-B3', 'LED-B4', 'LED-B5', 'LED-BH1', 'LED-RGB1', 'LED-V1', 'LED-V2', 'ID65', 'ID50']. by default 'default'.
+        When 'default', it fetches the illuminant value recorded in the db_config.json file of the package. If no value has been recorded, then it sets the illuminant value to 'D65'.      
+
     delete_files : bool, optional
         Whether to delete the raw files
 
@@ -624,7 +659,7 @@ def process_rawdata(files: list, device: str, filenaming:Optional[str] = 'none',
         device_nb = device.split('_')[1]
 
         if device_type.lower() == 'fotonowy':
-            return process_rawfiles.MFT_fotonowy(files=files, filenaming=filenaming, folder=folder, db=db, comment=comment, device_nb=device_nb, authors=authors, white_reference=white_reference, interpolation=interpolation, step=step, delete_files=delete_files, return_filename=return_filename)
+            return process_rawfiles.MFT_fotonowy(files=files, filenaming=filenaming, folder=folder, db=db, comment=comment, device_nb=device_nb, authors=authors, white_reference=white_reference, interpolation=interpolation, step=step, observer=observer, illuminant=illuminant, delete_files=delete_files, return_filename=return_filename)
         
         elif device_type == 'sMFT':
             print('in construction !!')
@@ -633,7 +668,23 @@ def process_rawdata(files: list, device: str, filenaming:Optional[str] = 'none',
     else:
         device_nb = 'default'
         if device.lower() == 'fotonowy':            
-            return process_rawfiles.MFT_fotonowy(files=files, filenaming=filenaming, folder=folder, db=db, comment=comment, device_nb=device_nb, authors=authors, white_reference=white_reference, interpolation=interpolation, step=step, delete_files=delete_files, return_filename=return_filename) 
+            return process_rawfiles.MFT_fotonowy(files=files, filenaming=filenaming, folder=folder, db=db, comment=comment, device_nb=device_nb, authors=authors, white_reference=white_reference, interpolation=interpolation, step=step, observer=observer, illuminant=illuminant, delete_files=delete_files, return_filename=return_filename) 
+
+
+def set_colorimetry():
+    """Record the colorimetric information (observer and illuminant) in the db_config.json file of the microfading package.
+    """
+
+    DB = databases.DB()
+    return DB.set_colorimetry()
+
+
+def set_lighting_conditions():
+    """Record the exposure lighting conditions in the db_config.json file of the microfading package.
+    """
+
+    DB = databases.DB()
+    return DB.set_lighting_conditions()
     
 
 
@@ -1012,11 +1063,24 @@ class MFT(object):
         # Retrieve the data
         original_data = self.get_data(data='cl')
 
+        selected_data = []
+
+        for data in original_data:
+            if 'mean' in data.columns.get_level_values(1):
+                cl_data = data.xs(key='mean', axis=1, level=1)
+                doses_data = data.xs(key='value', axis=1, level=1)
+                
+                selected_data.append(pd.concat([doses_data,cl_data], axis=1))
+
+            else:
+                selected_data.append(data.xs(key='value', axis=1, level=1)) 
+
         #original_data = self.get_data(data='dE') if self.data_category == 'interim' else self.get_data(data='dE')[0].astype(float)
+                
 
         # Added the delta LabCh values to the data dataframes
         coordinates = ['L*', 'a*', 'b*', 'C*', 'h']
-        data = [d.assign(**{f'd{coord}': d[coord] - d[coord].values[0] for coord in coordinates}) for d in original_data]
+        data = [d.assign(**{f'd{coord}': d[coord] - d[coord].values[0] for coord in coordinates}) for d in selected_data]
                 
         # Select the wanted dose_unit and coordinate
         wanted_data = [x[[doses[dose_unit], coordinate]] for x in data]
@@ -1160,7 +1224,7 @@ class MFT(object):
         files = []        
                 
         for file in self.files:
-
+            
             df_info = pd.read_excel(file, sheet_name='info')
             df_sp = pd.read_excel(file, sheet_name='spectra', header=[0,1], index_col=0)
             df_cl = pd.read_excel(file, sheet_name='CIELAB', header=[0,1])                      
@@ -1466,17 +1530,19 @@ class MFT(object):
         return times_years
 
 
-    def get_Lab(self, illuminant:Optional[str] = 'D65', observer:Optional[str] = '10', dose_unit: Optional[str] = 'He', dose_values:Union[int, float, list, tuple] = 'all'):
+    def get_Lab(self, illuminant:Optional[str] = 'default', observer:Optional[str] = 'default', dose_unit: Optional[str] = 'He', dose_values:Union[int, float, list, tuple] = 'all'):
         """
         Retrieve the CIE L*a*b* values.
 
         Parameters
         ----------
         illuminant : (str, optional)  
-            Reference *illuminant* ('D65', or 'D50'). by default 'D65'.
+            Reference *illuminant* ('D65', or 'D50'). by default 'default'.
+            When 'default', it fetches the illuminant value recorded in the db_config.json file of the package. If no value has been recorded, then it sets the illuminant value to 'D65'.
  
         observer : (str|int, optional)
-            Reference *observer* in degree ('10' or '2'). by default '10'.
+            Reference *observer* in degree ('10' or '2'). by default 'default'.
+            When 'default', it fetches the observer value recorded in the db_config.json file of the package. If no value has been recorded, then it sets the observer value to '10'.
 
         dose_unit : Optional[str], optional
             Unit of the light dose energy, by default ['He']
@@ -1494,17 +1560,33 @@ class MFT(object):
         -------
         pandas dataframe
             It returns the L*a*b* values inside a dataframe where each column corresponds to a single file.
-        """        
-        observer = str(observer)
+        """    
+        DB = databases.DB()
 
-        illuminants = {'D65':colour.SDS_ILLUMINANTS['D65'], 'D50':colour.SDS_ILLUMINANTS['D50']}
+        if observer == 'default':
+            if isinstance(DB.get_colorimetry_info(), str):
+                observer = '10deg'
+            else:
+                observer = DB.get_colorimetry_info().loc['observer']['value']
+
+        else:
+            observer = f'{str(observer)}deg'
+
+
+        if illuminant == 'default':
+            if isinstance(DB.get_colorimetry_info(), str):
+                illuminant = 'D65'
+            else:
+                illuminant = DB.get_colorimetry_info().loc['illuminant']['value']
+        
+        
         observers = {
-            '10': 'cie_10_1964',
-            '2' : 'cie_2_1931',
+            '10deg': 'cie_10_1964',
+            '2deg' : 'cie_2_1931',
         }
         cmfs_observers = {
-            '10': colour.colorimetry.MSDS_CMFS_STANDARD_OBSERVER["CIE 1964 10 Degree Standard Observer"],
-            '2': colour.colorimetry.MSDS_CMFS_STANDARD_OBSERVER["CIE 1931 2 Degree Standard Observer"] 
+            '10deg': colour.colorimetry.MSDS_CMFS_STANDARD_OBSERVER["CIE 1964 10 Degree Standard Observer"],
+            '2deg': colour.colorimetry.MSDS_CMFS_STANDARD_OBSERVER["CIE 1931 2 Degree Standard Observer"] 
             }
         
         ccs_ill = colour.CCS_ILLUMINANTS[observers[observer]][illuminant]
@@ -1529,7 +1611,7 @@ class MFT(object):
                 wl = df.index
                 sd = colour.SpectralDistribution(sp,wl)                
 
-                XYZ = colour.sd_to_XYZ(sd,cmfs_observers[observer], illuminant=illuminants[illuminant])        
+                XYZ = colour.sd_to_XYZ(sd,cmfs_observers[observer], illuminant=colour.SDS_ILLUMINANTS[illuminant])        
                 Lab = np.round(colour.XYZ_to_Lab(XYZ/100,ccs_ill),3)               
                 Lab_values = pd.concat([Lab_values, pd.DataFrame(Lab, index=['L*','a*','b*']).T], axis=0)
                 Lab_values.index = np.arange(0,Lab_values.shape[0])
@@ -1540,7 +1622,6 @@ class MFT(object):
         return pd.concat(df_Lab, axis=1)           
     
     
-
     def get_doses(self, dose_unit:Union[str,list] = 'all', max_doses:Optional[bool] = False):
         """Retrieve the light energy doses related to each microfading measurement.
 
@@ -1605,9 +1686,6 @@ class MFT(object):
         else:
             print(f'The info tab of the microfading interim file(s) {self.files} does not contain an object_id parameter.')
             return None
-            
-            
-            
 
 
     def compute_mean(self, return_data:Optional[bool] = True, criterion:Optional[str] = 'group', save:Optional[bool] = False, folder:Optional[str] = '.', filename:Optional[str] = 'default'):
@@ -1968,56 +2046,104 @@ class MFT(object):
                 self.plot_delta()
 
   
-    def plot_bars(self, BWS_lines:Optional[bool] = True, coordinate:Optional[str] = 'dE00', dose_unit:Optional[str] = 'Hv', dose_value:Union[int, float] = 0.5, fontsize:Optional[int] = 24, colors=None):
+    def plot_bars(self, BWS_lines:Optional[bool] = True, coordinate:Optional[str] = 'dE00', dose_unit:Optional[str] = 'Hv', dose_value:Union[int, float] = 0.5, xlabels:Union[str, list] = 'default', fontsize:Optional[int] = 24, rotate_xlabels:Optional[int] = 0, position_xlabels:Optional[str] = 'center', position_text:Optional[tuple] = (0.03,0.92), colors:Union[str,float,list]=None):
 
         # ['L*','a*','b*','C*','h','dL*','da*','db*','dC*','dh','dE76','dE00','dR_vis']
-
-        all_data = self.get_cielab(coordinates=[coordinate], dose_unit=dose_unit)
-        print('Not yet fully implemented !!')
-        return
-
+      
+        # Define the light dose value      
+        doses_dic = {'He':'He_MJ/m2', 'Hv':'Hv_Mlxh', 't':'t_sec'}
         max_doses = [x.values[0] for x in self.get_doses(dose_unit=dose_unit, max_doses=True)]
 
         if dose_value > np.min(max_doses):
-            print(f'The choosen dose_value ({dose_value}) is bigger than one of the final dose values. Thus the dose_value has been set to {np.min(max_doses)}, which is the lowest final dose value.')
+            print(f'The choosen dose_value ({dose_value} {doses_dic[dose_unit].split("_")[1]}) is bigger than one of the final dose values. Thus the dose_value has been set to {np.min(max_doses)} {doses_dic[dose_unit].split("_")[1]}, which is the lowest final dose value.')
             dose_value = np.min(max_doses)
 
-        
-        wanted_data = [interp1d(x.index,x['dE00'].values)(dose_value) for x in all_data]
 
-        object_ids = [x for x in self.get_metadata().loc['object_id']]
-        meas_nbs = [x.split('.')[-1] for x in self.get_meas_ids]
-        meas_names = self.get_metadata().loc['object_name']
-        meas_types = self.get_metadata().loc['object_type']
-        srgbs = [x for x in self.get_sRGB().loc[0,:].clip(0,1).values.reshape(len(wanted_data),-1)]
+        # Define the labels on the x-axis
+        if xlabels == 'default':
+            xlabels = self.get_meas_ids
 
-        df_overview = pd.DataFrame({'x':meas_nbs, 'y':wanted_data, 'yerr':yerr, 'object':object_ids, 'name':meas_names, 'type':meas_types, 'srgb':srgbs})
-        df_overview.index.name = 'meas_id'
-        return df_overview
+        elif xlabels == 'meas_nb':
+            xlabels = [x.split('.')[-1] for x in self.get_meas_ids]
+
+        elif xlabels in [x for x in self.get_metadata().index if '[' not in x]:
+            xlabels = self.get_metadata(labels=xlabels).values
+
+        
+        # Define the colour of the bars
+        if colors == 'sample':
+            colors = [x for x in self.get_sRGB(dose_values=0).values.reshape(len(self.files),-1)]
+        
+        elif isinstance(colors, str):
+            colors = [colors] * len(self.files)
+
+        elif isinstance(colors, float):
+            colors = [str(colors)] * len(self.files)
+              
+
+        # Gather the data and relevant info inside a dataframe
+        all_data = self.get_cielab(coordinates=[coordinate], dose_unit=dose_unit, dose_values=dose_value)
+        cl_data = [x.iloc[0].values[0] for x in all_data]
+        cl_data_std = [x.iloc[0].values[1] if 'std' in x.columns.get_level_values(1) else 0 for x in all_data]
+
+        plot_data = {
+            'y': cl_data,
+            'y_std': cl_data_std, 
+            'xlabels': xlabels,
+            'type': self.get_metadata(labels='object_type').values,
+            'name': self.get_metadata(labels='object_name').values,
+            'colors': colors
+        }
+        
+        df_data = pd.DataFrame.from_dict(plot_data)
         
         
+        # Create the plot
         sns.set_theme(font='serif')
         fig, ax = plt.subplots(1,1, figsize=(15,8))
 
-        x = np.arange(0,len(wanted_data))
-        ax.bar(x=x, height=wanted_data)
+        if BWS_lines == True:         
+            
+            df_BWS = df_data[df_data['type'] == 'BWS']
+            df_data = df_data[df_data['type'] != 'BWS']
+
+            ls_dic = {'BW1':'-','BW2':'--','BW3':'-.','BW4':':'}
+            
+            for col in df_BWS.T.columns:
+                data_BWS = df_BWS.T[col]
+                ax.axhline(data_BWS['y'], color='blue', ls =ls_dic[data_BWS['name']], label=data_BWS['name'])
+                ax.axhspan(ymin=data_BWS['y']-data_BWS['y_std'], ymax=data_BWS['y']+data_BWS['y_std'], alpha=0.5, color='0.75', ec='none')        
+        
+
+        x = np.arange(0,len(df_data))
+        ax.bar(x=x, height=df_data['y'], yerr=df_data['y_std'], capsize=5, color=df_data['colors'], edgecolor='none')
 
         ax.xaxis.set_tick_params(labelsize=fontsize)
         ax.yaxis.set_tick_params(labelsize=fontsize)
 
+        ax.xaxis.grid() # horizontal lines only
+
         ax.set_xlabel('Microfading analyses numbers', fontsize=fontsize)
         ax.set_ylabel(labels_eq[coordinate], fontsize=fontsize)
 
-        ax.xaxis.grid() # horizontal lines only
-
         
+        ax.set_xticks(x)
+        ax.set_xticklabels(df_data['xlabels'], rotation=rotate_xlabels, ha=position_xlabels)
+
+        ax.text(x=position_text[0], y=position_text[1], s=f'Light dose = {dose_value} {doses_dic[dose_unit].split("_")[1]}', fontsize=fontsize-6, transform=ax.transAxes, ha='left', va='top')
+
+        if BWS_lines == True:
+            ax.legend(fontsize=fontsize-4)
+
         plt.tight_layout()
         plt.show()
 
+        
 
 
 
-    def plot_CIELAB(self, stds=[], dose_unit:Optional[str] = 'He', dose_values:Union[int, float, list, tuple] = 'all', colors:Union[str,list] = None, title:Optional[str] = None, fontsize:Optional[int] = 20, legend_labels:Union[str,list] = 'default', legend_position:Optional[str] = 'in', legend_fontsize:Optional[int] = 20, legend_title:Optional[str] = None, save:Optional[bool] = False, path_fig:Optional[str] = 'cwd'):
+
+    def plot_CIELAB(self, stds=[], dose_unit:Optional[str] = 'He', dose_values:Union[int, float, list, tuple] = 'all', colors:Union[str,list] = None, title:Optional[str] = None, fontsize:Optional[int] = 20, legend_labels:Union[str,list] = 'default', legend_position:Optional[str] = 'in', legend_fontsize:Optional[int] = 20, legend_title:Optional[str] = None, obs_ill:Optional[bool] = True, save:Optional[bool] = False, path_fig:Optional[str] = 'cwd'):
         """Plot the Lab values related to the microfading analyses.
 
         Parameters
@@ -2098,10 +2224,26 @@ class MFT(object):
             legend_labels = [f'{x}-{y}' for x,y in zip(self.get_meas_ids,group_descriptions)]
             legend_title = 'Measurement $n^o$'
 
-        return plotting.CIELAB(data=data_Lab, legend_labels=legend_labels, colors=colors, title=title, fontsize=fontsize, legend_fontsize=legend_fontsize, legend_position=legend_position, legend_title=legend_title, save=save, path_fig=path_fig)
+        # Whether to plot the observer and illuminant info
+        if obs_ill:
+            DB = databases.DB()
+            if isinstance(DB.get_colorimetry_info(), str):
+                observer = '10deg'
+                illuminant = 'D65'
+            else:
+                observer = DB.get_colorimetry_info().loc['observer']['value']
+                illuminant = DB.get_colorimetry_info().loc['illuminant']['value']
+
+            dic_obs = {'10deg':'$\mathrm{10^o}$', '2deg':'$\mathrm{2^o}$'}            
+            obs_ill = f'{dic_obs[observer]}-{illuminant}'
+        
+        else:
+            obs_ill = None
+
+        return plotting.CIELAB(data=data_Lab, legend_labels=legend_labels, colors=colors, title=title, fontsize=fontsize, legend_fontsize=legend_fontsize, legend_position=legend_position, legend_title=legend_title, obs_ill=obs_ill, save=save, path_fig=path_fig)
 
 
-    def plot_swatches_circle(self, light_doses: Optional[list] = [0,0.5,1,2,5,15], JND:Optional[list] = [1,2,3,5,10], dE:Optional[bool] = True, fontsize: Optional[int] = 24, equation:Optional[str] = 'c0*(x**c1) + c2', initial_params:Optional[List[float]] = [0.1, 0.1], save:Optional[bool] = False, path_fig:Optional[str] = 'cwd', title:Optional[str] = None, report:Optional[bool] = False): 
+    def plot_swatches_circle(self, light_doses: Optional[list] = [0,0.5,1,2,5,15], JND:Optional[list] = [1,2,3,5,10], dose_unit:Union[str,tuple] = 'Hv', dE:Optional[bool] = True, fontsize: Optional[int] = 24, equation:Optional[str] = 'c0*(x**c1) + c2', initial_params:Optional[List[float]] = [0.1, 0.1], save:Optional[bool] = False, path_fig:Optional[str] = 'cwd', title:Optional[str] = None, report:Optional[bool] = False): 
         """Plot the microfading data with circular colored patches. 
 
         Parameters
@@ -2114,6 +2256,10 @@ class MFT(object):
             Whether to plot circular patches of just noticeable differences, by default [1,2,3,5,10]
             NOT YET IMPLEMENTED
 
+        dose_unit : [str, tuple], optional
+            Unit of the light energy dose, by default 'Hv'
+            Any of the following units can be used: 'He', 'Hv', 't'. Where 'He' corresponds to radiant energy (MJ/m2), 'Hv' to exposure dose (Mlxh), and 't' to times (hours) (exh,50,10,365)
+        
         dE : bool, optional
             Whether to include the dE00 value between the background and each circular patche, by default True
 
@@ -2687,7 +2833,7 @@ class MFT(object):
         plotting.spectra(data=wanted_data, spectral_mode=spectral_mode, x_range=wl_range, colors=colors, fontsize_legend=legend_fontsize, legend_labels=legend_labels, legend_title=legend_title, title=title, fontsize=fontsize, derivation=derivation)
 
 
-    def set_illuminant(self, illuminant:Optional[str] = 'D65', observer:Optional[str] = '10'):
+    def get_illuminant(self, illuminant:Optional[str] = 'D65', observer:Optional[str] = '10'):
         """Set the illuminant values
 
         Parameters
@@ -2717,7 +2863,7 @@ class MFT(object):
         return CCS, SDS
 
      
-    def set_observer(self, observer:Optional[str] = '10'):
+    def get_observer(self, observer:Optional[str] = '10'):
         """Set the observer.
 
         Parameters
@@ -2755,16 +2901,18 @@ class MFT(object):
         return sp_derivation
     
 
-    def get_sRGB(self, illuminant='D65', observer='10', dose_unit: Optional[str] = 'He', dose_values:Union[int, float, list, tuple] = 'all', clip:Optional[bool] = True):
+    def get_sRGB(self, illuminant='default', observer='default', dose_unit: Optional[str] = 'He', dose_values:Union[int, float, list, tuple] = 'all', clip:Optional[bool] = True):
         """Compute the sRGB values. 
 
         Parameters
         ----------
         illuminant : (str, optional)  
-            Reference *illuminant* ('D65', or 'D50'). by default 'D65'.
+            Reference *illuminant* ('D65', or 'D50'). by default 'default'.
+            When 'default', it fetches the illuminant value recorded in the db_config.json file of the package. If no value has been recorded, then it sets the illuminant value to 'D65'.
  
         observer : (str|int, optional)
-            Reference *observer* in degree ('10' or '2'). by default '10'.
+            Reference *observer* in degree ('10' or '2'). by default 'default'.
+            When 'default', it fetches the observer value recorded in the db_config.json file of the package. If no value has been recorded, then it sets the observer value to '10'.
 
         dose_unit : Optional[str], optional
             Unit of the light dose energy, by default ['He']
@@ -2785,16 +2933,33 @@ class MFT(object):
         pandas dataframe
             It returns the sRGB values inside a dataframe where each column corresponds to a single file.
         """
-        observer = str(observer)
 
-        illuminants = {'D65':colour.SDS_ILLUMINANTS['D65'], 'D50':colour.SDS_ILLUMINANTS['D50']}
+        DB = databases.DB()
+
+        if observer == 'default':
+            if isinstance(DB.get_colorimetry_info(), str):
+                observer = '10deg'
+            else:
+                observer = DB.get_colorimetry_info().loc['observer']['value']
+
+        else:
+            observer = f'{str(observer)}deg'
+
+
+        if illuminant == 'default':
+            if isinstance(DB.get_colorimetry_info(), str):
+                illuminant = 'D65'
+            else:
+                illuminant = DB.get_colorimetry_info().loc['illuminant']['value']
+        
+        
         observers = {
-            '10': 'cie_10_1964',
-            '2' : 'cie_2_1931',
+            '10deg': 'cie_10_1964',
+            '2deg' : 'cie_2_1931',
         }
         cmfs_observers = {
-            '10': colour.colorimetry.MSDS_CMFS_STANDARD_OBSERVER["CIE 1964 10 Degree Standard Observer"],
-            '2': colour.colorimetry.MSDS_CMFS_STANDARD_OBSERVER["CIE 1931 2 Degree Standard Observer"] 
+            '10deg': colour.colorimetry.MSDS_CMFS_STANDARD_OBSERVER["CIE 1964 10 Degree Standard Observer"],
+            '2deg': colour.colorimetry.MSDS_CMFS_STANDARD_OBSERVER["CIE 1931 2 Degree Standard Observer"] 
             }
         
         ccs_ill = colour.CCS_ILLUMINANTS[observers[observer]][illuminant]
@@ -2821,7 +2986,7 @@ class MFT(object):
                 wl = df.index
                 sd = colour.SpectralDistribution(sp,wl)                
 
-                XYZ = colour.sd_to_XYZ(sd,cmfs_observers[observer], illuminant=illuminants[illuminant]) 
+                XYZ = colour.sd_to_XYZ(sd,cmfs_observers[observer], illuminant=colour.SDS_ILLUMINANTS[illuminant]) 
                 srgb = np.round(colour.XYZ_to_sRGB(XYZ / 100, illuminant=ccs_ill), 4)                        
                 srgb_values = pd.concat([srgb_values, pd.DataFrame(srgb, index=['R','G','B']).T], axis=0)
                 srgb_values.index = np.arange(0,srgb_values.shape[0])
@@ -2849,16 +3014,18 @@ class MFT(object):
         return wavelengths
 
 
-    def get_XYZ(self, illuminant:Optional[str] = 'D65', observer:Union[str,int] = '10', dose_unit: Optional[str] = 'He', dose_values:Union[int, float, list, tuple] = 'all'):
+    def get_XYZ(self, illuminant:Optional[str] = 'default', observer:Union[str,int] = 'default', dose_unit: Optional[str] = 'He', dose_values:Union[int, float, list, tuple] = 'all'):
         """Compute the XYZ values. 
 
         Parameters
         ----------
         illuminant : (str, optional)  
-            Reference *illuminant* ('D65', or 'D50'). by default 'D65'.
+            Reference *illuminant* ('D65', or 'D50'). by default 'default'.
+            When 'default', it fetches the illuminant value recorded in the db_config.json file of the package. If no value has been recorded, then it sets the illuminant value to 'D65'.
  
         observer : (str|int, optional)
-            Reference *observer* in degree ('10' or '2'). by default '10'.
+            Reference *observer* in degree ('10' or '2'). by default 'default'.
+            When 'default', it fetches the observer value recorded in the db_config.json file of the package. If no value has been recorded, then it sets the observer value to '10'.
 
         dose_unit : Optional[str], optional
             Unit of the light dose energy, by default ['He']
@@ -2877,14 +3044,28 @@ class MFT(object):
             It returns the XYZ values inside a dataframe where each column corresponds to a single file.
         """
 
-        observer = str(observer)
+        DB = databases.DB()
 
-        illuminants = {'D65':colour.SDS_ILLUMINANTS['D65'], 'D50':colour.SDS_ILLUMINANTS['D50']}
+        if observer == 'default':
+            if isinstance(DB.get_colorimetry_info(), str):
+                observer = '10deg'
+            else:
+                observer = DB.get_colorimetry_info().loc['observer']['value']
+
+        else:
+            observer = f'{str(observer)}deg'
+
+
+        if illuminant == 'default':
+            if isinstance(DB.get_colorimetry_info(), str):
+                illuminant = 'D65'
+            else:
+                illuminant = DB.get_colorimetry_info().loc['illuminant']['value']               
         
         cmfs_observers = {
-            '10': colour.colorimetry.MSDS_CMFS_STANDARD_OBSERVER["CIE 1964 10 Degree Standard Observer"],
-            '2': colour.colorimetry.MSDS_CMFS_STANDARD_OBSERVER["CIE 1931 2 Degree Standard Observer"] 
-            }
+            '10deg': colour.colorimetry.MSDS_CMFS_STANDARD_OBSERVER["CIE 1964 10 Degree Standard Observer"],
+            '2deg': colour.colorimetry.MSDS_CMFS_STANDARD_OBSERVER["CIE 1931 2 Degree Standard Observer"] 
+            } 
         
         meas_ids = self.get_meas_ids                
         df_sp = self.get_spectra(dose_unit=dose_unit, dose_values=dose_values)   
@@ -2907,7 +3088,7 @@ class MFT(object):
                 wl = df.index
                 sd = colour.SpectralDistribution(sp,wl)                
 
-                XYZ = np.round(colour.sd_to_XYZ(sd,cmfs_observers[observer], illuminant=illuminants[illuminant]),3)
+                XYZ = np.round(colour.sd_to_XYZ(sd,cmfs_observers[observer], illuminant=colour.SDS_ILLUMINANTS[illuminant]),3)
                 XYZ_values = pd.concat([XYZ_values, pd.DataFrame(XYZ, index=['X','Y','Z']).T], axis=0)
                 XYZ_values.index = np.arange(0,XYZ_values.shape[0])
 
@@ -2917,16 +3098,18 @@ class MFT(object):
         return pd.concat(df_XYZ, axis=1)
 
 
-    def get_xy(self, illuminant:Optional[str] = 'D65', observer:Union[str, int] = '10', dose_unit: Optional[str] = 'He', dose_values:Union[int, float, list, tuple] = 'all'):
+    def get_xy(self, illuminant:Optional[str] = 'default', observer:Union[str, int] = 'default', dose_unit: Optional[str] = 'He', dose_values:Union[int, float, list, tuple] = 'all'):
         """Compute the xy values. 
 
         Parameters
         ----------
         illuminant : (str, optional)  
-            Reference *illuminant* ('D65', or 'D50'). by default 'D65'.
+            Reference *illuminant* ('D65', or 'D50'). by default 'default'.
+            When 'default', it fetches the illuminant value recorded in the db_config.json file of the package. If no value has been recorded, then it sets the illuminant value to 'D65'.
  
         observer : (str|int, optional)
-            Reference *observer* in degree ('10' or '2'). by default '10'.
+            Reference *observer* in degree ('10' or '2'). by default 'default'.
+            When 'default', it fetches the observer value recorded in the db_config.json file of the package. If no value has been recorded, then it sets the observer value to '10'.
 
         dose_unit : Optional[str], optional
             Unit of the light dose energy, by default ['He']
@@ -2944,15 +3127,29 @@ class MFT(object):
         pandas dataframe
             It returns the xy values inside a dataframe where each column corresponds to a single file.
         """
+        DB = databases.DB()
+
+        if observer == 'default':
+            if isinstance(DB.get_colorimetry_info(), str):
+                observer = '10deg'
+            else:
+                observer = DB.get_colorimetry_info().loc['observer']['value']
+
+        else:
+            observer = f'{str(observer)}deg'
 
 
-        observer = str(observer)
-
-        illuminants = {'D65':colour.SDS_ILLUMINANTS['D65'], 'D50':colour.SDS_ILLUMINANTS['D50']}        
+        if illuminant == 'default':
+            if isinstance(DB.get_colorimetry_info(), str):
+                illuminant = 'D65'
+            else:
+                illuminant = DB.get_colorimetry_info().loc['illuminant']['value']               
+        
         cmfs_observers = {
-            '10': colour.colorimetry.MSDS_CMFS_STANDARD_OBSERVER["CIE 1964 10 Degree Standard Observer"],
-            '2': colour.colorimetry.MSDS_CMFS_STANDARD_OBSERVER["CIE 1931 2 Degree Standard Observer"] 
-            }
+            '10deg': colour.colorimetry.MSDS_CMFS_STANDARD_OBSERVER["CIE 1964 10 Degree Standard Observer"],
+            '2deg': colour.colorimetry.MSDS_CMFS_STANDARD_OBSERVER["CIE 1931 2 Degree Standard Observer"] 
+            }       
+        
         
         meas_ids = self.get_meas_ids                
         df_sp = self.get_spectra(dose_unit=dose_unit, dose_values=dose_values)   
@@ -2974,7 +3171,7 @@ class MFT(object):
                 wl = df.index
                 sd = colour.SpectralDistribution(sp,wl)                
 
-                XYZ = colour.sd_to_XYZ(sd,cmfs_observers[observer], illuminant=illuminants[illuminant])
+                XYZ = colour.sd_to_XYZ(sd,cmfs_observers[observer], illuminant=colour.SDS_ILLUMINANTS[illuminant])
                 xy = np.round(colour.XYZ_to_xy(XYZ),4)
                 xy_values = pd.concat([xy_values, pd.DataFrame(xy, index=['x','y']).T], axis=0)
                 xy_values.index = np.arange(0,xy_values.shape[0])
