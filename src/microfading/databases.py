@@ -830,7 +830,56 @@ class DB:
         else:
             print(f'The file {Path(self.folder_db) / "MFT_devices.txt"} is not existing. Make sure to create one by running the function "create_DB" from the microfading package.')
             return
+
+
+    def get_colorimetry_info(self):
+
+        if not self.config_file.exists():
+            print("The configuration file does not exist. Please ensure 'db_config.json' is created.")
+            return None
+
+        with open(self.config_file, "r") as f:
+            config = json.load(f)
+    
+        # Check if the 'lighting' key exists in the config
+        if "colorimetry" in config:
+            colorimetry_info = config["colorimetry"]
+            
+            # Convert user info to a DataFrame
+            df = pd.DataFrame.from_dict(colorimetry_info, orient="index", columns=["value"])
+            return df
+        else:
+            print("The colorimetric conditions have not been registered. Please register using the 'set_colorimetry_conditions' function.")
+            return None
+    
+
+    def get_lighting_conditions(self):
+
+        if not self.config_file.exists():
+            print("The configuration file does not exist. Please ensure 'db_config.json' is created.")
+            return None
         
+
+        with open(self.config_file, "r") as f:
+            config = json.load(f)
+    
+        # Check if the 'lighting' key exists in the config
+        if "lighting" in config:
+            lighting_info = config["lighting"]
+
+            hours_per_years = int(lighting_info['hours_per_day'] * lighting_info['days_per_year'])
+            yearly_Hv = hours_per_years * lighting_info['illuminance_lux']
+
+            lighting_info['hours_per_year'] = hours_per_years
+            lighting_info['yearly_Hv_klxh'] = int(yearly_Hv / 1e3)
+            
+            # Convert user info to a DataFrame
+            df = pd.DataFrame.from_dict(lighting_info, orient="index", columns=["value"])
+            return df
+        else:
+            print("The lighting conditions info has not been registered. Please register using the 'set_lighting_conditions' function.")
+            return None
+      
 
     def get_white_references(self):
 
@@ -881,3 +930,122 @@ class DB:
 
         else:
             print('No databases have been created yet.')
+
+
+    def set_colorimetry_info(self):
+
+
+        wg_observer = ipw.Dropdown(
+            description = 'Observer (deg)',
+            value = '10',
+            options = ['2', '10'],
+            style = style
+        )
+
+        wg_illuminant = ipw.Dropdown(
+            description = 'Illuminant',
+            value = 'D65',
+            options = ['A', 'B', 'C', 'D50', 'D55', 'D60', 'D65', 'D75', 'E', 'FL1', 'FL2', 'FL3', 'FL4', 'FL5', 'FL6', 'FL7', 'FL8', 'FL9', 'FL10', 'FL11', 'FL12', 'FL3.1', 'FL3.2', 'FL3.3', 'FL3.4', 'FL3.5', 'FL3.6', 'FL3.7', 'FL3.8', 'FL3.9', 'FL3.10', 'FL3.11', 'FL3.12', 'FL3.13', 'FL3.14', 'FL3.15', 'HP1', 'HP2', 'HP3', 'HP4', 'HP5', 'LED-B1', 'LED-B2', 'LED-B3', 'LED-B4', 'LED-B5', 'LED-BH1', 'LED-RGB1', 'LED-V1', 'LED-V2', 'ID65', 'ID50'],
+            style = style
+        )
+
+        recording = ipw.Button(
+            description='Save',
+            disabled=False,
+            button_style='', # 'success', 'info', 'warning', 'danger' or ''
+            tooltip='Click me',            
+        )
+
+        button_record_output = ipw.Output()
+
+        
+
+        def button_record_pressed(b):
+            """
+            Save the person info in the persons.txt file.
+            """
+
+            button_record_output.clear_output(wait=True)
+
+            with open(self.config_file, "r") as f:
+                config = json.load(f)
+
+            # Update config with user data
+            config["colorimetry"] = {
+                "observer": f'{wg_observer.value}deg',
+                "illuminant": wg_illuminant.value,                                
+            }
+            # Save the updated config back to the JSON file
+            with open(self.config_file, "w") as f:
+                json.dump(config, f, indent=4)
+
+            
+            with button_record_output:
+                print('Colorimetric conditions info recorded in the db_config.json file.')
+
+        
+        recording.on_click(button_record_pressed)
+
+        display(ipw.VBox([wg_observer, wg_illuminant]))
+        display(ipw.HBox([recording, button_record_output]))
+   
+    
+    def set_lighting_conditions(self):
+
+        wg_illuminance = ipw.IntText(
+            description = 'Illuminance (lux)',
+            value = 100,
+            style = style, 
+        )
+
+        wg_hours_per_day = ipw.IntText(
+            description = 'Exposure hours per day',
+            value = 10,
+            style = style, 
+        )
+
+        wg_days_per_year = ipw.IntText(
+            description = 'Exposure days per year',
+            value = 365,
+            style = style, 
+        )
+
+        recording = ipw.Button(
+            description='Save',
+            disabled=False,
+            button_style='', # 'success', 'info', 'warning', 'danger' or ''
+            tooltip='Click me',            
+        )
+
+        button_record_output = ipw.Output()
+
+
+        def button_record_pressed(b):
+            """
+            Save the person info in the persons.txt file.
+            """
+
+            button_record_output.clear_output(wait=True)
+
+            with open(self.config_file, "r") as f:
+                config = json.load(f)
+
+            # Update config with user data
+            config["lighting"] = {
+                "illuminance_lux": wg_illuminance.value,
+                "hours_per_day": wg_hours_per_day.value,
+                "days_per_year": wg_days_per_year.value,                
+            }
+            # Save the updated config back to the JSON file
+            with open(self.config_file, "w") as f:
+                json.dump(config, f, indent=4)
+
+            
+            with button_record_output:
+                print('Lighting conditions info recorded in the db_config.json file.')
+
+        
+        recording.on_click(button_record_pressed)
+
+        display(ipw.VBox([wg_illuminance, wg_hours_per_day,wg_days_per_year]))
+        display(ipw.HBox([recording, button_record_output]))
