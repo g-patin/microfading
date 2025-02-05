@@ -61,7 +61,7 @@ def DB():
 
     if DB.folder_db.stem == "folder_path":
         print('The databases files have not been created. To create them, run the command "mf.create_DB(<folder_path_of_your_choice>)".')
-        return
+        return False
     
     else:
         db_files = ['DB_projects.csv', 'DB_objects.csv','institutions.txt', 'persons.txt','object_types.txt', 'object_techniques.txt', 'object_supports.txt', 'object_creators.txt']
@@ -73,6 +73,8 @@ def DB():
             print('The databases files were created, but one or several files are currently missing.')
             print(f'The files should be located in the following directory: {DB.folder_db}')
 
+        return True
+    
 
 def get_datasets(MFT:Optional[str] = 'fotonowy', rawfiles:Optional[bool] = False, BWS:Optional[bool] = True, stdev:Optional[bool] = False):
     """Retrieve exemples of dataset files. These files are meant to give the users the possibility to test the MFT class and its functions.  
@@ -447,7 +449,7 @@ def update_DB_projects(new: str, old:Optional[str] = None):
     DB.update_db_projects(new=new, old=old) 
 
 
-def register_devices():
+def add_devices():
     """
     Register microfading devices.
     """
@@ -530,7 +532,7 @@ def register_devices():
     display(ipw.HBox([registering,button_record_output]))
 
 
-def register_references():
+def add_references():
     """
     Register white standard references.
     """
@@ -671,12 +673,12 @@ def process_rawdata(files: list, device: str, filenaming:Optional[str] = 'none',
             return process_rawfiles.MFT_fotonowy(files=files, filenaming=filenaming, folder=folder, db=db, comment=comment, device_nb=device_nb, authors=authors, white_reference=white_reference, interpolation=interpolation, step=step, observer=observer, illuminant=illuminant, delete_files=delete_files, return_filename=return_filename) 
 
 
-def set_colorimetry():
+def set_colorimetry_info():
     """Record the colorimetric information (observer and illuminant) in the db_config.json file of the microfading package.
     """
 
     DB = databases.DB()
-    return DB.set_colorimetry()
+    return DB.set_colorimetry_info()
 
 
 def set_lighting_conditions():
@@ -1564,20 +1566,20 @@ class MFT(object):
         DB = databases.DB()
 
         if observer == 'default':
-            if isinstance(DB.get_colorimetry_info(), str):
+            if isinstance(DB.get_colorimetry_conditions(), str):
                 observer = '10deg'
             else:
-                observer = DB.get_colorimetry_info().loc['observer']['value']
+                observer = DB.get_colorimetry_conditions().loc['observer']['value']
 
         else:
             observer = f'{str(observer)}deg'
 
 
         if illuminant == 'default':
-            if isinstance(DB.get_colorimetry_info(), str):
+            if isinstance(DB.get_colorimetry_conditions(), str):
                 illuminant = 'D65'
             else:
-                illuminant = DB.get_colorimetry_info().loc['illuminant']['value']
+                illuminant = DB.get_colorimetry_conditions().loc['illuminant']['value']
         
         
         observers = {
@@ -2046,7 +2048,55 @@ class MFT(object):
                 self.plot_delta()
 
   
-    def plot_bars(self, BWS_lines:Optional[bool] = True, coordinate:Optional[str] = 'dE00', dose_unit:Optional[str] = 'Hv', dose_value:Union[int, float] = 0.5, xlabels:Union[str, list] = 'default', fontsize:Optional[int] = 24, rotate_xlabels:Optional[int] = 0, position_xlabels:Optional[str] = 'center', position_text:Optional[tuple] = (0.03,0.92), colors:Union[str,float,list]=None):
+    def plot_bars(self, BWS_lines:Optional[bool] = True, coordinate:Optional[str] = 'dE00', dose_unit:Optional[str] = 'Hv', dose_value:Union[int, float] = 0.5, xlabels:Union[str, list] = 'default', fontsize:Optional[int] = 24, rotate_xlabels:Optional[int] = 0, position_xlabels:Optional[str] = 'center', position_text:Optional[tuple] = (0.03,0.92), colors:Union[str,float,list]=None, save:Optional[bool] = False, path_fig:Optional[str] = 'cwd'):
+        """Plot a bar graph of a given colorimetric coordinate for a given light dose value.
+
+        Parameters
+        ----------
+        BWS_lines : Optional[bool], optional
+            Whether to display the blue wool standard values as horizontal lines or as bars, by default True
+
+        coordinate : Optional[str], optional
+            Colorimetric coordinate to be displayed, by default 'dE00'
+            It can be any coordinates among the following list : ['L*','a*','b*','C*','h','dL*','da*','db*','dC*','dh','dE76','dE00','dR_vis'].
+
+        dose_unit : Optional[str], optional
+            Unit of the light energy dose, by default 'Hv'
+            Any of the following units can be used: 'He', 'Hv', 't'. Where 'He' corresponds to radiant energy (MJ/m2), 'Hv' to exposure dose (Mlxh), and 't' to times (sec)
+
+        dose_value : Union[int, float], optional
+            Values of the light dose energy, by default 0.5
+
+        xlabels : Union[str, list], optional
+            Values of the labels on the x-axis (one label per bar), by default 'default'
+            When 'default', it takes the measurement id as label.
+
+        fontsize : Optional[int], optional
+            Fontsize of the plot (title, ticks, and labels), by default 24
+
+        rotate_xlabels : Optional[int], optional
+            Whether to rotate the labels on the x-axis, by default 0
+            It can be any integer value between 0 and 360.
+
+        position_xlabels : Optional[str], optional
+            Position of the labels according to each bar ('center', 'left', 'right'), by default 'center'
+
+        position_text : Optional[tuple], optional
+            Position (x,y) of the text with the exposure dose value, by default (0.03,0.92)
+
+        colors : Union[str,float,list], optional
+            Colors of the bar, by default None
+            When 'sample', the color of each bar will be based on srgb values computed from the reflectance values. 
+            A single string or float value can also be used to define the color of all the bars (see matplotlib colour values). 
+            A list string can also be given, in that case, the number of element in the list should be equal to the number of bars. 
+
+        save : bool, optional
+            Whether to save the figure, by default False
+
+        path_fig : str, optional
+            Absolute path required to save the figure, by default 'cwd'
+            When 'cwd', it will save the figure in the current working directory.
+        """
 
         # ['L*','a*','b*','C*','h','dL*','da*','db*','dC*','dh','dE76','dE00','dR_vis']
       
@@ -2116,7 +2166,14 @@ class MFT(object):
         
 
         x = np.arange(0,len(df_data))
-        ax.bar(x=x, height=df_data['y'], yerr=df_data['y_std'], capsize=5, color=df_data['colors'], edgecolor='none')
+
+        
+        if colors == None:
+            colors = None
+        else:
+            colors = df_data['colors']
+
+        ax.bar(x=x, height=df_data['y'], yerr=df_data['y_std'], capsize=5, color=colors, edgecolor='none')
 
         ax.xaxis.set_tick_params(labelsize=fontsize)
         ax.yaxis.set_tick_params(labelsize=fontsize)
@@ -2136,11 +2193,14 @@ class MFT(object):
             ax.legend(fontsize=fontsize-4)
 
         plt.tight_layout()
-        plt.show()
 
-        
+        if save == True:
+            if path_fig == 'cwd':
+                path_fig = f'{os.getcwd()}/{coordinate}-bar.png'                    
+                
+            fig.savefig(path_fig,dpi=300, facecolor='white') 
 
-
+        plt.show()     
 
 
     def plot_CIELAB(self, stds=[], dose_unit:Optional[str] = 'He', dose_values:Union[int, float, list, tuple] = 'all', colors:Union[str,list] = None, title:Optional[str] = None, fontsize:Optional[int] = 20, legend_labels:Union[str,list] = 'default', legend_position:Optional[str] = 'in', legend_fontsize:Optional[int] = 20, legend_title:Optional[str] = None, obs_ill:Optional[bool] = True, save:Optional[bool] = False, path_fig:Optional[str] = 'cwd'):
@@ -2227,12 +2287,12 @@ class MFT(object):
         # Whether to plot the observer and illuminant info
         if obs_ill:
             DB = databases.DB()
-            if isinstance(DB.get_colorimetry_info(), str):
+            if isinstance(DB.get_colorimetry_conditions(), str):
                 observer = '10deg'
                 illuminant = 'D65'
             else:
-                observer = DB.get_colorimetry_info().loc['observer']['value']
-                illuminant = DB.get_colorimetry_info().loc['illuminant']['value']
+                observer = DB.get_colorimetry_conditions().loc['observer']['value']
+                illuminant = DB.get_colorimetry_conditions().loc['illuminant']['value']
 
             dic_obs = {'10deg':'$\mathrm{10^o}$', '2deg':'$\mathrm{2^o}$'}            
             obs_ill = f'{dic_obs[observer]}-{illuminant}'
@@ -2937,20 +2997,20 @@ class MFT(object):
         DB = databases.DB()
 
         if observer == 'default':
-            if isinstance(DB.get_colorimetry_info(), str):
+            if isinstance(DB.get_colorimetry_conditions(), str):
                 observer = '10deg'
             else:
-                observer = DB.get_colorimetry_info().loc['observer']['value']
+                observer = DB.get_colorimetry_conditions().loc['observer']['value']
 
         else:
             observer = f'{str(observer)}deg'
 
 
         if illuminant == 'default':
-            if isinstance(DB.get_colorimetry_info(), str):
+            if isinstance(DB.get_colorimetry_conditions(), str):
                 illuminant = 'D65'
             else:
-                illuminant = DB.get_colorimetry_info().loc['illuminant']['value']
+                illuminant = DB.get_colorimetry_conditions().loc['illuminant']['value']
         
         
         observers = {
@@ -3047,20 +3107,20 @@ class MFT(object):
         DB = databases.DB()
 
         if observer == 'default':
-            if isinstance(DB.get_colorimetry_info(), str):
+            if isinstance(DB.get_colorimetry_conditions(), str):
                 observer = '10deg'
             else:
-                observer = DB.get_colorimetry_info().loc['observer']['value']
+                observer = DB.get_colorimetry_conditions().loc['observer']['value']
 
         else:
             observer = f'{str(observer)}deg'
 
 
         if illuminant == 'default':
-            if isinstance(DB.get_colorimetry_info(), str):
+            if isinstance(DB.get_colorimetry_conditions(), str):
                 illuminant = 'D65'
             else:
-                illuminant = DB.get_colorimetry_info().loc['illuminant']['value']               
+                illuminant = DB.get_colorimetry_conditions().loc['illuminant']['value']               
         
         cmfs_observers = {
             '10deg': colour.colorimetry.MSDS_CMFS_STANDARD_OBSERVER["CIE 1964 10 Degree Standard Observer"],
@@ -3130,20 +3190,20 @@ class MFT(object):
         DB = databases.DB()
 
         if observer == 'default':
-            if isinstance(DB.get_colorimetry_info(), str):
+            if isinstance(DB.get_colorimetry_conditions(), str):
                 observer = '10deg'
             else:
-                observer = DB.get_colorimetry_info().loc['observer']['value']
+                observer = DB.get_colorimetry_conditions().loc['observer']['value']
 
         else:
             observer = f'{str(observer)}deg'
 
 
         if illuminant == 'default':
-            if isinstance(DB.get_colorimetry_info(), str):
+            if isinstance(DB.get_colorimetry_conditions(), str):
                 illuminant = 'D65'
             else:
-                illuminant = DB.get_colorimetry_info().loc['illuminant']['value']               
+                illuminant = DB.get_colorimetry_conditions().loc['illuminant']['value']               
         
         cmfs_observers = {
             '10deg': colour.colorimetry.MSDS_CMFS_STANDARD_OBSERVER["CIE 1964 10 Degree Standard Observer"],
