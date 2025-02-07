@@ -68,13 +68,15 @@ def DB():
         
         if all(list(map(os.path.isfile, [str(Path(DB.folder_db)/x) for x in db_files]))):
             print(f'All the databases were created and can be found in the following directory: {DB.folder_db}')
+            
+            return True
 
         else:
             print('The databases files were created, but one or several files are currently missing.')
             print(f'The files should be located in the following directory: {DB.folder_db}')
 
-        return True
-    
+            return False
+
 
 def get_datasets(MFT:Optional[str] = 'fotonowy', rawfiles:Optional[bool] = False, BWS:Optional[bool] = True, stdev:Optional[bool] = False):
     """Retrieve exemples of dataset files. These files are meant to give the users the possibility to test the MFT class and its functions.  
@@ -250,18 +252,12 @@ def get_path_DB():
 
     
     if DB.folder_db.stem == "folder_path":
-        print('Databases have not been created or have been deleted. Please, create databases by running the function "create_DB" from the microfading package.')
+        print('A specific folder has not been defined for the location of the databases. You might either want to create databases by running the function "create_DB" or set a folder for the databases by using the function "set_folder_DB".')
         return None
     
     else:    
-        if 'DB_projects.csv' in os.listdir(DB.folder_db) and 'DB_objects.csv' in os.listdir(DB.folder_db):
-
-            print(f'DB_projects.csv and DB_objects.csv files can be found in the following folder: {DB.folder_db}')    
-            return DB.folder_db       
-
-        else:
-            print('Databases have not been created or have been deleted. Please, create databases by running the function "create_DB" from the microfading package.')
-            return None
+        print(f'The databases are located the folder: {DB.folder_db}')    
+        return DB.folder_db    
 
 
 def get_creators():
@@ -679,6 +675,20 @@ def set_colorimetry_info():
 
     DB = databases.DB()
     return DB.set_colorimetry_info()
+
+
+def set_folder_DB(folder_path: str):
+    """Set the path of the folder where the databases should be stored.
+
+    Parameters
+    ----------
+    folder_path : str
+        Path of the folder where the databases will be stored
+    
+    """
+
+    DB = databases.DB()    
+    return DB.set_folder_db(folder_path=folder_path)
 
 
 def set_lighting_conditions():
@@ -1566,20 +1576,20 @@ class MFT(object):
         DB = databases.DB()
 
         if observer == 'default':
-            if isinstance(DB.get_colorimetry_conditions(), str):
+            if isinstance(DB.get_colorimetry_info(), str):
                 observer = '10deg'
             else:
-                observer = DB.get_colorimetry_conditions().loc['observer']['value']
+                observer = DB.get_colorimetry_info().loc['observer']['value']
 
         else:
             observer = f'{str(observer)}deg'
 
 
         if illuminant == 'default':
-            if isinstance(DB.get_colorimetry_conditions(), str):
+            if isinstance(DB.get_colorimetry_info(), str):
                 illuminant = 'D65'
             else:
-                illuminant = DB.get_colorimetry_conditions().loc['illuminant']['value']
+                illuminant = DB.get_colorimetry_info().loc['illuminant']['value']
         
         
         observers = {
@@ -2287,12 +2297,12 @@ class MFT(object):
         # Whether to plot the observer and illuminant info
         if obs_ill:
             DB = databases.DB()
-            if isinstance(DB.get_colorimetry_conditions(), str):
+            if isinstance(DB.get_colorimetry_info(), str):
                 observer = '10deg'
                 illuminant = 'D65'
             else:
-                observer = DB.get_colorimetry_conditions().loc['observer']['value']
-                illuminant = DB.get_colorimetry_conditions().loc['illuminant']['value']
+                observer = DB.get_colorimetry_info().loc['observer']['value']
+                illuminant = DB.get_colorimetry_info().loc['illuminant']['value']
 
             dic_obs = {'10deg':'$\mathrm{10^o}$', '2deg':'$\mathrm{2^o}$'}            
             obs_ill = f'{dic_obs[observer]}-{illuminant}'
@@ -2997,20 +3007,20 @@ class MFT(object):
         DB = databases.DB()
 
         if observer == 'default':
-            if isinstance(DB.get_colorimetry_conditions(), str):
+            if isinstance(DB.get_colorimetry_info(), str):
                 observer = '10deg'
             else:
-                observer = DB.get_colorimetry_conditions().loc['observer']['value']
+                observer = DB.get_colorimetry_info().loc['observer']['value']
 
         else:
             observer = f'{str(observer)}deg'
 
 
         if illuminant == 'default':
-            if isinstance(DB.get_colorimetry_conditions(), str):
+            if isinstance(DB.get_colorimetry_info(), str):
                 illuminant = 'D65'
             else:
-                illuminant = DB.get_colorimetry_conditions().loc['illuminant']['value']
+                illuminant = DB.get_colorimetry_info().loc['illuminant']['value']
         
         
         observers = {
@@ -3107,20 +3117,20 @@ class MFT(object):
         DB = databases.DB()
 
         if observer == 'default':
-            if isinstance(DB.get_colorimetry_conditions(), str):
+            if isinstance(DB.get_colorimetry_info(), str):
                 observer = '10deg'
             else:
-                observer = DB.get_colorimetry_conditions().loc['observer']['value']
+                observer = DB.get_colorimetry_info().loc['observer']['value']
 
         else:
             observer = f'{str(observer)}deg'
 
 
         if illuminant == 'default':
-            if isinstance(DB.get_colorimetry_conditions(), str):
+            if isinstance(DB.get_colorimetry_info(), str):
                 illuminant = 'D65'
             else:
-                illuminant = DB.get_colorimetry_conditions().loc['illuminant']['value']               
+                illuminant = DB.get_colorimetry_info().loc['illuminant']['value']               
         
         cmfs_observers = {
             '10deg': colour.colorimetry.MSDS_CMFS_STANDARD_OBSERVER["CIE 1964 10 Degree Standard Observer"],
@@ -3190,20 +3200,20 @@ class MFT(object):
         DB = databases.DB()
 
         if observer == 'default':
-            if isinstance(DB.get_colorimetry_conditions(), str):
+            if isinstance(DB.get_colorimetry_info(), str):
                 observer = '10deg'
             else:
-                observer = DB.get_colorimetry_conditions().loc['observer']['value']
+                observer = DB.get_colorimetry_info().loc['observer']['value']
 
         else:
             observer = f'{str(observer)}deg'
 
 
         if illuminant == 'default':
-            if isinstance(DB.get_colorimetry_conditions(), str):
+            if isinstance(DB.get_colorimetry_info(), str):
                 illuminant = 'D65'
             else:
-                illuminant = DB.get_colorimetry_conditions().loc['illuminant']['value']               
+                illuminant = DB.get_colorimetry_info().loc['illuminant']['value']               
         
         cmfs_observers = {
             '10deg': colour.colorimetry.MSDS_CMFS_STANDARD_OBSERVER["CIE 1964 10 Degree Standard Observer"],
