@@ -66,7 +66,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#get-functions" class="md-skip">
+        <a href="#description" class="md-skip">
           Skip to content
         </a>
       
@@ -353,6 +353,15 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#description" class="md-nav__link">
+    <span class="md-ellipsis">
+      Description
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#get-functions" class="md-nav__link">
     <span class="md-ellipsis">
       Get functions
@@ -363,6 +372,15 @@
       
         <li class="md-nav__item">
   <a href="#addregister-functions" class="md-nav__link">
+    <span class="md-ellipsis">
+      Add/Register functions
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#addregister-functions_1" class="md-nav__link">
     <span class="md-ellipsis">
       Add/Register functions
     </span>
@@ -752,6 +770,15 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#description" class="md-nav__link">
+    <span class="md-ellipsis">
+      Description
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#get-functions" class="md-nav__link">
     <span class="md-ellipsis">
       Get functions
@@ -762,6 +789,15 @@
       
         <li class="md-nav__item">
   <a href="#addregister-functions" class="md-nav__link">
+    <span class="md-ellipsis">
+      Add/Register functions
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#addregister-functions_1" class="md-nav__link">
     <span class="md-ellipsis">
       Add/Register functions
     </span>
@@ -834,47 +870,71 @@
 
   <h1>Databases management</h1>
 
-<p>The microfading package gives you the possibility to implement databases where the information related to the objects and projects can be stored. The main advantage of having databases is to connect metadata to the analytical data when processing raw files. </p>
+<p>In this section, you will learn how to use the databases that come along with the <code>microfading</code> package and inside which you have the possibility to store information. The main purpose of the databases is to connect the metadata with the analytical data. Additionally, the databases will allow you to conveniently reuse information and will also enable you to perform queries based on the information stored in the databases. For example, one could retrieve all the data obtained on paintings created by a given artist. </p>
 <p>This section implies that you have created the database files. If that is not the case, look at the section on how to <a href="https://g-patin.github.io/microfading/create-databases/">create empty databases</a>. If you want to know whether databases were already created, use the following function:</p>
 <div class="highlight"><pre><span></span><code><span class="kn">import</span> <span class="nn">microfading</span> <span class="k">as</span> <span class="nn">mf</span>
-</code></pre></div>
-<div class="highlight"><pre><span></span><code><span class="n">mf</span><span class="o">.</span><span class="n">DB</span><span class="p">()</span>
+
+<span class="c1"># Check whether databases were created.</span>
+<span class="n">mf</span><span class="o">.</span><span class="n">DB</span><span class="p">()</span>
 </code></pre></div>
 <div class="output-area">
 <pre>
+True
 All the databases were created and can be found in the following directory: /home/john/Documents/MFT/databases
 </pre>
 </div>
 
 <p>&nbsp;</p>
-<p>The microfading packages contains several functions to manage the databases:</p>
+<h2 id="description"><strong>Description</strong><a class="headerlink" href="#description" title="Permanent link">&para;</a></h2>
+<p>The databases simply consists of csv and txt files in which you will accumulate information. The management of the databases lies around two main actions:</p>
+<ol>
+<li>You want to learn how to <strong>add / remove info</strong>.</li>
+<li>You want to learn how to <strong>retrieve info</strong> when needed. </li>
+</ol>
+<p>The first things to do is to import the microfading package as showed in the code box above. You will access the databases functions as followed:</p>
+<div class="highlight"><pre><span></span><code><span class="n">mf</span><span class="o">.&lt;</span><span class="n">function</span> <span class="n">name</span><span class="o">&gt;</span>
+
+<span class="c1"># for example, this will retrieve all the microfading devices that you registered. </span>
+<span class="n">mf</span><span class="o">.</span><span class="n">get_devices</span><span class="p">()</span>
+</code></pre></div>
+<p>Every function name start with a verb followed by an underscore and a noun or an adjective providing more information on the action that will be performed. There are only 4 verbs:</p>
 <ul>
 <li><strong>Get functions</strong>: retrieve information contains in the databases</li>
-<li><strong>Add or register functions</strong>: add a new item in the databases</li>
-<li><strong>Update functions</strong>: modify the recording parameters of the databases</li>
+<li><strong>Add functions</strong>: add a new item in the databases</li>
+<li><strong>Update functions</strong>: modify the recorded parameters of the databases</li>
+<li><strong>Set functions</strong>: set default values for some key parameters</li>
 </ul>
+<p>&nbsp;</p>
 <h2 id="get-functions"><strong>Get functions</strong><a class="headerlink" href="#get-functions" title="Permanent link">&para;</a></h2>
-<p>There are eight <em>get</em> functions:</p>
+<p>There are ten <em>get</em> functions:</p>
 <ul>
-<li><code>get_path_DB()</code> : returns the absolute path where the databases are stored on your local computer</li>
-<li><code>get_DB()</code> : returns the databases as pandas dataframes</li>
+<li><code>get_path_DB()</code> : returns the absolute path where the databases are stored on your local computer.</li>
+<li><code>get_DB()</code> : returns the databases as pandas dataframes.</li>
+<li><code>get_colorimetric_info()</code> : returns the observer and illuminant default values.</li>
 <li><code>get creators()</code> : returns a list of names and surnames corresponding to the persons that created the microfaded objects.</li>
 <li><code>get_institutions()</code> : returns a list of institutions that own the microfaded objects.</li>
-<li><code>get_objects()</code> : returns a list of the microfaded objects</li>
+<li><code>get_lighting_conditions()</code> : returns the default light exposure conditions default values.</li>
+<li><code>get_objects()</code> : returns a list of the microfaded objects.</li>
 <li><code>get_persons()</code> : returns a list of persons that performed the microfading analyses.</li>
 <li><code>get_devices()</code> : returns a list of the registered microfading devices.</li>
 <li><code>get_white_references()</code> : returns a list of the registered white standard references.</li>
 </ul>
 <h2 id="addregister-functions"><strong>Add/Register functions</strong><a class="headerlink" href="#addregister-functions" title="Permanent link">&para;</a></h2>
-<p>There are seven <em>add/register</em> functions:</p>
+<p>There are seven <em>add</em> functions:</p>
 <ul>
 <li><code>add_new_creator()</code> : record information about a new object creator (artist, institution, etc.).</li>
 <li><code>add_new_institution()</code> : record information about a new institution.</li>
 <li><code>add_new_object()</code> : record information about a new object.</li>
 <li><code>add_new_person()</code> : record information about a new person performing microfading measurements.</li>
 <li><code>add_new_project()</code> : record information about a new project.</li>
-<li><code>register_devices()</code> : register a new microfading device.</li>
-<li><code>register_references()</code> : register a new white standard reference.</li>
+<li><code>add_devices()</code> : register a new microfading device.</li>
+<li><code>add_references()</code> : register a new white standard reference.</li>
+</ul>
+<h2 id="addregister-functions_1"><strong>Add/Register functions</strong><a class="headerlink" href="#addregister-functions_1" title="Permanent link">&para;</a></h2>
+<p>There are two <em>set</em> functions:</p>
+<ul>
+<li><code>set_colorimetric_info()</code> : set the observer and illuminant default values</li>
+<li><code>set_lighting_conditions()</code> : set the light exposure conditions default values</li>
 </ul>
 <div class="highlight"><pre><span></span><code><span class="kn">import</span> <span class="nn">microfading</span> <span class="k">as</span> <span class="nn">mf</span>
 </code></pre></div>

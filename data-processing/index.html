@@ -65,6 +65,11 @@
     <label class="md-overlay" for="__drawer"></label>
     <div data-md-component="skip">
       
+        
+        <a href="#fotonowy-raw-files" class="md-skip">
+          Skip to content
+        </a>
+      
     </div>
     <div data-md-component="announce">
       
@@ -376,6 +381,17 @@
       
       
       
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    Data processing
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
       <a href="./" class="md-nav__link md-nav__link--active">
         
   
@@ -385,6 +401,41 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#fotonowy-raw-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      Fotonowy raw files
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#here-we-use-the-raw-files-fom-the-microfading-package-but-ideally-you-should-use-your-own-raw-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      Here we use the raw files fom the microfading package, but ideally you should use your own raw files.
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
       
     </li>
   
@@ -646,6 +697,32 @@
   
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#fotonowy-raw-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      Fotonowy raw files
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#here-we-use-the-raw-files-fom-the-microfading-package-but-ideally-you-should-use-your-own-raw-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      Here we use the raw files fom the microfading package, but ideally you should use your own raw files.
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -659,9 +736,16 @@
                   
 
 
-  <h1>Data processing</h1>
-
+<p>In this section, we will show you how to process raw microfading files into our standard <em>interim</em> files, that is required to use the <code>microfading</code> package.</p>
+<p>The current version of the <code>microfading</code> package can only process raw files obtained with the Fotonowy microfading device. Don't hesitate to contact us to discuss the possibility to process raw files obtained with other microfading systems.</p>
+<h2 id="fotonowy-raw-files">Fotonowy raw files<a class="headerlink" href="#fotonowy-raw-files" title="Permanent link">&para;</a></h2>
 <p>Although by most devices, the  data can be exported to an open file format (txt, csv, etc.), the microfading raw files produced by each microfading devices are often difficult read. These files often prioritize efficiency or size at the expense of readability. Which is why, it was decided to create a specific file structure where information and data could easily be found. </p>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span> <span class="nn">microfading</span> <span class="k">as</span> <span class="nn">mf</span>
+</code></pre></div>
+<p>```python</p>
+<h1 id="here-we-use-the-raw-files-fom-the-microfading-package-but-ideally-you-should-use-your-own-raw-files">Here we use the raw files fom the microfading package, but ideally you should use your own raw files.<a class="headerlink" href="#here-we-use-the-raw-files-fom-the-microfading-package-but-ideally-you-should-use-your-own-raw-files" title="Permanent link">&para;</a></h1>
+<p>rawfiles = mf.get_datasets(MFT='fotonowy', rawfiles=True)
+mf.process_rawdata</p>
 
 
 
