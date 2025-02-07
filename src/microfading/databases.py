@@ -654,7 +654,7 @@ class DB:
     def create_db(self, folder_path):      
 
         self.folder_db = folder_path
-        self.save_folder_db(folder_path)
+        self.set_folder_db(folder_path)
 
         # create the project database
         db_project = pd.DataFrame(columns=['project_id','institution','start_date','end_date','project_leader','keywords'])
@@ -747,10 +747,12 @@ class DB:
             f.write('name,surname,initials')
 
 
-    def save_folder_db(self, folder_path):
+    def set_folder_db(self, folder_path):
         # Save folder path in a JSON file
         with open(self.config_file, 'w') as file:
             json.dump({"folder_db": folder_path}, file)
+
+        print(f'The databases folder has been set to the path: {folder_path}')
 
 
     def load_folder_db(self):
@@ -849,7 +851,7 @@ class DB:
             df = pd.DataFrame.from_dict(colorimetry_info, orient="index", columns=["value"])
             return df
         else:
-            print("The colorimetric conditions have not been registered. Please register using the 'set_colorimetry_conditions' function.")
+            print("The colorimetric conditions have not been registered. Please register using the 'set_colorimetry_info' function.")
             return None
     
 
