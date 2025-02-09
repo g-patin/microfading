@@ -58,24 +58,20 @@ def DB():
 
     # instantiate a DB class object
     DB = databases.DB()
+    DB_config = DB.get_db_config()['databases']
 
-    if DB.folder_db.stem == "folder_path":
-        print('The databases files have not been created. To create them, run the command "mf.create_DB(<folder_path_of_your_choice>)".')
-        return False
-    
-    else:
-        db_files = ['DB_projects.csv', 'DB_objects.csv','institutions.txt', 'persons.txt','object_types.txt', 'object_techniques.txt', 'object_supports.txt', 'object_creators.txt']
+    db_files = ['DB_projects.csv', 'DB_objects.csv','institutions.txt', 'persons.txt','object_types.txt', 'object_techniques.txt', 'object_supports.txt', 'object_creators.txt']
         
-        if all(list(map(os.path.isfile, [str(Path(DB.folder_db)/x) for x in db_files]))):
-            print(f'All the databases were created and can be found in the following directory: {DB.folder_db}')
+    if all(list(map(os.path.isfile, [str(Path(DB.folder_db)/x) for x in db_files]))):
+        print(f'All the databases were created and can be found in the following directory: {DB.folder_db}')
             
-            return True
+        return True
 
-        else:
-            print('The databases files were created, but one or several files are currently missing.')
-            print(f'The files should be located in the following directory: {DB.folder_db}')
+    else:
+        print('The databases files were created, but one or several files are currently missing.')
+        print(f'The files should be located in the following directory: {DB.folder_db}')
 
-            return False
+        return False
 
 
 def get_datasets(MFT:Optional[str] = 'fotonowy', rawfiles:Optional[bool] = False, BWS:Optional[bool] = True, stdev:Optional[bool] = False):
@@ -238,28 +234,6 @@ def get_objects(project_id:Union[str,list] = 'all'):
     return projects_objects
 
 
-def get_path_DB():
-    """Retrieve the absolute path of the folder where the databases are located.
-
-    Returns
-    -------
-    string or None
-        If dabases have been created, it will return the absolute path as a string. Otherwise, it will only print a statement indicating no databases were found.    
-    """
-    
-    # instantiate a DB class object
-    DB = databases.DB()   
-
-    
-    if DB.folder_db.stem == "folder_path":
-        print('A specific folder has not been defined for the location of the databases. You might either want to create databases by running the function "create_DB" or set a folder for the databases by using the function "set_folder_DB".')
-        return None
-    
-    else:    
-        print(f'The databases are located the folder: {DB.folder_db}')    
-        return DB.folder_db    
-
-
 def get_creators():
     """Retrieve the list of object creators that have been registered in the object_creators.txt file
 
@@ -293,6 +267,31 @@ def get_DB(db:Optional[str] = 'all'):
     # instantiate a DB class object and return the databases if they exist.
     DB = databases.DB()
     return DB.get_db(db=db)
+
+
+def get_DB_config():
+    """Retrieve the configuration info related to the databases
+
+    Returns
+    -------
+    It returns a dictionary with the configuration info    
+    """
+
+    DB = databases.DB() 
+    return DB.get_db_config()
+
+
+def get_DB_path():
+    """Retrieve the absolute path of the folder where the databases are located.
+
+    Returns
+    -------
+    string or None
+        If dabases have been created, it will return the absolute path as a string. Otherwise, it will only print a statement indicating no databases were found.    
+    """
+
+    DB = databases.DB()
+    return DB.get_db_path()
 
 
 def get_institutions():
@@ -347,7 +346,7 @@ def get_colorimetry_info():
     return DB.get_colorimetry_info()
 
 
-def get_lighting_conditions():
+def get_exposure_conditions():
     """Retrieve the exposure lighting conditions recorded in the db_config.json file of the microfading package.
 
     Returns
@@ -357,7 +356,20 @@ def get_lighting_conditions():
     """
 
     DB = databases.DB()    
-    return DB.get_lighting_conditions()
+    return DB.get_exposure_conditions()
+
+
+def get_light_dose_info():
+    """Retrieve the light dose info recorded in the db_config.json file of the microfading package.
+
+    Returns
+    -------
+    pandas dataframe or string
+        It returns the information inside a dataframe if they have been recorded.
+    """
+
+    DB = databases.DB()    
+    return DB.get_light_dose_info()
 
 
 def get_white_references():
@@ -592,8 +604,7 @@ def add_references():
     display(ipw.HBox([registering,button_record_output]))
 
 
-
-def process_rawdata(files: list, device: str, filenaming:Optional[str] = 'none', folder:Optional[str] = '.', db:Optional[bool] = False, comment:Optional[str] = '', authors:Optional[str] = 'XX', white_reference:Optional[str] = 'default', interpolation:Optional[str] = 'He', step:Optional[float | int] = 0.1, observer:Optional[str] = 'default', illuminant:Optional[str] = 'default', delete_files:Optional[bool] = True, return_filename:Optional[bool] = True):
+def process_rawdata(files: list, device: str, filenaming:Optional[str] = 'none', folder:Optional[str] = '.', db:Optional[bool] = 'default', comment:Optional[str] = '', authors:Optional[str] = 'XX', white_reference:Optional[str] = 'default', interpolation:Optional[str] = 'default', step:Optional[float | int] = 0.1, observer:Optional[str] = 'default', illuminant:Optional[str] = 'default', delete_files:Optional[bool] = True, return_filename:Optional[bool] = True):
     """Process the microfading raw files created by the software that performed the microfading analysis. 
 
     Parameters
@@ -652,6 +663,51 @@ def process_rawdata(files: list, device: str, filenaming:Optional[str] = 'none',
         It returns an excel file composed of three tabs (info, CIELAB, spectra).
     """
 
+    # Load the databases function and config file
+    DB = databases.DB()
+    db_config = DB.get_db_config()
+    
+
+    # Set the db value
+    if db == 'default':
+        if len(db_config) == 0:
+            db = False
+        else:
+            db = DB.get_db_config()['databases']['usage']
+
+
+    # Set the observer value
+    if observer == 'default':
+        if len(db_config) == 0:
+            observer = '10deg'
+        else:
+            observer = DB.get_colorimetry_info().loc['observer'].values[0]
+
+
+    # Set the illuminant value
+    if illuminant == 'default':
+        if len(db_config) == 0:
+            illuminant = 'D65'
+        else:
+            illuminant = DB.get_colorimetry_info().loc['illuminant'].values[0]
+
+
+    # Set the interpolation value
+    if interpolation == 'default':
+        if len(db_config) == 0:
+            interpolation = 'He'
+        else:
+            interpolation = DB.get_light_dose_info().loc['unit'].values[0].split('_')[0]
+      
+    
+    # Set the white reference value
+    if white_reference == 'default':
+        if len(db_config) == 0:
+            white_reference = 'default'
+        else:
+            white_reference = DB.get_colorimetry_info().loc['white_reference'].values[0]  
+    
+    # Run the process_rawfiles function according to the microfading device
     if "_" in device:
         device_type = device.split('_')[0]
         device_nb = device.split('_')[1]
@@ -677,27 +733,28 @@ def set_colorimetry_info():
     return DB.set_colorimetry_info()
 
 
-def set_folder_DB(folder_path: str):
-    """Set the path of the folder where the databases should be stored.
-
-    Parameters
-    ----------
-    folder_path : str
-        Path of the folder where the databases will be stored
-    
-    """
-
-    DB = databases.DB()    
-    return DB.set_folder_db(folder_path=folder_path)
-
-
-def set_lighting_conditions():
+def set_exposure_conditions():
     """Record the exposure lighting conditions in the db_config.json file of the microfading package.
     """
 
     DB = databases.DB()
-    return DB.set_lighting_conditions()
+    return DB.set_exposure_conditions()
     
+
+def set_DB(folder_path:Optional[str] = '', use:Optional[bool] = True):
+    """Record the databases info in the db_config.json file of the microfading package.
+    """
+
+    DB = databases.DB()
+    return DB.set_db(folder_path=folder_path, use=use)
+
+
+def set_light_dose():
+    """Record the unit of the light dose in the db_config.json file of the microfading package.
+    """
+
+    DB = databases.DB()
+    return DB.set_light_dose()
 
 
 #### MICROFADING CLASS ####         
