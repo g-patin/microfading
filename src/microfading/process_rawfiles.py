@@ -291,8 +291,12 @@ def MFT_fotonowy(files: list, filenaming:Optional[str] = 'none', folder:Optional
                 "comment",
                 "[PROJECT INFO]"] + list(db_projects.columns) + ["[OBJECT INFO]"] + list(db_objects.columns) + MFT_info_templates.device_info + MFT_info_templates.analysis_info + MFT_info_templates.beam_info
 
-                df_authors = DB.get_persons()                
-                if '-' in authors or ' - ' in authors:                     
+                df_authors = DB.get_persons()
+
+                if authors == 'XX':
+                    authors_names = 'unknown'
+
+                elif '-' in authors or ' - ' in authors:                     
                     list_authors = []
                     for x in authors.split('-'):
                         x = x.strip()
@@ -344,7 +348,7 @@ def MFT_fotonowy(files: list, filenaming:Optional[str] = 'none', folder:Optional
                     WR_nb = 'none'
                     WR_description = 'unknown'
                 else:
-                    print(f'The white reference you entered ({white_reference}) has not been registered. Please first register the white reference, by using the function mf.register_references().')
+                    print(f'The white reference you entered ({white_reference}) has not been registered. Please first register the white reference, by using the function mf.add_references().')
                     return
                 
                 device_info = [
@@ -379,9 +383,8 @@ def MFT_fotonowy(files: list, filenaming:Optional[str] = 'none', folder:Optional
                 area = pi * (((fwhm/1e6)/2)**2)
                 power = np.round((irr * area) * 1e3, 3)
                 lum = np.round(area * (ill * 1e6),3)
-                current = int(df_info.loc['Curr'].values[0].split(' ')[0])               
-                                
-
+                current = int(df_info.loc['Curr'].values[0].split(' ')[0])       
+                           
                 analysis_info = [
                     " ",
                     meas_id,
@@ -397,6 +400,7 @@ def MFT_fotonowy(files: list, filenaming:Optional[str] = 'none', folder:Optional
                     illuminant,
                     observer,
                 ]
+
 
                 # beam info                
 
