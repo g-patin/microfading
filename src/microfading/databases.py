@@ -13,8 +13,11 @@ style = {"description_width": "initial"}
 class DB:
 
     def __init__(self, config_file=Path(__file__).parent / 'db_config.json') -> None:
-        self.config_file =  config_file        
-        self.folder_db = Path(self.get_db_path())
+        self.config_file =  config_file  
+        try:      
+            self.folder_db = Path(self.get_db_path())
+        except TypeError:                       
+            self.folder_db = 'path_folder'
                
 
     def add_new_creator(self):
@@ -873,8 +876,7 @@ class DB:
         db_config = self.get_db_config()
         config_databases = db_config['databases']
 
-        if len(config_databases) == 0:
-            print('The databases have not been configured. Please enter databases configuration info by using the function set_DB().')
+        if len(config_databases) == 0:            
             return None
         
         elif 'path_folder' not in config_databases.keys():

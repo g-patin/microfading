@@ -60,6 +60,10 @@ def DB():
     DB = databases.DB()
     DB_config = DB.get_db_config()['databases']
 
+    if len(DB_config) == 0:
+        print('The databases have not been configured. Please enter databases configuration info by using the function set_DB().')
+        return False
+
     db_files = ['DB_projects.csv', 'DB_objects.csv','institutions.txt', 'persons.txt','object_types.txt', 'object_techniques.txt', 'object_supports.txt', 'object_creators.txt']
         
     if all(list(map(os.path.isfile, [str(Path(DB.folder_db)/x) for x in db_files]))):
@@ -1632,8 +1636,10 @@ class MFT(object):
         """    
         DB = databases.DB()
 
+        
+        # Set the observer value
         if observer == 'default':
-            if isinstance(DB.get_colorimetry_info(), str):
+            if len(DB.get_colorimetry_info()) == 0:
                 observer = '10deg'
             else:
                 observer = DB.get_colorimetry_info().loc['observer']['value']
@@ -1641,14 +1647,16 @@ class MFT(object):
         else:
             observer = f'{str(observer)}deg'
 
-
+        
+        # Set the illuminant value
         if illuminant == 'default':
-            if isinstance(DB.get_colorimetry_info(), str):
+            if len(DB.get_colorimetry_info()) == 0:
                 illuminant = 'D65'
             else:
                 illuminant = DB.get_colorimetry_info().loc['illuminant']['value']
         
         
+        # Get colorimetric data related to the standard observer
         observers = {
             '10deg': 'cie_10_1964',
             '2deg' : 'cie_2_1931',
@@ -1660,6 +1668,7 @@ class MFT(object):
         
         ccs_ill = colour.CCS_ILLUMINANTS[observers[observer]][illuminant]
 
+        
         meas_ids = self.get_meas_ids               
         df_sp = self.get_spectra(dose_unit=dose_unit, dose_values=dose_values)   
         df_sp_nominal = [
@@ -2354,7 +2363,7 @@ class MFT(object):
         # Whether to plot the observer and illuminant info
         if obs_ill:
             DB = databases.DB()
-            if isinstance(DB.get_colorimetry_info(), str):
+            if len(DB.get_colorimetry_info()) == 0:
                 observer = '10deg'
                 illuminant = 'D65'
             else:
@@ -3063,8 +3072,10 @@ class MFT(object):
 
         DB = databases.DB()
 
+        
+        # Set the observer value
         if observer == 'default':
-            if isinstance(DB.get_colorimetry_info(), str):
+            if len(DB.get_colorimetry_info()) == 0:
                 observer = '10deg'
             else:
                 observer = DB.get_colorimetry_info().loc['observer']['value']
@@ -3072,14 +3083,15 @@ class MFT(object):
         else:
             observer = f'{str(observer)}deg'
 
-
+        # Set the illuminant value
         if illuminant == 'default':
-            if isinstance(DB.get_colorimetry_info(), str):
+            if len(DB.get_colorimetry_info()) == 0:
                 illuminant = 'D65'
             else:
                 illuminant = DB.get_colorimetry_info().loc['illuminant']['value']
         
         
+        # Get colorimetric data related to the standard observer
         observers = {
             '10deg': 'cie_10_1964',
             '2deg' : 'cie_2_1931',
@@ -3173,8 +3185,9 @@ class MFT(object):
 
         DB = databases.DB()
 
+        # Set the observer value
         if observer == 'default':
-            if isinstance(DB.get_colorimetry_info(), str):
+            if len(DB.get_colorimetry_info()) == 0:
                 observer = '10deg'
             else:
                 observer = DB.get_colorimetry_info().loc['observer']['value']
@@ -3183,12 +3196,15 @@ class MFT(object):
             observer = f'{str(observer)}deg'
 
 
+        # Set the illuminant value
         if illuminant == 'default':
-            if isinstance(DB.get_colorimetry_info(), str):
+            if len(DB.get_colorimetry_info()) == 0:
                 illuminant = 'D65'
             else:
                 illuminant = DB.get_colorimetry_info().loc['illuminant']['value']               
         
+        
+        # Get colorimetric data related to the standard observer
         cmfs_observers = {
             '10deg': colour.colorimetry.MSDS_CMFS_STANDARD_OBSERVER["CIE 1964 10 Degree Standard Observer"],
             '2deg': colour.colorimetry.MSDS_CMFS_STANDARD_OBSERVER["CIE 1931 2 Degree Standard Observer"] 
@@ -3256,8 +3272,9 @@ class MFT(object):
         """
         DB = databases.DB()
 
+        # Set the observer value
         if observer == 'default':
-            if isinstance(DB.get_colorimetry_info(), str):
+            if len(DB.get_colorimetry_info()) == 0:
                 observer = '10deg'
             else:
                 observer = DB.get_colorimetry_info().loc['observer']['value']
@@ -3266,12 +3283,15 @@ class MFT(object):
             observer = f'{str(observer)}deg'
 
 
+        # Set the illuminant value
         if illuminant == 'default':
-            if isinstance(DB.get_colorimetry_info(), str):
+            if len(DB.get_colorimetry_info()) == 0:
                 illuminant = 'D65'
             else:
                 illuminant = DB.get_colorimetry_info().loc['illuminant']['value']               
         
+        
+        # Get colorimetric data related to the standard observer
         cmfs_observers = {
             '10deg': colour.colorimetry.MSDS_CMFS_STANDARD_OBSERVER["CIE 1964 10 Degree Standard Observer"],
             '2deg': colour.colorimetry.MSDS_CMFS_STANDARD_OBSERVER["CIE 1931 2 Degree Standard Observer"] 
