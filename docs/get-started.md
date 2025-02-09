@@ -54,14 +54,14 @@ m = mf.MFT(files=files)
 	
 ## 3. **Three keywords function: get, plot, compute**
 
-Once you have created an instance of the `MFT` class, you can access the functions. The name of each function starts by a verb: get, plot, or compute. Enter one of these verbs and use the auto-completion tool (`Shift + Tab`) to display a list of available functions.
+Once you have created an instance of the `MFT` class, you can access the functions. The name of each function starts by a verb: get, plot, or compute. Enter one of the verbs and use the auto-completion tool (`Tab` button) to display a list of available functions.
 
 ![Alt text](images/mf_functions.png){: .img-medium align=left }
 /// caption
 List of all the plotting functions.
 ///
 	
-The functions can be run without passing any arguments, this will output the default values. To adjust the output to your needs, you will need to modify the values of the arguments. For instance, the function `get_cielab()` returns the $\Delta E_{00}$ values by default. If you want to retrieve other CIELAB coordinates, you will need to pass in a new value for the argument *coordinates* (see code below). To know the role of each argument in a function and which values can you pass in, you will need to read the documentation. The latter can either be access in the jupyter notebook or in the [References section](https://g-patin.github.io/microfading/references/) of this website.
+The functions can be run without passing any arguments, this will output the default values. To adjust the output to your needs, you will need to modify the values of the arguments. For instance, the function `get_cielab()` returns the $\Delta E_{00}$ values by default. If you want to retrieve other CIELAB coordinates, you will need to pass in a new value for the argument *coordinates* (see code below). To know the role of each argument in a function and which values can you pass in, you will need to read the documentation (see below). The latter can either be access in the jupyter notebook or in the [References section](https://g-patin.github.io/microfading/references/) of this website.
 	
 ![Alt text](images/mf_functions_arguments.png){: .img-large align=left }
 /// caption
@@ -73,5 +73,24 @@ Play with the argument values of functions
 
 If you are planning to perform microfading measurements more than once, we advise you to make use of the databases. This will allow you to save metadata about the microfaded object in the excel data file, which can ultimately be used to perform queries. For example, you could ask to retrieve all measurements performed on a given material or on objects created by a specific artist,etc. Unfortunately, such as a possibility has not been implemented yet.
 	
-To start using the databases, you will first need to create them and fill them with some information. To learn how to create databases, see the [Create databases section](https://g-patin.github.io/microfading/create-databases/). To learn how to fill the databases and properly manage the, see the [Databases management section](https://g-patin.github.io/microfading/databases-management/). 
+To start using the databases, you will first need to create them and fill them with some information. To learn how to create databases, see the [Create databases section](https://g-patin.github.io/microfading/create-databases/). To learn how to fill the databases and properly manage them, see the [Databases management section](https://g-patin.github.io/microfading/databases-management/). 
 
+
+## 5. **Use the docstrings**
+
+Whenever you will use functions from the `microfading` package, you will always be able to access the docstrings. These contain valuable information that will help you to adequately use the functions. To open the dosctrings, you have two possibilites:
+
+1. Write the name of a function (without parentheses) followed by a question mark (see example below).
+
+	![Alt text](images/mf_docstrings-example_02.png){: .img-Large align=left }
+	/// caption
+	Opening a docstring with a question mark.
+	///
+
+
+2. Write the name of a function (with parentheses), place the cursor inside the parentheses and press `Ctrl + Caps Lock` (see example below).
+
+![Alt text](images/mf_docstrings-example_01.png){: .img-Large align=left }
+/// caption
+Opening a tooltip docstring window.
+///

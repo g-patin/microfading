@@ -22,7 +22,7 @@ nav:
       - databases-management.md
       - assess-light-sensitivity.md
       - generate-report.md
-      - data-processing.md
+      - rawdata-processing.md
       - data-visualization.md      
   - How-to-guides:             
       - retrieve-test-datasets.md
