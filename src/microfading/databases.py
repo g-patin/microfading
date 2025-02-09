@@ -11,10 +11,11 @@ style = {"description_width": "initial"}
 
 
 class DB:
-    def __init__(self, config_file=Path(__file__).parent / 'db_config.json') -> None:
-        self.config_file =  config_file
-        self.folder_db = Path(self.load_folder_db())
 
+    def __init__(self, config_file=Path(__file__).parent / 'db_config.json') -> None:
+        self.config_file =  config_file        
+        self.folder_db = Path(self.get_db_path())
+               
 
     def add_new_creator(self):
         """Record a new object creator in the object_creators.txt file
@@ -516,7 +517,7 @@ class DB:
         db_projects = self.get_db(db='projects')
         existing_columns = list(db_projects.columns)
         institutions = tuple(self.get_institutions()['name'].values)    
-        persons = tuple([f'{x[0]} {x[1]}' for x in self.get_persons()[['name','surname']].values])    
+        persons = tuple([f'{x[0]}, {x[1]}' for x in self.get_persons()[['name','surname']].values])    
 
         # Define ipython widgets
         project_Id = ipw.Text(        
@@ -552,12 +553,22 @@ class DB:
             style=style,
         )
 
-        person = ipw.Combobox(
+        project_leader = ipw.Combobox(
             placeholder = 'Enter a name or a surname',
             options=persons,            
             description='Project leader',
             disabled=False,
             layout=Layout(width="90%", height="30px"),
+            style=style,
+        )
+
+        coresearchers = ipw.SelectMultiple(
+            value=['none'],
+            options=['none'] + list(persons), 
+            description='Co-researchers',
+            rows=5,
+            disabled=False,
+            layout=Layout(width="90%", height="95px"),
             style=style,
         )
         
@@ -582,7 +593,7 @@ class DB:
         )
 
         # Combobox for additional parameters (if any)
-        additional_params = [col for col in existing_columns if col not in ['project_id', 'institution', 'start_date', 'end_date', 'project_leader', 'keywords']]
+        additional_params = [col for col in existing_columns if col not in ['project_id', 'institution', 'start_date', 'end_date', 'project_leader', 'co-researchers', 'keywords']]
         additional_param_widgets = {}
         for param in additional_params:
             additional_param_widgets[param] = ipw.Combobox(
@@ -604,14 +615,36 @@ class DB:
 
                 Projects_DB_file = self.folder_db / 'DB_projects.csv'
                 Projects_DB = pd.read_csv(Projects_DB_file)  
+                persons = self.get_persons()
 
                 institutions = pd.read_csv(self.folder_db / 'institutions.txt')['name'].values
+
                 
+                project_leader_name = project_leader.value.split(',')[0].strip()
+                project_leader_surname = project_leader.value.split(',')[1].strip()
+                project_leader_initials = persons.query(f'name == "{project_leader_name}" and surname == "{project_leader_surname}"')['initials'].values[0]
+
+                if coresearchers.value[0] == 'none':
+                    coresearchers_initials = 'none'
+
+                else:
+                    coresearchers_initials = []
+                    for coresearcher in [x for x in coresearchers.value]:
+                        coresearcher_name = coresearcher.split(',')[0].strip()
+                        coresearcher_surname = coresearcher.split(',')[1].strip()
+                        coresearcher_initials = persons.query(f'name == "{coresearcher_name}" and surname == "{coresearcher_surname}"')['initials'].values[0]
+                        coresearchers_initials.append(coresearcher_initials)
+
+                
+                    coresearchers_initials = '-'.join(coresearchers_initials)
+                
+             
                 new_row = pd.DataFrame({'project_id':project_Id.value,
                         'institution':institution.value, 
                         'start_date':startDate.value, 
                         'end_date':endDate.value,
-                        'project_leader':person.value,                        
+                        'project_leader':project_leader_initials,  
+                        'co-researchers':coresearchers_initials,                       
                         'keywords':project_keyword.value},                       
                         index=[0] 
                         )  
@@ -641,9 +674,10 @@ class DB:
             ipw.VBox([
                 ipw.HBox([
                     ipw.VBox([project_Id,institution, project_keyword],layout=Layout(width="60%", height="95%")),
-                    ipw.VBox([startDate,endDate, person],layout=Layout(width="60%", height="95%")),
+                    ipw.VBox([startDate,endDate, project_leader],layout=Layout(width="60%", height="95%")),
+                    ipw.VBox([coresearchers],layout=Layout(width="60%", height="95%"))
                     ]),                
-                ], layout=Layout(width="50%", height="100%")),                        
+                ], layout=Layout(width="70%", height="100%")),                        
             ], layout=Layout(width="100%", height="110%"))
         ) 
 
@@ -651,21 +685,38 @@ class DB:
         display(ipw.HBox([recording, button_record_output]))
 
 
-    def create_db(self, folder_path):      
+    def create_db(self, folder_path):   
+        
+        ##### ENTER THE FOLDER_PATH IN CONFIG FILE #####
 
-        self.folder_db = folder_path
-        self.set_folder_db(folder_path)
+        with open(self.config_file, "r", encoding="utf-8") as f:
+            config = json.load(f)
+
+        # Ensure the databases section exists
+        if 'databases' not in config:
+            config["databases"] = {}
+
+        # Update the databases dictionary with the new key-value pair
+        config["databases"]["path_folder"] = folder_path
+
+        
+        # Save the updated config back to the JSON file
+        with open(self.config_file, "w", encoding="utf-8") as f:
+            json.dump(config, f, indent=4)
+
+        
+        ##### CREATE THE DATABASE FILES #####
 
         # create the project database
-        db_project = pd.DataFrame(columns=['project_id','institution','start_date','end_date','project_leader','keywords'])
+        db_project = pd.DataFrame(columns=['project_id','institution','start_date','end_date','project_leader','co-researchers','keywords'])
         db_project.to_csv(Path(folder_path) / 'DB_projects.csv', index=False)
+
 
         # create the object database
         db_object = pd.DataFrame(columns=['object_id','object_category','object_type','object_technique','object_title','object_name','object_creator','object_date','object_owner','object_support','colorants','colorants_name','binding','ratio','thickness_um','color','status','project_id'])
         db_object.to_csv(Path(folder_path) / 'DB_objects.csv', index=False)
 
-        print(f'DB_projects.csv and DB_objects.csv created in the following folder: {folder_path}')
-
+        
         # create several text files
 
         with open(Path(folder_path) / 'MFT_devices.txt', 'w') as f:
@@ -746,27 +797,9 @@ class DB:
         with open(Path(folder_path) / 'persons.txt', 'w') as f:
             f.write('name,surname,initials')
 
-
-    def set_folder_db(self, folder_path):
-        # Save folder path in a JSON file
-        with open(self.config_file, 'w') as file:
-            json.dump({"folder_db": folder_path}, file)
-
-        print(f'The databases folder has been set to the path: {folder_path}')
-
-
-    def load_folder_db(self):
-        # Load folder path from JSON file if it exists
-        if os.path.exists(self.config_file):
-            with open(self.config_file, 'r') as file:
-                config = json.load(file)
-                return config.get("folder_db")
-            
-        else:
-            print('Databases have not been created or were deleted.')
-            return None
+        print(f'The database files have been created in the following folder: {folder_path}')
+           
     
-
     def get_creators(self):
         if (Path(self.folder_db) / 'object_creators.txt').exists():
             df_creators = pd.read_csv(Path(self.folder_db) / 'object_creators.txt')
@@ -801,6 +834,58 @@ class DB:
             return db_objects
 
 
+    def get_db_config(self):
+        # Load folder path from JSON file if it exists
+        if os.path.exists(self.config_file):
+            with open(self.config_file, 'r') as file:
+                config = json.load(file)
+                return config
+        
+        else:
+            print('The db_config.json has been deleted ! Please re-install the microfading package.')
+            return None      
+    
+        
+    def get_db_use(self):
+
+        if not self.config_file.exists():
+            print("The configuration file does not exist. Please ensure 'db_config.json' is created.")
+            return None
+        
+
+        with open(self.config_file, "r") as f:
+            config = json.load(f)
+    
+        # Check if the 'databases' key exists in the config
+        if "databases" in config:
+            db_use_info = config["databases"]
+
+            # Convert user info to a DataFrame
+            df = pd.DataFrame.from_dict(db_use_info, orient="index", columns=["value"])
+            return df
+        else:
+            print("The db_use info have not been registered. Please register using the 'set_DB()' function.")
+            return None
+
+
+    def get_db_path(self):
+        
+        db_config = self.get_db_config()
+        config_databases = db_config['databases']
+
+        if len(config_databases) == 0:
+            print('The databases have not been configured. Please enter databases configuration info by using the function set_DB().')
+            return None
+        
+        elif 'path_folder' not in config_databases.keys():
+            print('There is no path configured for the databases. Please enter databases configuration info by using the function set_DB().')
+            return None
+
+        else:
+            db_path = config_databases['path_folder']
+            return db_path      
+    
+    
     def get_persons(self):
         
         if (Path(self.folder_db) / 'persons.txt').exists():
@@ -855,7 +940,7 @@ class DB:
             return None
     
 
-    def get_lighting_conditions(self):
+    def get_exposure_conditions(self):
 
         if not self.config_file.exists():
             print("The configuration file does not exist. Please ensure 'db_config.json' is created.")
@@ -865,21 +950,43 @@ class DB:
         with open(self.config_file, "r") as f:
             config = json.load(f)
     
-        # Check if the 'lighting' key exists in the config
-        if "lighting" in config:
-            lighting_info = config["lighting"]
+        # Check if the 'exposure' key exists in the config
+        if "exposure" in config:
+            exposure_info = config["exposure"]
 
-            hours_per_years = int(lighting_info['hours_per_day'] * lighting_info['days_per_year'])
-            yearly_Hv = hours_per_years * lighting_info['illuminance_lux']
+            hours_per_years = int(exposure_info['hours_per_day'] * exposure_info['days_per_year'])
+            yearly_Hv = hours_per_years * exposure_info['illuminance_lux']
 
-            lighting_info['hours_per_year'] = hours_per_years
-            lighting_info['yearly_Hv_klxh'] = int(yearly_Hv / 1e3)
+            exposure_info['hours_per_year'] = hours_per_years
+            exposure_info['yearly_Hv_klxh'] = int(yearly_Hv / 1e3)
             
             # Convert user info to a DataFrame
-            df = pd.DataFrame.from_dict(lighting_info, orient="index", columns=["value"])
+            df = pd.DataFrame.from_dict(exposure_info, orient="index", columns=["value"])
             return df
         else:
-            print("The lighting conditions info has not been registered. Please register using the 'set_lighting_conditions' function.")
+            print("The exposure conditions info has not been registered. Please register using the 'set_exposure_conditions' function.")
+            return None
+        
+    
+    def get_light_dose_info(self):
+
+        if not self.config_file.exists():
+            print("The configuration file does not exist. Please ensure 'db_config.json' is created.")
+            return None
+        
+
+        with open(self.config_file, "r") as f:
+            config = json.load(f)
+    
+        # Check if the 'light_dose' key exists in the config
+        if "light_dose" in config:
+            light_dose_info = config["light_dose"]
+
+            # Convert user info to a DataFrame
+            df = pd.DataFrame.from_dict(light_dose_info, orient="index", columns=["value"])
+            return df
+        else:
+            print("The light dose info have not been registered. Please register using the 'set_light_dose' function.")
             return None
       
 
@@ -951,6 +1058,12 @@ class DB:
             style = style
         )
 
+        wg_white_ref = ipw.Dropdown(
+            description = 'White reference',            
+            options = self.get_white_references()['Id'].values,
+            style = style
+        )
+
         recording = ipw.Button(
             description='Save',
             disabled=False,
@@ -975,7 +1088,8 @@ class DB:
             # Update config with user data
             config["colorimetry"] = {
                 "observer": f'{wg_observer.value}deg',
-                "illuminant": wg_illuminant.value,                                
+                "illuminant": wg_illuminant.value, 
+                "white_reference": wg_white_ref.value,                               
             }
             # Save the updated config back to the JSON file
             with open(self.config_file, "w") as f:
@@ -988,11 +1102,70 @@ class DB:
         
         recording.on_click(button_record_pressed)
 
-        display(ipw.VBox([wg_observer, wg_illuminant]))
+        display(ipw.VBox([wg_observer, wg_illuminant, wg_white_ref]))
         display(ipw.HBox([recording, button_record_output]))
    
     
-    def set_lighting_conditions(self):
+    def set_db(self, folder_path:Optional[str] = '', use:Optional[bool] = True):
+        
+        wg_folder = ipw.Text(
+            description = 'Path folder',
+            placeholder = 'Location of the databases folder on your computer',
+            value = folder_path,
+            style = style, 
+            layout=Layout(width="50%", height="30px"),
+        )
+
+        wg_use = ipw.Dropdown(
+            description = 'Use',
+            value = use,
+            options = [True, False],
+            style = style,
+            layout=Layout(width="10%", height="30px"),
+        )        
+
+        recording = ipw.Button(
+            description='Save',
+            disabled=False,
+            button_style='', # 'success', 'info', 'warning', 'danger' or ''
+            tooltip='Click me',            
+        )
+
+        button_record_output = ipw.Output()
+
+
+        def button_record_pressed(b):
+            """
+            Save the databases info in the db_config.json file.
+            """
+
+            button_record_output.clear_output(wait=True)
+
+            with open(self.config_file, "r") as f:
+                config = json.load(f)
+
+            # Update config with user data
+            config["databases"] = {
+                "path_folder": wg_folder.value,
+                "usage": wg_use.value,
+                              
+            }
+            # Save the updated config back to the JSON file
+            with open(self.config_file, "w") as f:
+                json.dump(config, f, indent=4)
+
+            
+            with button_record_output:
+                print('Database info recorded in the db_config.json file.')
+
+        
+        recording.on_click(button_record_pressed)
+
+        display(ipw.VBox([wg_folder, wg_use]))
+        display(ipw.HBox([recording, button_record_output]))
+
+    
+    def set_exposure_conditions(self):
 
         wg_illuminance = ipw.IntText(
             description = 'Illuminance (lux)',
@@ -1024,7 +1197,7 @@ class DB:
 
         def button_record_pressed(b):
             """
-            Save the person info in the persons.txt file.
+            Save the exposure conditions info in the db_config.json file.
             """
 
             button_record_output.clear_output(wait=True)
@@ -1033,7 +1206,7 @@ class DB:
                 config = json.load(f)
 
             # Update config with user data
-            config["lighting"] = {
+            config["exposure"] = {
                 "illuminance_lux": wg_illuminance.value,
                 "hours_per_day": wg_hours_per_day.value,
                 "days_per_year": wg_days_per_year.value,                
@@ -1044,10 +1217,57 @@ class DB:
 
             
             with button_record_output:
-                print('Lighting conditions info recorded in the db_config.json file.')
+                print('Exposure conditions info recorded in the db_config.json file.')
 
         
         recording.on_click(button_record_pressed)
 
         display(ipw.VBox([wg_illuminance, wg_hours_per_day,wg_days_per_year]))
+        display(ipw.HBox([recording, button_record_output]))
+
+    
+    def set_light_dose(self):
+
+        wg_dose_unit = ipw.Dropdown(
+            description = 'Dose unit',
+            placeholder = 'Select a unit',
+            options = ['He_MJ/m2', 'Hv_Mlxh', 't_sec'],
+            style = style
+        )
+
+        recording = ipw.Button(
+            description='Save',
+            disabled=False,
+            button_style='', # 'success', 'info', 'warning', 'danger' or ''
+            tooltip='Click me',            
+        )
+
+        button_record_output = ipw.Output()
+
+        def button_record_pressed(b):
+            """
+            Save the light dose unit in the db_config.json file.
+            """
+
+            button_record_output.clear_output(wait=True)
+
+            with open(self.config_file, "r") as f:
+                config = json.load(f)
+
+            # Update config with user data
+            config["light_dose"] = {
+                "unit": wg_dose_unit.value,                                
+            }
+            # Save the updated config back to the JSON file
+            with open(self.config_file, "w") as f:
+                json.dump(config, f, indent=4)
+
+            
+            with button_record_output:
+                print('The unit of the light dose has been recorded in the db_config.json file.')
+
+
+        recording.on_click(button_record_pressed)
+
+        display(ipw.VBox([wg_dose_unit]))
         display(ipw.HBox([recording, button_record_output]))
