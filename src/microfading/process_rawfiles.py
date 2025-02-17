@@ -14,7 +14,7 @@ from . import MFT_info_dictionaries
 from . import MFT_info_templates
 
 
-def MFT_fotonowy(files: list, filenaming:Optional[str] = 'none', folder:Optional[str] = '.', db:Optional[bool] = False, comment:Optional[str] = '', device_nb:Optional[str] = 'default', authors:Optional[str] = 'XX', white_reference:Optional[bool] = 'default', interpolation:Optional[str] = 'He', step:Optional[float | int] = 0.1, average:Optional[int] = 20, observer:Optional[str] = 'default', illuminant:Optional[str] = 'default', background:Optional[str] = 'black', delete_files:Optional[bool] = True, return_filename:Optional[bool] = True):
+def MFT_fotonowy(files: list, filenaming:Optional[str] = 'none', folder:Optional[str] = '.', db:Optional[bool] = False, comment:Optional[str] = '', device_nb:Optional[str] = 'default', authors:Optional[str] = 'XX', white_standard:Optional[bool] = 'default', interpolation:Optional[str] = 'He', step:Optional[float | int] = 0.1, average:Optional[int] = 20, observer:Optional[str] = 'default', illuminant:Optional[str] = 'default', background:Optional[str] = 'black', delete_files:Optional[bool] = True, return_filename:Optional[bool] = True):
 
             
     # check whether the objects and projects databases have been created
@@ -62,7 +62,7 @@ def MFT_fotonowy(files: list, filenaming:Optional[str] = 'none', folder:Optional
     
     # retrieve counts spectral files to be processed
     raw_files_counts = [Path(file) for file in files if 'spect_convert.txt' in Path(file).name]
- 
+    
     
     # process each spectral file
     for raw_file_counts in raw_files_counts:
@@ -336,19 +336,19 @@ def MFT_fotonowy(files: list, filenaming:Optional[str] = 'none', folder:Optional
                     print(f'The device you entered ({device_nb}) has not been registered. Please first register the device, by using the function mf.register_devices().')
                     return
 
-                df_WR = DB.get_white_references()
-                if white_reference in df_WR['Id'].values:
+                df_WR = DB.get_white_standards()
+                if white_standard in df_WR['Id'].values:
                     df_WR = df_WR.set_index('Id')
-                    WR_nb = white_reference
-                    WR_description = df_WR.loc[white_reference]['description']
-                elif white_reference == 'default':
+                    WR_nb = white_standard
+                    WR_description = df_WR.loc[white_standard]['description']
+                elif white_standard == 'default':
                     WR_nb = 'none'
                     WR_description = 'Fotonowy fotolon PTFE'
-                elif white_reference == 'unknown':
+                elif white_standard == 'unknown':
                     WR_nb = 'none'
                     WR_description = 'unknown'
                 else:
-                    print(f'The white reference you entered ({white_reference}) has not been registered. Please first register the white reference, by using the function mf.add_references().')
+                    print(f'The white reference you entered ({white_standard}) has not been registered. Please first register the white reference, by using the function mf.add_references().')
                     return
                 
                 device_info = [
@@ -475,8 +475,7 @@ def MFT_fotonowy(files: list, filenaming:Optional[str] = 'none', folder:Optional
             ###### DELETE FILE #######
             if return_filename:
                 return Path(folder) / f'{filename}.xlsx'
-            else:
-                return None
+            
             
         
 
