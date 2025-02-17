@@ -1910,20 +1910,20 @@ class MFT(object):
         
 
         ###### INFO #######
-
-        data_info = self.get_metadata().fillna(' ')
-
+        
+        data_info = self.get_metadata().fillna('none')
+        
         # Select the first column as a template
         df_info = data_info.iloc[:,0]
         
 
         # Rename title file
-        df_info.rename({'[SINGLE MICRO-FADING ANALYSIS]': '[MEAN MICRO-FADING ANALYSES]'}, inplace=True)
+        df_info.rename({'[SINGLE MICROFADING ANALYSIS]': '[MEAN MICROFADING ANALYSES]'}, inplace=True)
 
         # Date time
         most_recent_dt = max(data_info.loc['date_time'])
         df_info.loc['date_time'] = most_recent_dt
-
+        
         # Project data info
         df_info.loc['project_id'] = '_'.join(sorted(set(data_info.loc['project_id'].values)))
         df_info.loc['project_leader'] = '_'.join(sorted(set(data_info.loc['project_leader'].values)))
@@ -1959,10 +1959,11 @@ class MFT(object):
         
         df_info.loc['measurement_mode'] = '_'.join(sorted(set(data_info.loc['measurement_mode'].values)))
         df_info.loc['zoom'] = '_'.join(sorted(set(data_info.loc['zoom'].values)))
-        df_info.loc['iris'] = '_'.join(sorted(set(str(data_info.loc['iris'].values))))
+        df_info.loc['iris'] =  '_'.join(set([str(x) if f'{x}'.isnumeric() else x for x in list(data_info.loc['iris'].values)]))
         df_info.loc['geometry'] = '_'.join(sorted(set(data_info.loc['geometry'].values)))
-        df_info.loc['distance_ill_mm'] = '_'.join(sorted(set(str(data_info.loc['distance_ill_mm'].values))))
-        df_info.loc['distance_coll_mm'] = '_'.join(sorted(set(str(data_info.loc['distance_coll_mm'].values))))       
+        df_info.loc['distance_ill_mm'] = '_'.join(set([str(x) if f'{x}'.isnumeric() else x for x in list(data_info.loc['distance_ill_mm'].values)]))
+        df_info.loc['distance_coll_mm'] = '_'.join(set([str(x) if f'{x}'.isnumeric() else x for x in list(data_info.loc['distance_coll_mm'].values)]))
+         
 
         if len(set(data_info.loc['fiber_fading'].values)) > 1:
             df_info.loc['fiber_fading'] = '_'.join(sorted(set([x.split('_')[0] for x in data_info.loc['fiber_fading'].values])))
@@ -2009,7 +2010,8 @@ class MFT(object):
             df_info.loc['specular_component'] = '_'.join(sorted(set([x.split('_')[0] for x in data_info.loc['specular_component'].values]))) 
 
         
-        df_info.loc['integration_time_ms'] = np.round(np.mean(data_info.loc['integration_time_ms'].astype(float).values),1)
+        df_info.loc['integration_time_sample_ms'] = np.round(np.mean(data_info.loc['integration_time_sample_ms'].astype(float).values),1)
+        df_info.loc['integration_time_whitestandard_ms'] = np.round(np.mean(data_info.loc['integration_time_whitestandard_ms'].astype(float).values),1)
         df_info.loc['average'] = '_'.join([str(x) for x in sorted(set(data_info.loc['average'].astype(str).values))]) 
         df_info.loc['duration_min'] = np.round(np.mean(data_info.loc['duration_min'].values),1)
         df_info.loc['interval_sec'] = '_'.join([str(x) for x in sorted(set(data_info.loc['interval_sec'].values))])
@@ -2021,13 +2023,13 @@ class MFT(object):
         # Beam data info
 
         df_info.loc['beam_photo'] = '_'.join(sorted(set(data_info.loc['beam_photo'].values)))
-        df_info.loc['resolution_micron/pixel'] = '_'.join(sorted(set(str(data_info.loc['resolution_micron/pixel'].values))))
+        df_info.loc['resolution_micron/pixel'] = '_'.join(set([str(x) if f'{x}'.isnumeric() else x for x in list(data_info.loc['resolution_micron/pixel'].values)]))
 
         fwhm = data_info.loc['FWHM_micron']
         fwhm_avg = np.mean([i for i in [to_float(x) for x in fwhm] if isinstance(i, (int, float))])
         df_info.loc['FWHM_micron'] = fwhm_avg
 
-        power_infos = data_info.loc['power_mW'].values
+        power_infos = data_info.loc['radiantFlux_mW'].values
         power_values = []
         
         for power_info in power_infos:
@@ -2040,38 +2042,28 @@ class MFT(object):
                 
         power_mean = np.round(np.mean(power_values),3)
         power_std = np.round(np.std(power_values),3)
-        df_info.loc['power_mW'] = f'{ufloat(power_mean,power_std)}'    
+        df_info.loc['radiantFlux_mW'] = f'{ufloat(power_mean,power_std)}'    
                  
 
-        irr_values = [str(ufloat(x,0)) if isinstance(x, int) else x for x in data_info.loc['irradiance_W/m**2'] ] 
+        irr_values = [str(ufloat(x,0)) if isinstance(x, int) else x for x in data_info.loc['irradiance_Ee_W/m^2'] ] 
         irr_mean = np.int32(np.mean([unumpy.nominal_values(ufloat_fromstr(x)) for x in irr_values]))
         irr_std = np.int32(np.std([unumpy.nominal_values(ufloat_fromstr(x)) for x in irr_values]))
         irr_avg = ufloat(irr_mean, irr_std)    
-        df_info.loc['irradiance_W/m**2'] = irr_avg
+        df_info.loc['irradiance_Ee_W/m^2'] = irr_avg
        
-        lm = [x for x in data_info.loc['luminuous_flux_lm'].values]
+        lm = [x for x in data_info.loc['luminuousFlux_lm'].values]
         lm_avg = np.round(np.mean(lm),3)
-        df_info.loc['luminuous_flux_lm'] = lm_avg
+        df_info.loc['luminuousFlux_lm'] = lm_avg
 
-        ill = [x for x in data_info.loc['illuminance_Mlx']]
+        ill = [x for x in data_info.loc['illuminance_Ev_Mlx']]
         ill_avg = np.round(np.mean(ill),3)
-        df_info.loc['illuminance_Mlx'] = ill_avg
+        df_info.loc['illuminance_Ev_Mlx'] = ill_avg
 
         
         # Results data info
-        df_info.loc['totalDose_He_MJ/m**2'] = df_cl_final.index.values[-1]
-        df_info.loc['totalDose_Hv_Mlxh'] = df_cl_final['Hv_Mlxh'].values[-1]
-        df_info.loc['fittedEqHe_dE00'] = ''
-        df_info.loc['fittedEqHv_dE00'] = ''
-        df_info.loc['fittedRate_dE00_at_2Mlxh'] = ''
-        df_info.loc['fittedRate_dE00_at_20MJ/m**2'] = ''
-        df_info.loc['dE00_at_300klxh'] = ''
-        df_info.loc['dE00_at_3MJ/m**2'] = ''
-        df_info.loc['dEab_final'] = ufloat(df_cl_final['dE76'].values[-1][0], df_cl_final['dE76'].values[-1][1])
-        df_info.loc['dE00_final'] = ufloat(df_cl_final['dE00'].values[-1][0], df_cl_final['dE00'].values[-1][1])
-        df_info.loc['dR_VIS_final'] = ufloat(df_cl_final['dR_vis'].values[-1][0], df_cl_final['dR_vis'].values[-1][1])
-        df_info.loc['Hv_at_1dE00'] = ''
-        df_info.loc['BWSE'] = ''
+        df_info.loc['radiantExposure_He_MJ/m^2'] = df_cl_final.index.values[-1]
+        df_info.loc['exposureDose_Hv_Mlxh'] = np.round(df_cl_final['Hv_Mlxh'].values[-1],4)
+        
 
         # Rename the column
         df_info.name = 'value'
@@ -2106,6 +2098,8 @@ class MFT(object):
                 df_info.to_excel(writer, sheet_name='info', index=True)
                 df_cl_final.to_excel(writer, sheet_name="CIELAB", index=True)
                 df_sp_final.to_excel(writer, sheet_name='spectra', index=True)
+
+            print(f'{folder / filename} successfully created.')
         
 
         ###### RETURN THE MEAN DATAFRAMES #######
