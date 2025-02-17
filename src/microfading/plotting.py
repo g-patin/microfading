@@ -33,6 +33,7 @@ labels_eq = {
 x_labels = {
     'Hv': 'Exposure dose $H_v$ (Mlxh)',
     'He': 'Radiant Exposure $H_e$ ($MJ/m^2$)',
+    't': 'Exposure duration (sec)',
     't_s': 'Exposure duration (sec)',
     't_m': 'Exposure duration (min)'
 }
@@ -613,7 +614,7 @@ def spectra(data, stds=[], spectral_mode:Optional[str] = 'R', legend_labels=[], 
     # Set the list of colors
     if isinstance(colors, list) or isinstance(colors, np.ndarray):        
         colors = colors        
-
+        
     elif colors == None:
         colors = [None] * len(data)
     
@@ -631,7 +632,7 @@ def spectra(data, stds=[], spectral_mode:Optional[str] = 'R', legend_labels=[], 
     # Set the std values
     if len(stds) == 0:        
         stds = [np.zeros(len(x[1])) for x in data]
-                
+        
          
     # Initiate a for loop to plot the data    
     for i, (d,s) in enumerate(zip(data,stds)):
@@ -711,14 +712,16 @@ def spectra(data, stds=[], spectral_mode:Optional[str] = 'R', legend_labels=[], 
     plt.show()
 
 
-def swatches_circle(data, data_type:Optional[str] = 'Lab', light_doses: Optional[list] = [0.5,1,2,5,15], JND:Optional[list] = [], dE:Optional[bool] = True, fontsize: Optional[int] = 24, save:Optional[bool] = False, path_fig:Optional[str] = 'cwd', title:Optional[str] = None, background_grey: Optional [float] = 0.85):
+def swatches_circle(data, data_type:Optional[str] = 'Lab', light_doses: Optional[list] = [0.5,1,2,5,15], JND:Optional[list] = [], dose_unit:Optional[str] = 'Hv', dE:Optional[bool] = True, fontsize: Optional[int] = 24, save:Optional[bool] = False, path_fig:Optional[str] = 'cwd', title:Optional[str] = None, background_grey: Optional [float] = 0.85):
 
     if list(set([len(x) for x in data]))[0] == len(JND):
         xlabel = 'Just noticeable difference (JND)'
 
     elif list(set([len(x) for x in data]))[0] == len(light_doses):
-        xlabel = 'Exposure dose $H_v$ (Mlxh)'
-
+        if dose_unit == "Hv":
+            xlabel = 'Exposure dose $H_v$ (Mlxh)'
+        elif dose_unit == "He":
+            xlabel = 'Radiant exposure $H_e$ ($MJ/m^2$)'
     else:
         print('Plotting aborted ! The length of data values is not equal to the length of light_doses or JND values.')
         return
@@ -784,7 +787,7 @@ def swatches_circle(data, data_type:Optional[str] = 'Lab', light_doses: Optional
         ax.set_yticks([])
 
         ax.xaxis.set_tick_params(labelsize=fontsize)    
-        ax.set_xlabel('Exposure dose $H_v$ (Mlxh)', fontsize=fontsize)
+        ax.set_xlabel(xlabel, fontsize=fontsize)
 
         ax.set_title(title_value, fontsize=fontsize+2)
 
