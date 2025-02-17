@@ -376,8 +376,8 @@ def get_light_dose_info():
     return DB.get_light_dose_info()
 
 
-def get_white_references():
-    """Retrieve the list of white standard references that have been registered in the white_references.txt file.
+def get_white_standards():
+    """Retrieve the list of white standard references that have been registered in the white_standards.txt file.
 
     Returns
     -------
@@ -386,7 +386,7 @@ def get_white_references():
     """
 
     DB = databases.DB()    
-    return DB.get_white_references()
+    return DB.get_white_standards()
 
 
 def add_new_creator():
@@ -577,7 +577,7 @@ def add_references():
 
     def button_record_pressed(b):
         """
-        Save the reference info in the white_references.txt file.
+        Save the reference info in the white_standards.txt file.
         """
 
         button_record_output.clear_output(wait=True)
@@ -586,16 +586,16 @@ def add_references():
         reference_description = description_widget.value.strip()
         
 
-        df_references = pd.read_csv(f'{DB.folder_db}/white_references.txt')
+        df_references = pd.read_csv(f'{DB.folder_db}/white_standards.txt')
         reference_Ids = df_references['Id'].values
 
         if reference_id not in reference_Ids:
 
             df_references = pd.concat([df_references, pd.DataFrame(data=[reference_id,reference_description], index=['Id','description']).T])
-            df_references.to_csv(f'{DB.folder_db}/white_references.txt', index=False)
+            df_references.to_csv(f'{DB.folder_db}/white_standards.txt', index=False)
 
             with button_record_output:
-                print(f'Item registered in the following file: {DB.folder_db}/white_references.txt')
+                print(f'Item registered in the following file: {DB.folder_db}/white_standards.txt')
 
         else:
             with button_record_output:
@@ -608,7 +608,7 @@ def add_references():
     display(ipw.HBox([registering,button_record_output]))
 
 
-def process_rawdata(files: list, device: str, filenaming:Optional[str] = 'none', folder:Optional[str] = '.', db:Optional[bool] = 'default', comment:Optional[str] = '', authors:Optional[str] = 'XX', white_reference:Optional[str] = 'default', interpolation:Optional[str] = 'default', step:Optional[float | int] = 0.1, observer:Optional[str] = 'default', illuminant:Optional[str] = 'default', delete_files:Optional[bool] = True, return_filename:Optional[bool] = True):
+def process_rawdata(files: list, device: str, filenaming:Optional[str] = 'none', folder:Optional[str] = '.', db:Optional[bool] = 'default', comment:Optional[str] = '', authors:Optional[str] = 'XX', white_standard:Optional[str] = 'default', interpolation:Optional[str] = 'default', step:Optional[float | int] = 0.1, observer:Optional[str] = 'default', illuminant:Optional[str] = 'default', delete_files:Optional[bool] = True, return_filename:Optional[bool] = True):
     """Process the microfading raw files created by the software that performed the microfading analysis. 
 
     Parameters
@@ -705,11 +705,11 @@ def process_rawdata(files: list, device: str, filenaming:Optional[str] = 'none',
       
     
     # Set the white reference value
-    if white_reference == 'default':
+    if white_standard == 'default':
         if len(db_config) == 0:
-            white_reference = 'default'
+            white_standard = 'default'
         else:
-            white_reference = DB.get_colorimetry_info().loc['white_reference'].values[0]  
+            white_standard = DB.get_colorimetry_info().loc['white_standard'].values[0]  
     
     # Run the process_rawfiles function according to the microfading device
     if "_" in device:
@@ -717,7 +717,7 @@ def process_rawdata(files: list, device: str, filenaming:Optional[str] = 'none',
         device_nb = device.split('_')[1]
 
         if device_type.lower() == 'fotonowy':
-            return process_rawfiles.MFT_fotonowy(files=files, filenaming=filenaming, folder=folder, db=db, comment=comment, device_nb=device_nb, authors=authors, white_reference=white_reference, interpolation=interpolation, step=step, observer=observer, illuminant=illuminant, delete_files=delete_files, return_filename=return_filename)
+            return process_rawfiles.MFT_fotonowy(files=files, filenaming=filenaming, folder=folder, db=db, comment=comment, device_nb=device_nb, authors=authors, white_standard=white_standard, interpolation=interpolation, step=step, observer=observer, illuminant=illuminant, delete_files=delete_files, return_filename=return_filename)
         
         elif device_type == 'sMFT':
             print('in construction !!')
@@ -726,7 +726,7 @@ def process_rawdata(files: list, device: str, filenaming:Optional[str] = 'none',
     else:
         device_nb = 'default'
         if device.lower() == 'fotonowy':            
-            return process_rawfiles.MFT_fotonowy(files=files, filenaming=filenaming, folder=folder, db=db, comment=comment, device_nb=device_nb, authors=authors, white_reference=white_reference, interpolation=interpolation, step=step, observer=observer, illuminant=illuminant, delete_files=delete_files, return_filename=return_filename) 
+            return process_rawfiles.MFT_fotonowy(files=files, filenaming=filenaming, folder=folder, db=db, comment=comment, device_nb=device_nb, authors=authors, white_standard=white_standard, interpolation=interpolation, step=step, observer=observer, illuminant=illuminant, delete_files=delete_files, return_filename=return_filename) 
 
 
 def set_colorimetry_info():
@@ -1766,7 +1766,7 @@ class MFT(object):
             return None
 
 
-    def compute_mean(self, return_data:Optional[bool] = True, criterion:Optional[str] = 'group', save:Optional[bool] = False, folder:Optional[str] = '.', filename:Optional[str] = 'default'):
+    def compute_mean(self, return_data:Optional[bool] = True, criterion:Optional[str] = 'group', dose_unit:Optional[str] = 'He', save:Optional[bool] = False, folder:Optional[str] = '.', filename:Optional[str] = 'default'):
         """Compute mean and standard deviation values of several microfading measurements.
 
         Parameters
@@ -1841,7 +1841,7 @@ class MFT(object):
 
         # Get the energy dose step
         #H_values = [x.columns.astype(float) for x in data_sp]       
-        H_values = [x.values.flatten() for x in self.get_doses(dose_unit='He')]
+        H_values = [x.values.flatten() for x in self.get_doses(dose_unit=dose_unit)]
         step_H = sorted(set([x[2] - x[1] for x in H_values]))[0]
         highest_He = np.max([x[-1] for x in H_values])
 
@@ -1852,7 +1852,7 @@ class MFT(object):
        
 
         # Wanted energy dose values          
-        wanted_H = np.round(np.arange(0,highest_He+step_H,step_H),1)  
+        wanted_H = np.round(np.arange(0,highest_He+step_H,step_H),2)  
 
         if len(wanted_H) != sp_mean.shape[1]:            
             wanted_H = np.linspace(0,highest_He,sp_mean.shape[1])
@@ -1862,8 +1862,9 @@ class MFT(object):
         
 
         # Create a multi-index pandas DataFrame
+        doses_dict = {'He': 'He_MJ/m2', 'Hv': 'Hv_Mlxh', 't': 't_sec'}
         H_tuples = [(dose, measurement) for dose in wanted_H for measurement in ['mean', 'std']]
-        multiindex_cols = pd.MultiIndex.from_tuples(H_tuples, names=['He_MJ/m2', 'Measurement'])
+        multiindex_cols = pd.MultiIndex.from_tuples(H_tuples, names=[doses_dict[dose_unit], 'Measurement'])
         
         data_df_sp = np.empty((len(wl), len(wanted_H) * 2))       
         data_df_sp[:, 0::2] = sp_mean
@@ -1925,10 +1926,11 @@ class MFT(object):
 
         # Project data info
         df_info.loc['project_id'] = '_'.join(sorted(set(data_info.loc['project_id'].values)))
-        df_info.loc['projectleider'] = '_'.join(sorted(set(data_info.loc['projectleider'].values)))
-        df_info.loc['meelezer'] = '_'.join(sorted(set(data_info.loc['meelezer'].values)))
-        df_info.loc['aanvraagdatum'] = '_'.join(sorted(set(data_info.loc['aanvraagdatum'].values)))
-        df_info.loc['uiterste_datum'] = '_'.join(sorted(set(data_info.loc['uiterste_datum'].values)))
+        df_info.loc['project_leader'] = '_'.join(sorted(set(data_info.loc['project_leader'].values)))
+        df_info.loc['co-researchers'] = '_'.join(sorted(set(data_info.loc['co-researchers'].values)))
+        df_info.loc['start_date'] = '_'.join(sorted(set(data_info.loc['start_date'].values)))
+        df_info.loc['end_date'] = '_'.join(sorted(set(data_info.loc['end_date'].values)))
+        df_info.loc['keywords'] = '_'.join(sorted(set(data_info.loc['keywords'].values)))
 
         # Object data info
         if len(set([x.split('_')[0] for x in data_info.loc['institution'].values])) > 1:
@@ -1948,7 +1950,7 @@ class MFT(object):
         df_info.loc['colorants_name'] = '_'.join(sorted(set(data_info.loc['colorants_name'].values)))
         df_info.loc['binding'] = '_'.join(sorted(set(data_info.loc['binding'].values)))
         df_info.loc['ratio'] = '_'.join(sorted(set(data_info.loc['ratio'].values)))
-        df_info.loc['thickness_microns'] = '_'.join(sorted(set(data_info.loc['thickness_microns'].values)))
+        df_info.loc['thickness_um'] = '_'.join(sorted(set(data_info.loc['thickness_um'].values)))
         df_info.loc['status'] = '_'.join(sorted(set(data_info.loc['status'].values)))
 
         # Device data info
@@ -1983,8 +1985,8 @@ class MFT(object):
         if len(set(data_info.loc['filter_ill'].values)) > 1:
             df_info.loc['filter_ill'] = '_'.join(sorted(set([x.split('_')[0] for x in data_info.loc['filter_ill'].values])))
 
-        if len(set(data_info.loc['white_ref'].values)) > 1:
-            df_info.loc['white_ref'] = '_'.join(sorted(set([x.split('_')[0] for x in data_info.loc['white_ref'].values])))
+        if len(set(data_info.loc['white_standard'].values)) > 1:
+            df_info.loc['white_standard'] = '_'.join(sorted(set([x.split('_')[0] for x in data_info.loc['white_standard'].values])))
         
 
         # Analysis data info
@@ -2025,10 +2027,21 @@ class MFT(object):
         fwhm_avg = np.mean([i for i in [to_float(x) for x in fwhm] if isinstance(i, (int, float))])
         df_info.loc['FWHM_micron'] = fwhm_avg
 
-        power_info = data_info.loc['power_mW']
-        power_avg = np.mean([ufloat_fromstr(x.split('_')[1]) for x in power_info])
-        power_ids = '-'.join(sorted(set([x.split('_')[0] for x in power_info])))
-        df_info.loc['power_mW'] = f'{power_ids}_{power_avg}' 
+        power_infos = data_info.loc['power_mW'].values
+        power_values = []
+        
+        for power_info in power_infos:
+            if "_" in str(power_info):
+                power_value = ufloat_fromstr(power_info.split('_')[0])
+                power_values.append(power_value)                            
+
+            else: 
+                power_values.append(power_info)               
+                
+        power_mean = np.round(np.mean(power_values),3)
+        power_std = np.round(np.std(power_values),3)
+        df_info.loc['power_mW'] = f'{ufloat(power_mean,power_std)}'    
+                 
 
         irr_values = [str(ufloat(x,0)) if isinstance(x, int) else x for x in data_info.loc['irradiance_W/m**2'] ] 
         irr_mean = np.int32(np.mean([unumpy.nominal_values(ufloat_fromstr(x)) for x in irr_values]))
@@ -2279,8 +2292,8 @@ class MFT(object):
         plt.show()     
 
 
-    def plot_CIELAB(self, stds=[], dose_unit:Optional[str] = 'He', dose_values:Union[int, float, list, tuple] = 'all', colors:Union[str,list] = None, title:Optional[str] = None, fontsize:Optional[int] = 20, legend_labels:Union[str,list] = 'default', legend_position:Optional[str] = 'in', legend_fontsize:Optional[int] = 20, legend_title:Optional[str] = None, obs_ill:Optional[bool] = True, save:Optional[bool] = False, path_fig:Optional[str] = 'cwd'):
-        """Plot the Lab values related to the microfading analyses.
+    def plot_CIELAB(self, stds=[], dose_unit:Optional[str] = 'He', dose_values:Union[int, float, list, tuple] = 'all', colors:Union[str,list] = None, title:Optional[str] = None, fontsize:Optional[int] = 20, legend_labels:Union[str,list] = 'default', legend_position:Optional[str] = 'in', legend_fontsize:Optional[int] = 20, legend_title:Optional[str] = None, dE:Optional[bool] = False, obs_ill:Optional[bool] = True, save:Optional[bool] = False, path_fig:Optional[str] = 'cwd'):
+        """Plot the Lab values related to input the microfading files.
 
         Parameters
         ----------
@@ -2291,30 +2304,41 @@ class MFT(object):
             Unit of the light energy dose, by default 'He'
             Any of the following units can be used: 'He', 'Hv', 't'. Where 'He' corresponds to radiant energy (MJ/m2), 'Hv' to exposure dose (Mlxh), and 't' to times (sec)
 
-        dose_values : Union[int, float, list, tuple], optional        
+        dose_values : [int, float, list, tuple], optional        
             Values of the light dose energy, by default 'all'
             A single value (integer or float number), a list of multiple numerical values, or range values with a tuple (start, end, step) can be entered.
-            When 'all', it takes the values found in the data.       
+            When 'all', it takes the values found in the data.   
 
-        title : Optional[str], optional
+        colors : [str, list], optional
+            Define the colors of the data points, by default None
+            When 'sample', the color of each points will be based on srgb values computed from the reflectance values. Alternatively, a single string value can be used to define the color (see matplotlib colour values) or a list of matplotlib colour values can be used.     
+
+        title : str, optional
             Whether to add a title to the plot, by default None
 
-        fontsize : Optional[int], optional
+        fontsize : int, optional
             Fontsize of the plot (title, ticks, and labels), by default 24
 
-        legend_labels : Union[str, list], optional
+        legend_labels : [str, list], optional
             A list of labels respective to each element given in the data parameter that will be shown in the legend. When the list is empty there is no legend displayed, by default 'default'
             When 'default', each label will composed of the Id number of the number followed by a short description
 
-        legend_position : Optional[str], optional
+        legend_position : str, optional
             Position of the legend, by default 'in'
             The legend can either be inside the figure ('in') or outside ('out')
 
-        legend_fontsize : Optional[int], optional
+        legend_fontsize : int, optional
             Fontsize of the legend, by default 24
 
-        legend_title : Optional[str], optional
+        legend_title : str, optional
             Add a title above the legend, by default ''
+
+        dE : bool, optional
+            Whether to display the dE00 curves in the bottom left suplots instead of the CIELAB 2D space, by default False
+            NOT IMPLEMENTED YET ! LEAVE PARAMETER TO FALSE
+            
+        obs_ill : bool, optional
+            Whether to display the observer and illuminant values, by default True
 
         save : bool, optional
             Whether to save the figure, by default False
@@ -2325,7 +2349,7 @@ class MFT(object):
 
         Returns
         -------
-        _type_
+        png file
             It returns a figure with 4 subplots that can be saved as a png file.
         """
 
@@ -2376,7 +2400,7 @@ class MFT(object):
         else:
             obs_ill = None
 
-        return plotting.CIELAB(data=data_Lab, legend_labels=legend_labels, colors=colors, title=title, fontsize=fontsize, legend_fontsize=legend_fontsize, legend_position=legend_position, legend_title=legend_title, obs_ill=obs_ill, save=save, path_fig=path_fig)
+        return plotting.CIELAB(data=data_Lab, legend_labels=legend_labels, colors=colors, title=title, fontsize=fontsize, legend_fontsize=legend_fontsize, legend_position=legend_position, legend_title=legend_title, dE=dE, obs_ill=obs_ill, save=save, path_fig=path_fig)
 
 
     def plot_swatches_circle(self, light_doses: Optional[list] = [0,0.5,1,2,5,15], JND:Optional[list] = [1,2,3,5,10], dose_unit:Union[str,tuple] = 'Hv', dE:Optional[bool] = True, fontsize: Optional[int] = 24, equation:Optional[str] = 'c0*(x**c1) + c2', initial_params:Optional[List[float]] = [0.1, 0.1], save:Optional[bool] = False, path_fig:Optional[str] = 'cwd', title:Optional[str] = None, report:Optional[bool] = False): 
@@ -2435,7 +2459,7 @@ class MFT(object):
 
         x_range=(0, light_doses[-1]+0.05, 0.05)   
         x_values = np.arange(*x_range)     
-        Lab = self.get_cielab(coordinates=['L*','a*','b*'], dose_unit='Hv')          
+        Lab = self.get_cielab(coordinates=['L*','a*','b*'], dose_unit=dose_unit)          
         data_Lab = [] 
 
         # Define the function to fit
@@ -2535,7 +2559,7 @@ class MFT(object):
             #print(wanted_Lab)
         
         
-            plotting.swatches_circle(data=[wanted_Lab], data_type='Lab', light_doses=light_doses, dE=dE, fontsize=fontsize, save=save, title=title, path_fig=path_fig)
+            plotting.swatches_circle(data=[wanted_Lab], data_type='Lab', light_doses=light_doses, dose_unit=dose_unit, dE=dE, fontsize=fontsize, save=save, title=title, path_fig=path_fig)
 
 
     def plot_delta(self, stds:Optional[bool] = True, coordinates:Optional[list] = ['dE00'], dose_unit:Optional[str] = 'He', legend_labels:Union[str, list] = 'default', initial_values:Optional[bool] = False, colors:Union[str,list] = None, lw:Union[int,list] = 'default', title:Optional[str] = None, fontsize:Optional[int] = 24, legend_fontsize:Optional[int] = 24, legend_title:Optional[str] = None, xlim:Optional[tuple] = None, save:Optional[bool] = False, path_fig:Optional[str] = 'cwd'):
@@ -2850,8 +2874,8 @@ class MFT(object):
             
             ls_list = ['-','--','-.',':','-','--','-.',':','-','--','-.',':',]
             ls = ls_list[:len(dose_values)] * len(data_sp)        
-            srgb_i = self.get_sRGB().iloc[0,:].values.reshape(-1, 3) 
-            colors = np.repeat(srgb_i, 3, axis=0).clip(0,1)          
+            srgb_i = self.get_sRGB().iloc[0,:].values.reshape(-1, 3)            
+            colors = np.repeat(srgb_i, data_sp[0].shape[1], axis=0).clip(0,1)          
 
         else:
             print(f'"{spectra}" is not an adequate value. Enter a value for the parameter "spectra" among the following list: "i", "f", "i+f", "doses".')
