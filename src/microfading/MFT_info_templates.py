@@ -14,7 +14,7 @@ device_info = ["[DEVICE INFO]",
         "lamp_ill",
         "filter_fading",
         "filter_ill",
-        "white_ref",
+        "white_standard",
 ]
 
 analysis_info = [
