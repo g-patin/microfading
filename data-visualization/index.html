@@ -9,7 +9,7 @@
       
       
       
-        <link rel="prev" href="../data-processing/">
+        <link rel="prev" href="../rawdata-processing/">
       
       
         <link rel="next" href="../retrieve-test-datasets/">
@@ -64,6 +64,11 @@
     <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
     <label class="md-overlay" for="__drawer"></label>
     <div data-md-component="skip">
+      
+        
+        <a href="#plot-parameters" class="md-skip">
+          Skip to content
+        </a>
       
     </div>
     <div data-md-component="announce">
@@ -369,11 +374,11 @@
   
   
     <li class="md-nav__item">
-      <a href="../data-processing/" class="md-nav__link">
+      <a href="../rawdata-processing/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
-    Data processing
+    Rawdata processing
   </span>
   
 
@@ -397,6 +402,17 @@
       
       
       
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    Data visualization
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
       <a href="./" class="md-nav__link md-nav__link--active">
         
   
@@ -406,6 +422,41 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#plot-parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      Plot parameters
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#save-plots" class="md-nav__link">
+    <span class="md-ellipsis">
+      Save plots
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
       
     </li>
   
@@ -646,6 +697,32 @@
   
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#plot-parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      Plot parameters
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#save-plots" class="md-nav__link">
+    <span class="md-ellipsis">
+      Save plots
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -661,7 +738,73 @@
 
   <h1>Data visualization</h1>
 
-
+<p>In this section, we will show you how to create visualizations of your microfading data. The plot functions, accessible after creating an instance of the microfading class, start with the verb "plot", as illustrated below. There are in total seven plots which are briefly described in Table 1. </p>
+<figure>
+<p><img align="left" alt="Alt text" class="img-medium" src="../images/mf_functions.png" /></p>
+<figcaption>
+<p>The plot functions</p>
+</figcaption>
+</figure>
+<p>Table 1. Description of the <em>plot</em> functions.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;"><div style="width:205px">Function name</div></th>
+<th style="text-align: left;"><div style="width:250px">Description</div></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>plot_bars()</code></td>
+<td style="text-align: left;">plot the value of a single colorimetric coordinates at a given light dose</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>plot_CIELAB()</code></td>
+<td style="text-align: left;">plot the trajectory of the <span class="arithmatex">\(L^*a^*b^*\)</span> coordinates in the CIELAB colour space</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>plot_delta()</code></td>
+<td style="text-align: left;">plot the <span class="arithmatex">\(\Delta\)</span> curves for one or several CIE colour coordinates</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>plot_sp()</code></td>
+<td style="text-align: left;">plot the reflectance spectra</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>plot_sp_delta()</code></td>
+<td style="text-align: left;">plot the difference between two reflectance spectra</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>plot_swatches_cirlce()</code></td>
+<td style="text-align: left;">plot the colour changes as a series of coloured circles</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>plots()</code></td>
+<td style="text-align: left;"></td>
+</tr>
+</tbody>
+</table>
+<h2 id="plot-parameters"><strong>Plot parameters</strong><a class="headerlink" href="#plot-parameters" title="Permanent link">&para;</a></h2>
+<p>Most of the plot functions have the same parameters. Knowing how to use the parameters will allow you to adapt the plots according to your needs. You will find below a description and some information about a few plotting parameters.</p>
+<ul>
+<li>
+<p><em>colours</em> : allow you to modify the colour of the lines or points. You can enter the following types of input values:</p>
+<p><ul class="a">
+  <li>String: it can be any colour compatible with the matplotlib colour list. In that case, all the lines or points have the same colour.</p>
+<p>eg: "green", "midnightblue", etc.</li>      </p>
+<p><li>List of string: If you want to attribute a specific color to each curve or point. The amount of string elements in the list should therefore before equal to the amount of curves.</p>
+<p>eg: ["blue", "chartreuse"]</li> </p>
+<p><li>'sample': This will render each curve or point according to the colour of the corresponding sample. It takes the first reflectance spectrum of the microfading data and compute the sRGB values.</li> </p>
+<p><li>Float: a float between 0 and 1 will give a grey line ranging from black (0) to white (1).</li> 
+</ul></p>
+</li>
+</ul>
+<p>&nbsp;</p>
+<ul>
+<li><em>dose_unit</em> :</li>
+</ul>
+<h2 id="save-plots"><strong>Save plots</strong><a class="headerlink" href="#save-plots" title="Permanent link">&para;</a></h2>
+<p>If you want to save the plot as an image file, then set the <em>save</em> parameter to True. I also recommend to enter a value for the <em>path_fig</em> parameter, otherwise it will save the figure in the current working directory with a very basic name. </p>
 
 
 

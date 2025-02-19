@@ -371,35 +371,20 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#addregister-functions" class="md-nav__link">
+  <a href="#add-functions" class="md-nav__link">
     <span class="md-ellipsis">
-      Add/Register functions
+      Add functions
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#addregister-functions_1" class="md-nav__link">
+  <a href="#set-functions" class="md-nav__link">
     <span class="md-ellipsis">
-      Add/Register functions
+      Set functions
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="Add/Register functions">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#add-a-new-object" class="md-nav__link">
-    <span class="md-ellipsis">
-      Add a new object
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
@@ -414,18 +399,18 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#update-project-parameters" class="md-nav__link">
+  <a href="#update-object-parameters" class="md-nav__link">
     <span class="md-ellipsis">
-      Update project parameters
+      Update object parameters
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#update-object-parameters" class="md-nav__link">
+  <a href="#update-project-parameters" class="md-nav__link">
     <span class="md-ellipsis">
-      Update object parameters
+      Update project parameters
     </span>
   </a>
   
@@ -494,11 +479,11 @@
   
   
     <li class="md-nav__item">
-      <a href="../data-processing/" class="md-nav__link">
+      <a href="../rawdata-processing/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
-    Data processing
+    Rawdata processing
   </span>
   
 
@@ -788,35 +773,20 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#addregister-functions" class="md-nav__link">
+  <a href="#add-functions" class="md-nav__link">
     <span class="md-ellipsis">
-      Add/Register functions
+      Add functions
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#addregister-functions_1" class="md-nav__link">
+  <a href="#set-functions" class="md-nav__link">
     <span class="md-ellipsis">
-      Add/Register functions
+      Set functions
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="Add/Register functions">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#add-a-new-object" class="md-nav__link">
-    <span class="md-ellipsis">
-      Add a new object
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
@@ -831,18 +801,18 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#update-project-parameters" class="md-nav__link">
+  <a href="#update-object-parameters" class="md-nav__link">
     <span class="md-ellipsis">
-      Update project parameters
+      Update object parameters
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#update-object-parameters" class="md-nav__link">
+  <a href="#update-project-parameters" class="md-nav__link">
     <span class="md-ellipsis">
-      Update object parameters
+      Update project parameters
     </span>
   </a>
   
@@ -886,78 +856,244 @@ All the databases were created and can be found in the following directory: /hom
 
 <p>&nbsp;</p>
 <h2 id="description"><strong>Description</strong><a class="headerlink" href="#description" title="Permanent link">&para;</a></h2>
-<p>The databases simply consists of csv and txt files in which you will accumulate information. The management of the databases lies around two main actions:</p>
+<p>The databases simply consists of csv and txt files (Table 1) inside which you will accumulate information. The management of the databases lies around two main actions:</p>
 <ol>
 <li>You want to learn how to <strong>add / remove info</strong>.</li>
-<li>You want to learn how to <strong>retrieve info</strong> when needed. </li>
+<li>You want to learn how to <strong>retrieve info</strong>. </li>
 </ol>
-<p>The first things to do is to import the microfading package as showed in the code box above. You will access the databases functions as followed:</p>
-<div class="highlight"><pre><span></span><code><span class="n">mf</span><span class="o">.&lt;</span><span class="n">function</span> <span class="n">name</span><span class="o">&gt;</span>
-
-<span class="c1"># for example, this will retrieve all the microfading devices that you registered. </span>
+<p>The first things to do is to import the microfading package as showed in the code box above. You will access the databases functions as followed: <code>mf.&lt;function name&gt;</code></p>
+<div class="highlight"><pre><span></span><code><span class="c1"># for example, this will retrieve all the microfading devices that you registered. </span>
 <span class="n">mf</span><span class="o">.</span><span class="n">get_devices</span><span class="p">()</span>
 </code></pre></div>
-<p>Every function name start with a verb followed by an underscore and a noun or an adjective providing more information on the action that will be performed. There are only 4 verbs:</p>
+<p>Every function name start with a verb followed by an underscore and a noun or an adjective providing more information about the action that will be performed. There are only 4 verbs:</p>
 <ul>
-<li><strong>Get functions</strong>: retrieve information contains in the databases</li>
-<li><strong>Add functions</strong>: add a new item in the databases</li>
-<li><strong>Update functions</strong>: modify the recorded parameters of the databases</li>
-<li><strong>Set functions</strong>: set default values for some key parameters</li>
+<li><strong>Get</strong>: retrieve information contains in the databases</li>
+<li><strong>Add</strong>: add a new item in the databases (in future versions, I will implement <em>remove</em> functions)</li>
+<li><strong>Update</strong>: modify the recorded parameters of the databases</li>
+<li><strong>Set</strong>: set default values for some key parameters</li>
 </ul>
 <p>&nbsp;</p>
+<p>Table 1. Description of the database files.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;"><div style="width:205px">Filename</div></th>
+<th style="text-align: left;"><div style="width:250px">Description</div></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">DB_objects.csv</td>
+<td style="text-align: left;">Contain information related to each microfaded object</td>
+</tr>
+<tr>
+<td style="text-align: left;">DB_projects.csv</td>
+<td style="text-align: left;">Contain information related to each project</td>
+</tr>
+<tr>
+<td style="text-align: left;">institutions.txt</td>
+<td style="text-align: left;">Contain information about the owners (institutions) of the objects</td>
+</tr>
+<tr>
+<td style="text-align: left;">MFT_devices.txt</td>
+<td style="text-align: left;">Contain information about the microfading devices</td>
+</tr>
+<tr>
+<td style="text-align: left;">objects_creators.txt</td>
+<td style="text-align: left;">A list of persons (surname and name) that created the objects</td>
+</tr>
+<tr>
+<td style="text-align: left;">objects_supports.txt</td>
+<td style="text-align: left;">A list of a materials used to create the objects</td>
+</tr>
+<tr>
+<td style="text-align: left;">objects_techniques.txt</td>
+<td style="text-align: left;">A list of techniques used to create the objects</td>
+</tr>
+<tr>
+<td style="text-align: left;">objects_types.txt</td>
+<td style="text-align: left;">A list of global categories to define the objects</td>
+</tr>
+<tr>
+<td style="text-align: left;">persons.txt</td>
+<td style="text-align: left;">A list of persons (name, surname, and initials) performing the analyses</td>
+</tr>
+<tr>
+<td style="text-align: left;">white_references.txt</td>
+<td style="text-align: left;">Contain information related to white reference standards</td>
+</tr>
+</tbody>
+</table>
+<p>&nbsp;</p>
 <h2 id="get-functions"><strong>Get functions</strong><a class="headerlink" href="#get-functions" title="Permanent link">&para;</a></h2>
-<p>There are ten <em>get</em> functions:</p>
-<ul>
-<li><code>get_path_DB()</code> : returns the absolute path where the databases are stored on your local computer.</li>
-<li><code>get_DB()</code> : returns the databases as pandas dataframes.</li>
-<li><code>get_colorimetric_info()</code> : returns the observer and illuminant default values.</li>
-<li><code>get creators()</code> : returns a list of names and surnames corresponding to the persons that created the microfaded objects.</li>
-<li><code>get_institutions()</code> : returns a list of institutions that own the microfaded objects.</li>
-<li><code>get_lighting_conditions()</code> : returns the default light exposure conditions default values.</li>
-<li><code>get_objects()</code> : returns a list of the microfaded objects.</li>
-<li><code>get_persons()</code> : returns a list of persons that performed the microfading analyses.</li>
-<li><code>get_devices()</code> : returns a list of the registered microfading devices.</li>
-<li><code>get_white_references()</code> : returns a list of the registered white standard references.</li>
-</ul>
-<h2 id="addregister-functions"><strong>Add/Register functions</strong><a class="headerlink" href="#addregister-functions" title="Permanent link">&para;</a></h2>
-<p>There are seven <em>add</em> functions:</p>
-<ul>
-<li><code>add_new_creator()</code> : record information about a new object creator (artist, institution, etc.).</li>
-<li><code>add_new_institution()</code> : record information about a new institution.</li>
-<li><code>add_new_object()</code> : record information about a new object.</li>
-<li><code>add_new_person()</code> : record information about a new person performing microfading measurements.</li>
-<li><code>add_new_project()</code> : record information about a new project.</li>
-<li><code>add_devices()</code> : register a new microfading device.</li>
-<li><code>add_references()</code> : register a new white standard reference.</li>
-</ul>
-<h2 id="addregister-functions_1"><strong>Add/Register functions</strong><a class="headerlink" href="#addregister-functions_1" title="Permanent link">&para;</a></h2>
-<p>There are two <em>set</em> functions:</p>
-<ul>
-<li><code>set_colorimetric_info()</code> : set the observer and illuminant default values</li>
-<li><code>set_lighting_conditions()</code> : set the light exposure conditions default values</li>
-</ul>
+<p>Table 2. Description of the <em>get</em> functions.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;"><div style="width:205px">Function name</div></th>
+<th style="text-align: left;"><div style="width:250px">Description</div></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>get_path_DB()</code></td>
+<td style="text-align: left;">returns the absolute path where the databases are stored on your local computer</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>get_DB()</code></td>
+<td style="text-align: left;">eturns the databases as pandas dataframes</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>get_colorimetric_info()</code></td>
+<td style="text-align: left;">returns the observer and illuminant default values</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>get creators()</code></td>
+<td style="text-align: left;">returns a list of names and surnames corresponding to the persons that created the microfaded objects</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>get_datasets()</code></td>
+<td style="text-align: left;">returns a list of microfading example data filenames that can be used to try the package</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>get_institutions()</code></td>
+<td style="text-align: left;">returns a list of institutions that own the microfaded objects</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>get_lighting_conditions()</code></td>
+<td style="text-align: left;">returns the default light exposure conditions default values</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>get_objects()</code></td>
+<td style="text-align: left;">returns a list of the microfaded objects</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>get_persons()</code></td>
+<td style="text-align: left;">returns a list of persons that performed the microfading analyses</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>get_devices()</code></td>
+<td style="text-align: left;">returns a list of the registered microfading devices</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>get_white_references()</code></td>
+<td style="text-align: left;">returns a list of the registered white standard references</td>
+</tr>
+</tbody>
+</table>
+<h2 id="add-functions"><strong>Add functions</strong><a class="headerlink" href="#add-functions" title="Permanent link">&para;</a></h2>
+<p>Table 3. Description of the <em>add</em> functions.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;"><div style="width:205px">Function name</div></th>
+<th style="text-align: left;"><div style="width:250px">Description</div></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>add_new_creator()</code></td>
+<td style="text-align: left;">record information about a new object creator (artist, institution, etc.)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>add_new_institution()</code></td>
+<td style="text-align: left;">record information about a new institution</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>add_new_object()</code></td>
+<td style="text-align: left;">record information about a new object</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>add_new_person()</code></td>
+<td style="text-align: left;">record information about a new person performing microfading measurements.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>add_new_project()</code></td>
+<td style="text-align: left;">record information about a new project</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>add_devices()</code></td>
+<td style="text-align: left;">add a new microfading device</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>add_references()</code></td>
+<td style="text-align: left;">add a new white standard reference</td>
+</tr>
+</tbody>
+</table>
+<h2 id="set-functions"><strong>Set functions</strong><a class="headerlink" href="#set-functions" title="Permanent link">&para;</a></h2>
+<p>Table 4. Description of the <em>set</em> functions.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;"><div style="width:205px">Function name</div></th>
+<th style="text-align: left;"><div style="width:250px">Description</div></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>set_colorimetric_info()</code></td>
+<td style="text-align: left;">set the observer and illuminant default values</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>set_DB()</code></td>
+<td style="text-align: left;">set the use of databases (True or False)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>set_dose_unit()</code></td>
+<td style="text-align: left;">set the unit of the light dose (MJ/m2, Mlxh, or sec)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>set_folder_DB()</code></td>
+<td style="text-align: left;">set the path of the databases files should be stored</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>set_lighting_conditions()</code></td>
+<td style="text-align: left;">set the light exposure conditions default values</td>
+</tr>
+</tbody>
+</table>
+<p>The values defined in the <em>set</em> functions are stored inside the <em>db_config.json</em> file which you can find on your local computer inside the <em>site-packages</em> folder of the microfading package. The folder <em>site-packages</em> is where the python libraries are installed on your computer (see below).</p>
 <div class="highlight"><pre><span></span><code><span class="kn">import</span> <span class="nn">microfading</span> <span class="k">as</span> <span class="nn">mf</span>
-</code></pre></div>
-<div class="highlight"><pre><span></span><code><span class="n">mf</span><span class="o">.</span><span class="n">add_new_project</span><span class="p">()</span>
-</code></pre></div>
-<div class="codehilite"><pre><span></span><code><span class="n">HBox</span><span class="p">(</span><span class="n">children</span><span class="o">=</span><span class="p">(</span><span class="n">VBox</span><span class="p">(</span><span class="n">children</span><span class="o">=</span><span class="p">(</span><span class="n">HBox</span><span class="p">(</span><span class="n">children</span><span class="o">=</span><span class="p">(</span><span class="n">VBox</span><span class="p">(</span><span class="n">children</span><span class="o">=</span><span class="p">(</span><span class="n">Text</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span><span class="w"> </span><span class="n">description</span><span class="o">=</span><span class="s1">&#39;Project Id&#39;</span><span class="p">,</span><span class="w"> </span><span class="n">layout</span><span class="o">=</span><span class="n">La</span><span class="err">…</span>
 
-
-
-<span class="n">HBox</span><span class="p">(</span><span class="n">children</span><span class="o">=</span><span class="p">(</span><span class="n">Button</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s1">&#39;Create record&#39;</span><span class="p">,</span><span class="w"> </span><span class="n">style</span><span class="o">=</span><span class="n">ButtonStyle</span><span class="p">(),</span><span class="w"> </span><span class="n">tooltip</span><span class="o">=</span><span class="s1">&#39;Click me&#39;</span><span class="p">),</span><span class="w"> </span><span class="n">Output</span><span class="p">()))</span>
+<span class="c1"># This command will indicate you where is the microfading package installed on your computer</span>
+<span class="n">mf</span>
 </code></pre></div>
+<div class="output-area">
+<pre>
+ < module 'microfading' from '/home/john/anaconda3/lib/python3.11/site-packages/microfading/__init__.py'>
+</pre>
+</div>
 
-<div class="highlight"><pre><span></span><code><span class="n">mf</span><span class="o">.</span><span class="n">add_new_project</span><span class="p">()</span>
-</code></pre></div>
-<h3 id="add-a-new-object">Add a new object<a class="headerlink" href="#add-a-new-object" title="Permanent link">&para;</a></h3>
+<p>Whenever a function will need a parameter stored inside the db_config.json, it will retrieve it and use it (See code below for an example).</p>
+<figure>
+<p><img align="left" alt="Alt text" class="img-Large" src="../images/mf_get_Lab.png" /></p>
+<figcaption>
+<p>Retrieve the Lab values.</p>
+</figcaption>
+</figure>
 <h2 id="update-functions"><strong>Update functions</strong><a class="headerlink" href="#update-functions" title="Permanent link">&para;</a></h2>
-<p>There are two <em>update</em> functions:</p>
-<ul>
-<li><code>update_DB_objects()</code> : add new categories to the objects database.</li>
-<li><code>update_DB_projects()</code> : add new categories to the projects database.</li>
-</ul>
-<h3 id="update-project-parameters">Update project parameters<a class="headerlink" href="#update-project-parameters" title="Permanent link">&para;</a></h3>
+<p>Table 5. Description of the <em>update</em> functions.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;"><div style="width:205px">Function name</div></th>
+<th style="text-align: left;"><div style="width:250px">Description</div></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>update_DB_objects()</code></td>
+<td style="text-align: left;">add new categories to the objects database</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>update_DB_projects()</code></td>
+<td style="text-align: left;">add new categories to the projects database</td>
+</tr>
+</tbody>
+</table>
 <h3 id="update-object-parameters">Update object parameters<a class="headerlink" href="#update-object-parameters" title="Permanent link">&para;</a></h3>
+<h3 id="update-project-parameters">Update project parameters<a class="headerlink" href="#update-project-parameters" title="Permanent link">&para;</a></h3>
 
 
 

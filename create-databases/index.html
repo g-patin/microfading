@@ -65,6 +65,11 @@
     <label class="md-overlay" for="__drawer"></label>
     <div data-md-component="skip">
       
+        
+        <a href="#databases-created" class="md-skip">
+          Skip to content
+        </a>
+      
     </div>
     <div data-md-component="announce">
       
@@ -367,11 +372,11 @@
   
   
     <li class="md-nav__item">
-      <a href="../data-processing/" class="md-nav__link">
+      <a href="../rawdata-processing/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
-    Data processing
+    Rawdata processing
   </span>
   
 
@@ -481,6 +486,17 @@
       
       
       
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    Create databases
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
       <a href="./" class="md-nav__link md-nav__link--active">
         
   
@@ -490,6 +506,41 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#databases-created" class="md-nav__link">
+    <span class="md-ellipsis">
+      Databases created ?
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#databases-location" class="md-nav__link">
+    <span class="md-ellipsis">
+      Databases location ?
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
       
     </li>
   
@@ -646,6 +697,32 @@
   
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#databases-created" class="md-nav__link">
+    <span class="md-ellipsis">
+      Databases created ?
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#databases-location" class="md-nav__link">
+    <span class="md-ellipsis">
+      Databases location ?
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -669,14 +746,33 @@
 
 <span class="n">mf</span><span class="o">.</span><span class="n">create_DB</span><span class="p">(</span><span class="n">folder</span><span class="o">=</span><span class="n">folder</span><span class="p">)</span>
 </code></pre></div>
-<p>If you want to know whether databases were created or you want to know where are the databases located, use the <code>folder_DB()</code> function. It will return the path of the folder where the databases are located.</p>
+<p>&nbsp;</p>
+<h2 id="databases-created"><strong>Databases created ?</strong><a class="headerlink" href="#databases-created" title="Permanent link">&para;</a></h2>
+<p>If you want to know whether databases were created, use the <code>DB()</code> function.</p>
 <div class="highlight"><pre><span></span><code><span class="kn">import</span> <span class="nn">microfading</span> <span class="k">as</span> <span class="nn">mf</span>
-</code></pre></div>
-<div class="highlight"><pre><span></span><code><span class="n">mf</span><span class="o">.</span><span class="n">DB</span><span class="p">()</span>
+
+<span class="c1"># Return True if databases files were created otherwise False</span>
+<span class="n">mf</span><span class="o">.</span><span class="n">DB</span><span class="p">()</span>
 </code></pre></div>
 <div class="output-area">
 <pre>
+True
 All the databases were created and can be found in the following directory: /home/john/Documents/MFT/databases
+</pre>
+</div>
+
+<p>&nbsp;</p>
+<h2 id="databases-location"><strong>Databases location ?</strong><a class="headerlink" href="#databases-location" title="Permanent link">&para;</a></h2>
+<p>If you want to know where are the databases files located, use the  <code>get_path_DB()</code> function. It will return the path of the folder where the databases are located.</p>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span> <span class="nn">microfading</span> <span class="k">as</span> <span class="nn">mf</span>
+
+<span class="c1"># Return the path were the databases files are located if any.</span>
+<span class="n">mf</span><span class="o">.</span><span class="n">get_path_DB</span><span class="p">()</span>
+</code></pre></div>
+<p>```</p>
+<div class="output-area">
+<pre>
+The databases are located in the folder: /home/john/Documents/MFT/databases
 </pre>
 </div>
 

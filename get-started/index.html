@@ -367,6 +367,15 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#5-use-the-docstrings" class="md-nav__link">
+    <span class="md-ellipsis">
+      5. Use the docstrings
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -446,11 +455,11 @@
   
   
     <li class="md-nav__item">
-      <a href="../data-processing/" class="md-nav__link">
+      <a href="../rawdata-processing/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
-    Data processing
+    Rawdata processing
   </span>
   
 
@@ -757,6 +766,15 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#5-use-the-docstrings" class="md-nav__link">
+    <span class="md-ellipsis">
+      5. Use the docstrings
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -806,14 +824,14 @@ PosixPath('/home/username/Documents/MFT/2024-144_MF.BWS003.G01_avg_BW1_model_202
 </code></pre></div>
 &nbsp;</p>
 <h2 id="3-three-keywords-function-get-plot-compute">3. <strong>Three keywords function: get, plot, compute</strong><a class="headerlink" href="#3-three-keywords-function-get-plot-compute" title="Permanent link">&para;</a></h2>
-<p>Once you have created an instance of the <code>MFT</code> class, you can access the functions. The name of each function starts by a verb: get, plot, or compute. Enter one of these verbs and use the auto-completion tool (<code>Shift + Tab</code>) to display a list of available functions.</p>
+<p>Once you have created an instance of the <code>MFT</code> class, you can access the functions. The name of each function starts by a verb: get, plot, or compute. Enter one of the verbs and use the auto-completion tool (<code>Tab</code> button) to display a list of available functions.</p>
 <figure>
 <p><img align="left" alt="Alt text" class="img-medium" src="../images/mf_functions.png" /></p>
 <figcaption>
 <p>List of all the plotting functions.</p>
 </figcaption>
 </figure>
-<p>The functions can be run without passing any arguments, this will output the default values. To adjust the output to your needs, you will need to modify the values of the arguments. For instance, the function <code>get_cielab()</code> returns the <span class="arithmatex">\(\Delta E_{00}\)</span> values by default. If you want to retrieve other CIELAB coordinates, you will need to pass in a new value for the argument <em>coordinates</em> (see code below). To know the role of each argument in a function and which values can you pass in, you will need to read the documentation. The latter can either be access in the jupyter notebook or in the <a href="https://g-patin.github.io/microfading/references/">References section</a> of this website.</p>
+<p>The functions can be run without passing any arguments, this will output the default values. To adjust the output to your needs, you will need to modify the values of the arguments. For instance, the function <code>get_cielab()</code> returns the <span class="arithmatex">\(\Delta E_{00}\)</span> values by default. If you want to retrieve other CIELAB coordinates, you will need to pass in a new value for the argument <em>coordinates</em> (see code below). To know the role of each argument in a function and which values can you pass in, you will need to read the documentation (see below). The latter can either be access in the jupyter notebook or in the <a href="https://g-patin.github.io/microfading/references/">References section</a> of this website.</p>
 <figure>
 <p><img align="left" alt="Alt text" class="img-large" src="../images/mf_functions_arguments.png" /></p>
 <figcaption>
@@ -822,7 +840,29 @@ PosixPath('/home/username/Documents/MFT/2024-144_MF.BWS003.G01_avg_BW1_model_202
 </figure>
 <h2 id="4-use-the-databases">4. <strong>Use the databases</strong><a class="headerlink" href="#4-use-the-databases" title="Permanent link">&para;</a></h2>
 <p>If you are planning to perform microfading measurements more than once, we advise you to make use of the databases. This will allow you to save metadata about the microfaded object in the excel data file, which can ultimately be used to perform queries. For example, you could ask to retrieve all measurements performed on a given material or on objects created by a specific artist,etc. Unfortunately, such as a possibility has not been implemented yet.</p>
-<p>To start using the databases, you will first need to create them and fill them with some information. To learn how to create databases, see the <a href="https://g-patin.github.io/microfading/create-databases/">Create databases section</a>. To learn how to fill the databases and properly manage the, see the <a href="https://g-patin.github.io/microfading/databases-management/">Databases management section</a>. </p>
+<p>To start using the databases, you will first need to create them and fill them with some information. To learn how to create databases, see the <a href="https://g-patin.github.io/microfading/create-databases/">Create databases section</a>. To learn how to fill the databases and properly manage them, see the <a href="https://g-patin.github.io/microfading/databases-management/">Databases management section</a>. </p>
+<h2 id="5-use-the-docstrings">5. <strong>Use the docstrings</strong><a class="headerlink" href="#5-use-the-docstrings" title="Permanent link">&para;</a></h2>
+<p>Whenever you will use functions from the <code>microfading</code> package, you will always be able to access the docstrings. These contain valuable information that will help you to adequately use the functions. To open the dosctrings, you have two possibilites:</p>
+<ol>
+<li>
+<p>Write the name of a function (without parentheses) followed by a question mark (see example below).</p>
+<figure>
+<p><img align="left" alt="Alt text" class="img-Large" src="../images/mf_docstrings-example_02.png" /></p>
+<figcaption>
+<p>Opening a docstring with a question mark.</p>
+</figcaption>
+</figure>
+</li>
+<li>
+<p>Write the name of a function (with parentheses), place the cursor inside the parentheses and press <code>Ctrl + Caps Lock</code> (see example below).</p>
+</li>
+</ol>
+<figure>
+<p><img align="left" alt="Alt text" class="img-Large" src="../images/mf_docstrings-example_01.png" /></p>
+<figcaption>
+<p>Opening a tooltip docstring window.</p>
+</figcaption>
+</figure>
 
 
 
