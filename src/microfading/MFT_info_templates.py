@@ -24,7 +24,8 @@ analysis_info = [
         "group_description",
         "background",
         "specular_component",
-        "integration_time_ms",
+        "integration_time_sample_ms",
+        "integration_time_whitestandard_ms",
         "average",
         "duration_min",
         "interval_sec",
@@ -39,10 +40,12 @@ beam_info = [
         "resolution_micron/pixel",
         "FWHM_micron",
         "current_mA",
-        "power_mW",
-        "luminuous_flux_lm",
-        "irradiance_W/m**2",        
-        "illuminance_Mlx",
+        "radiantFlux_mW",
+        "luminuousFlux_lm",
+        "irradiance_Ee_W/m^2",        
+        "illuminance_Ev_Mlx",
+        "radiantExposure_He_MJ/m^2",
+        "exposureDose_Hv_Mlxh"
 ]
 
 template_default = {

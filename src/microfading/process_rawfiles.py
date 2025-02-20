@@ -266,10 +266,10 @@ def MFT_fotonowy(files: list, filenaming:Optional[str] = 'none', folder:Optional
                 df_info.loc['duration_min'] = duration_min
                 df_info.loc['interval_sec'] = interval_sec
                 df_info.loc['numDataPoints'] = numDataPoints 
-                df_info.loc['totalDose_MJ/m2'] = np.round(total_He, 3)
-                df_info.loc['totalDose_Mlxh'] = np.round(total_Hv, 3)
-                df_info.loc['illuminance_Mlx'] = np.round(ill, 4)
-                df_info.loc['irradiance_W/m2'] = int(irr)
+                df_info.loc['radiantExposure_He_MJ/m^2'] = np.round(total_He, 3)
+                df_info.loc['exposureDose_Hv_Mlxh'] = np.round(total_Hv, 3)
+                df_info.loc['illuminance_Ev_Mlx'] = np.round(ill, 4)
+                df_info.loc['irradiance_Ee_W/m^2'] = int(irr)
 
                 current = int(df_info.loc['Curr'].values[0].split(' ')[0])
                 df_info.loc['Curr'] = current
@@ -377,7 +377,8 @@ def MFT_fotonowy(files: list, filenaming:Optional[str] = 'none', folder:Optional
                 meas_id = f'MF.{object_id}.{meas_nb}'
                 spec_comp = 'SCE_excluded'
 
-                int_time = np.int32(df_info.loc['Sample integration time [ms]'].values[0])
+                int_time_sample = np.int32(df_info.loc['Sample integration time [ms]'].values[0])
+                int_time_whitestandard = np.int32(df_info.loc['White standard integration time [ms]'].values[0])
                 fwhm = MFT_info_dictionaries.beam_FWHM[LED_nb]
 
                 area = pi * (((fwhm/1e6)/2)**2)
@@ -392,7 +393,8 @@ def MFT_fotonowy(files: list, filenaming:Optional[str] = 'none', folder:Optional
                     group_description,
                     background,
                     spec_comp,
-                    int_time,
+                    int_time_sample,
+                    int_time_whitestandard,
                     average, 
                     duration_min, 
                     interval_sec,
@@ -403,7 +405,7 @@ def MFT_fotonowy(files: list, filenaming:Optional[str] = 'none', folder:Optional
 
 
                 # beam info                
-
+                
                 beam_info = [
                     " ",
                     'none',
@@ -413,7 +415,9 @@ def MFT_fotonowy(files: list, filenaming:Optional[str] = 'none', folder:Optional
                     power,
                     lum,
                     np.int32(irr),
-                    np.round(ill,3)                    
+                    np.round(ill, 3),
+                    np.round(df_cl['He_MJ/m2'].values[-1], 4),
+                    np.round(df_cl['Hv_Mlxh'].values[-1], 4),                   
                 ]
 
                 info_values = [
@@ -451,6 +455,10 @@ def MFT_fotonowy(files: list, filenaming:Optional[str] = 'none', folder:Optional
                
                
             # export the dataframes to an excel file
+            if not Path(folder).exists():
+                print(f'The output folder you entered {folder} does not exist. Please make sure the output folder has been created.')
+                return 
+            
             with pd.ExcelWriter(Path(folder) / f'{filename}.xlsx') as writer:
 
                 df_info.to_excel(writer, sheet_name='info', index=True)
