@@ -674,23 +674,23 @@ def process_rawdata(files: list, device: str, filenaming:Optional[str] = 'none',
 
     # Set the db value
     if db == 'default':
-        if len(db_config) == 0:
-            db = False
+        if len(db_config['databases']) == 0:
+            db = False            
         else:
             db = DB.get_db_config()['databases']['usage']
-
+            
 
     # Set the observer value
-    if observer == 'default':
-        if len(db_config) == 0:
+    if observer == 'default':        
+        if len(db_config['colorimetry']) == 0:
             observer = '10deg'
         else:
             observer = DB.get_colorimetry_info().loc['observer'].values[0]
 
-
+    
     # Set the illuminant value
     if illuminant == 'default':
-        if len(db_config) == 0:
+        if len(db_config['colorimetry']) == 0:
             illuminant = 'D65'
         else:
             illuminant = DB.get_colorimetry_info().loc['illuminant'].values[0]
@@ -698,7 +698,7 @@ def process_rawdata(files: list, device: str, filenaming:Optional[str] = 'none',
 
     # Set the interpolation value
     if interpolation == 'default':
-        if len(db_config) == 0:
+        if len(db_config['light_dose']) == 0:
             interpolation = 'He'
         else:
             interpolation = DB.get_light_dose_info().loc['unit'].values[0].split('_')[0]
@@ -706,7 +706,7 @@ def process_rawdata(files: list, device: str, filenaming:Optional[str] = 'none',
     
     # Set the white reference value
     if white_standard == 'default':
-        if len(db_config) == 0:
+        if len(db_config['colorimetry']) == 0:
             white_standard = 'default'
         else:
             white_standard = DB.get_colorimetry_info().loc['white_standard'].values[0]  
@@ -1926,7 +1926,7 @@ class MFT(object):
         
         # Project data info
         df_info.loc['project_id'] = '_'.join(sorted(set(data_info.loc['project_id'].values)))
-        df_info.loc['project_leader'] = '_'.join(sorted(set(data_info.loc['project_leader'].values)))
+        df_info.loc['lead_researcher'] = '_'.join(sorted(set(data_info.loc['lead_researcher'].values)))
         df_info.loc['co-researchers'] = '_'.join(sorted(set(data_info.loc['co-researchers'].values)))
         df_info.loc['start_date'] = '_'.join(sorted(set(data_info.loc['start_date'].values)))
         df_info.loc['end_date'] = '_'.join(sorted(set(data_info.loc['end_date'].values)))
