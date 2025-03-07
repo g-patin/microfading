@@ -71,7 +71,7 @@ template_default = {
         "object_name",
         "object_creator",
         "object_date",
-        "object_support",
+        "object_material",
         "color",
         "colorants",
         "colorants_name",
