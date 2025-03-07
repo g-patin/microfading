@@ -668,13 +668,13 @@ def spectra(data, stds=[], spectral_mode:Optional[str] = 'R', legend_labels=[], 
     
     ax.set_xlabel('Wavelength $\lambda$ (nm)', fontsize = fontsize)
 
-    if derivation == False and spectral_mode.lower() == 'r':
+    if derivation == False and spectral_mode.upper() == 'R':
         ax.set_ylabel('Reflectance factor', fontsize = fontsize)
     elif derivation == False and spectral_mode.lower() == 'dr':
         ax.set_ylabel('Reflectance difference', fontsize = fontsize)
-    elif derivation == False and spectral_mode.lower() == 'a':
+    elif derivation == False and spectral_mode.upper() == 'A':
         ax.set_ylabel('Absorbance', fontsize = fontsize)
-    elif derivation == True and spectral_mode.lower() == 'a':
+    elif derivation == True and spectral_mode.upper() == 'A':
         ax.set_ylabel(r'$\frac{dA}{d\lambda}$', fontsize = fontsize+10)
     else:
         ax.set_ylabel(r'$\frac{dR}{d\lambda}$', fontsize = fontsize+10)
