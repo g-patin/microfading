@@ -176,8 +176,8 @@ class DB:
         techniques_file = open(self.folder_db / r'object_techniques.txt', 'r').read()
         techniques = techniques_file.split("\n")        
 
-        supports_file = open(self.folder_db  / r'object_supports.txt', 'r').read()
-        supports = supports_file.split("\n")        
+        materials_file = open(self.folder_db  / r'object_materials.txt', 'r').read()
+        materials = materials_file.split("\n")        
 
         owners_file = pd.read_csv(self.folder_db / 'institutions.txt')
         owners = tuple(owners_file['name'].values)
@@ -255,7 +255,7 @@ class DB:
 
         object_name = ipw.Text(        
             value='',
-            placeholder='Enter a short object name without space',
+            placeholder='Enter a short object (no space, no underscore)',
             description='Name',
             disabled=False,
             layout=Layout(width='99%',height="30px"),
@@ -272,23 +272,23 @@ class DB:
             style=style,
         )
 
-        object_technique = ipw.SelectMultiple(
-            placeholder = 'Enter techniques/materials',
+        object_technique = ipw.SelectMultiple(            
             options = techniques,
             description = 'Technique',
             ensure_option=False,
+            rows=10,
             disabled=False,
-            layout=Layout(width="99%", height="160px"),
+            layout=Layout(width="99%", height="180px"),
             style=style,
         )   
 
-        object_support = ipw.Combobox(
-            placeholder = 'Enter a material',
-            options = supports,
-            description = 'Support',
+        object_material = ipw.SelectMultiple(            
+            options = materials,
+            description = 'Materials',
             ensure_option=False,
+            rows=10,
             disabled=False,
-            layout=Layout(width="99%", height="30px"),
+            layout=Layout(width="99%", height="180px"),
             style=style,
         )
 
@@ -311,7 +311,7 @@ class DB:
             placeholder = 'Optional',
             ensure_option=False,
             disabled=False,
-            layout=Layout(width="99%", height="30px"),
+            layout=Layout(width="78%", height="30px"),
             style=style,
         )        
                 
@@ -327,14 +327,15 @@ class DB:
             'object_creator',
             'object_date',
             'object_owner',
-            'object_support']]
+            'object_material']]
 
         additional_param_widgets = {}
         for param in additional_params:
             additional_param_widgets[param] = ipw.Combobox(
                 description=param,
                 options=[],  # You can populate this with options if needed
-                placeholder=f"Enter {param} value"
+                placeholder=f"Enter {param} value",
+                style=style
             )        
 
 
@@ -356,12 +357,7 @@ class DB:
 
                 types_file = open(self.folder_db / r'object_types.txt', 'r').read().splitlines()
                 types = types_file       
-
-                techniques_file = open(self.folder_db / r'object_techniques.txt', 'r').read().splitlines()
-                techniques = techniques_file        
-
-                supports_file = open(self.folder_db  / r'object_supports.txt', 'r').read().splitlines()
-                supports = supports_file                        
+                                                       
 
                 new_row = pd.DataFrame({                    
                     'project_id': project_id.value,
@@ -374,7 +370,7 @@ class DB:
                     'object_creator': object_creator.value,                        
                     'object_date': object_date.value,
                     'object_owner': object_owner.value,
-                    'object_support': object_support.value},                       
+                    'object_material': "_".join(object_material.value)},                       
                     index=[0] 
                     ) 
 
@@ -390,16 +386,7 @@ class DB:
                     df_creators = pd.read_csv(self.folder_db / 'object_creators.txt')
                     df_creators = pd.concat([df_creators, pd.DataFrame(data=[creator_surname,creator_name], index=['surname','name']).T])
                     df_creators.to_csv(self.folder_db / 'object_creators.txt', index=False)
-                
-
-                
-                if object_support.value not in supports:
-                    supports.append(str(object_support.value))
-                    supports = sorted(supports, key=str.casefold)                    
-
-                    with open(self.folder_db / 'object_supports.txt', 'w') as f:
-                        f.write('\n'.join(supports).strip()) 
-                    f.close()
+                               
 
                 if object_type.value not in types:
                     types.append(str(object_type.value))
@@ -420,11 +407,13 @@ class DB:
 
         recording.on_click(button_record_pressed)
 
-        display(ipw.HBox([ipw.VBox([object_id,project_id,object_creator,object_date,object_owner,object_title, object_name],layout=Layout(width="40%", height="300px"), style=style,),
-                        ipw.VBox([object_category,object_type,object_technique,object_support,object_color],layout=Layout(width="40%", height="300px"), style=style),
-                        ]))  
-
-        display(*[widget for widget in additional_param_widgets.values()])
+        display(
+            ipw.HBox([
+                ipw.VBox([object_id,project_id,object_creator,object_date,object_owner,object_category,object_type,object_title, object_name], layout=Layout(width="30%", height="370px"), style=style,),
+                ipw.VBox([object_technique,object_material], layout=Layout(width="30%", height="370px"), style=style),
+                ipw.VBox([object_color, *[widget for widget in additional_param_widgets.values()]], layout=Layout(width="30%", height="370px"), style=style)
+                ]))
+                
         display(ipw.HBox([recording, button_record_output]))
         
 
@@ -688,6 +677,96 @@ class DB:
         display(ipw.HBox([recording, button_record_output]))
 
 
+    def add_techniques(self):
+        """Register a new object technique.
+
+        Returns
+        -------
+        ipywdigets
+            fill in the name of the technique to be registered. 
+        """
+
+        # Define ipython widgets
+
+        technique_widget = ipw.Text(        
+            value='',
+            placeholder='Enter a name',
+            description='Technique',               
+        )    
+
+        recording = ipw.Button(
+            description='Create record',
+            disabled=False,
+            button_style='', # 'success', 'info', 'warning', 'danger' or ''
+            tooltip='Click me',            
+        )        
+            
+        button_record_output = ipw.Output()
+
+
+        # Define the path of the users database file
+
+        databases_folder = self.get_db_path()
+        techniques_filename = 'object_techniques.txt'
+
+
+        # Define some functions    
+
+        def get_existing_techniques(file_path):
+            try:
+                return self.get_techniques()        
+                
+            except FileNotFoundError:            
+                return
+                
+
+        def update_text_file(file_path, name):
+
+            # Check if the initials already exists        
+            existing_techniques = get_existing_techniques(file_path)
+
+            if technique_widget.value in existing_techniques:
+                print(f'The technique {technique_widget.value} has already been registered.')
+
+            else:
+                existing_techniques.append(str(technique_widget.value).lower())         
+                existing_techniques = sorted(existing_techniques)
+                
+                with open(databases_folder / techniques_filename, 'w') as f:
+                        f.write('\n'.join(existing_techniques))
+
+                f.close()            
+                
+                print(f"Technique added: {name}")
+
+        
+
+        def button_record_pressed(b):
+            """
+            Save the technique name in the object_techniques.txt file.
+            """
+
+            button_record_output.clear_output(wait=True)
+
+            name = technique_widget.value.strip()
+            
+
+            with button_record_output:            
+                
+                if name: # ensure all fields are filled
+                    update_text_file(databases_folder / techniques_filename, name)
+                else:                    
+                    print("Please enter all fields (Name)")
+    
+    
+        # Link the widget button to the function
+        recording.on_click(button_record_pressed)
+
+        # Display the widgets
+        display(technique_widget)
+        display(ipw.HBox([recording, button_record_output]))
+    
+    
     def create_db(self, folder_path):   
         
         ##### ENTER THE FOLDER_PATH IN CONFIG FILE #####
@@ -716,7 +795,7 @@ class DB:
 
 
         # create the object database
-        db_object = pd.DataFrame(columns=['object_id','object_category','object_type','object_technique','object_title','object_name','object_creator','object_date','object_owner','object_support','colorants','colorants_name','binding','ratio','thickness_um','color','status','project_id'])
+        db_object = pd.DataFrame(columns=['object_id','object_category','object_type','object_technique','object_title','object_name','object_creator','object_date','object_owner','object_material','colorants','colorants_name','binding','ratio','thickness_um','color','status','project_id'])
         db_object.to_csv(Path(folder_path) / 'DB_objects.csv', index=False)
 
         
@@ -774,7 +853,7 @@ class DB:
             f.write("textile\n")
             f.write("wallpainting\n")
 
-        with open(Path(folder_path) / 'object_supports.txt', 'w') as f:
+        with open(Path(folder_path) / 'object_materials.txt', 'w') as f:
             f.write("blue paper\n")
             f.write("canvas\n")
             f.write("cardboard\n")
@@ -876,16 +955,14 @@ class DB:
         db_config = self.get_db_config()
         config_databases = db_config['databases']
 
-        if len(config_databases) == 0:            
-            return None
+        if len(config_databases) == 0:       
+            print('There is no path configured for the databases. Please enter databases configuration info by using the function set_DB().')     
+            return None 
         
-        elif 'path_folder' not in config_databases.keys():
-            print('There is no path configured for the databases. Please enter databases configuration info by using the function set_DB().')
-            return None
 
         else:
             db_path = config_databases['path_folder']
-            return db_path      
+            return Path(db_path)   
     
     
     def get_persons(self):
@@ -1001,6 +1078,28 @@ class DB:
         else:
             print(f'The file {Path(self.folder_db) / "white_standards.txt"} is not existing. Make sure to create one by running the function "create_DB" from the microfading package.')
             return
+
+    
+    def get_techniques(self):
+        """Retrieve the techniques used to create the objects.
+
+        Returns
+        -------
+        pandas dataframe
+            name of the techniques.
+        """
+
+        databases_folder = self.get_db_path()
+        techniques_filename = 'object_techniques.txt'
+
+        if not (databases_folder / techniques_filename).exists():
+            print('Please create a .txt file called "object_techniques" in the the following folder -> P:databases')
+            return
+        
+        else:
+            techniques_file = open(databases_folder / techniques_filename, 'r').read()
+            techniques = techniques_file.split("\n")   
+            return techniques
 
     
     def update_db_projects(self, new: str, old:Optional[str] = None):
