@@ -132,7 +132,7 @@ def MFT_fotonowy(files: list, filenaming:Optional[str] = 'none', folder:Optional
             df_cl['h'] = LCh[2]
 
             df_cl = df_cl[['He_MJ/m2', 'Hv_Mlxh','t_sec', 'L*','a*','b*','C*','h','dE76','dE00']]
-                                 
+                          
         else:
             # define abscissa units
             abs_scales = {'He': He, 'Hv': Hv, 't': times}
@@ -240,249 +240,249 @@ def MFT_fotonowy(files: list, filenaming:Optional[str] = 'none', folder:Optional
             df_sp = df_sp_interp
             
 
-            ###### CREATE INFO DATAFRAME ####### 
+        ###### CREATE INFO DATAFRAME ####### 
 
-            # retrieve the information about the analysis        
-            lookfor = '#Time'
-            file_raw_cl = open(raw_file_cl).read()
+        # retrieve the information about the analysis        
+        lookfor = '#Time'
+        file_raw_cl = open(raw_file_cl).read()
 
-            infos = file_raw_cl[:file_raw_cl.index(lookfor)].splitlines()
-            dic_infos = {}
+        infos = file_raw_cl[:file_raw_cl.index(lookfor)].splitlines()
+        dic_infos = {}
 
-            for i in infos:             
-                key = i[2:i.index(':')]
-                value = i[i.index(':')+2:]              
-                dic_infos[key]=[value]
+        for i in infos:             
+            key = i[2:i.index(':')]
+            value = i[i.index(':')+2:]              
+            dic_infos[key]=[value]
 
-            dic_infos.pop('Illuminant') # remove the Illuminant info
-            dic_infos['meas_id'] = f'{dic_infos["Object"][0]}_{dic_infos["Sample"][0]}'
-            df_info = pd.DataFrame.from_dict(dic_infos).T 
+        dic_infos.pop('Illuminant') # remove the Illuminant info
+        dic_infos['meas_id'] = f'{dic_infos["Object"][0]}_{dic_infos["Sample"][0]}'
+        df_info = pd.DataFrame.from_dict(dic_infos).T 
             
             
-            if db == False:          
+        if db == False:          
 
-                df_info.loc['illuminant'] = illuminant
-                df_info.loc['observer'] = observer
-                df_info.loc['duration_min'] = duration_min
-                df_info.loc['interval_sec'] = interval_sec
-                df_info.loc['numDataPoints'] = numDataPoints 
-                df_info.loc['radiantExposure_He_MJ/m^2'] = np.round(total_He, 3)
-                df_info.loc['exposureDose_Hv_Mlxh'] = np.round(total_Hv, 3)
-                df_info.loc['illuminance_Ev_Mlx'] = np.round(ill, 4)
-                df_info.loc['irradiance_Ee_W/m^2'] = int(irr)
+            df_info.loc['illuminant'] = illuminant
+            df_info.loc['observer'] = observer
+            df_info.loc['duration_min'] = duration_min
+            df_info.loc['interval_sec'] = interval_sec
+            df_info.loc['numDataPoints'] = numDataPoints 
+            df_info.loc['radiantExposure_He_MJ/m^2'] = np.round(total_He, 3)
+            df_info.loc['exposureDose_Hv_Mlxh'] = np.round(total_Hv, 3)
+            df_info.loc['illuminance_Ev_Mlx'] = np.round(ill, 4)
+            df_info.loc['irradiance_Ee_W/m^2'] = int(irr)
 
-                current = int(df_info.loc['Curr'].values[0].split(' ')[0])
-                df_info.loc['Curr'] = current
-                df_info = df_info.rename(index={'Curr': 'current_mA'})
+            current = int(df_info.loc['Curr'].values[0].split(' ')[0])
+            df_info.loc['Curr'] = current
+            df_info = df_info.rename(index={'Curr': 'current_mA'})
 
-                df_info.index.name = 'parameter'
-                df_info.columns = ['value']  
-                df_info = df_info.reset_index()
+            df_info.index.name = 'parameter'
+            df_info.columns = ['value']  
+            df_info = df_info.reset_index()
+
+        else:
+                
+            if 'project_id' in db_objects.columns:
+                db_objects = db_objects.drop('project_id', axis=1)
+                
+            info_parameters = [
+            "[SINGLE MICROFADING ANALYSIS]",
+            "authors",
+            "date_time",
+            "comment",
+            "[PROJECT INFO]"] + list(db_projects.columns) + ["[OBJECT INFO]"] + list(db_objects.columns) + MFT_info_templates.device_info + MFT_info_templates.analysis_info + MFT_info_templates.beam_info
+
+            df_authors = DB.get_persons()
+
+            if authors == 'XX':
+                authors_names = 'unknown'
+
+            elif '-' in authors or ' - ' in authors:                     
+                list_authors = []
+                for x in authors.split('-'):
+                    x = x.strip()
+                    df_author = df_authors[df_authors['initials'] == x]
+                    list_authors.append(f"{df_author['surname'].values[0]}, {df_author['name'].values[0]}")                    
+                authors_names = '_'.join(list_authors)
+                    
+            else:                    
+                df_author = df_authors[df_authors['initials'] == authors]
+                authors_names = f"{df_author['surname'].values[0]}, {df_author['name'].values[0]}"
+
+            date_time = pd.to_datetime(df_info.loc['Date'].values[0])
+            date = date_time.date()
+            project_id = raw_file_cl.stem.split(' ')[0]
+            object_id = raw_file_cl.stem.split(' ')[1]
+            group = raw_file_cl.stem.split(' ')[2]
+            group_description = raw_file_cl.stem.split(' ')[3].split('_')[0]
+            project_info = list(db_projects.query(f'project_id == "{project_id}"').values[0])
+            object_info = list(db_objects.query(f'object_id == "{object_id}"').values[0])
+
+
+            # device info values
+            LED_nb = df_info.loc['LED'].values[0]
+
+            df_devices = DB.get_devices()                
+            if device_nb in df_devices['Id'].values:
+                df_devices = df_devices.set_index('Id')                    
+                device_name = df_devices.loc[device_nb]['name']
+                device_description = df_devices.loc[device_nb]['description']
+
+            elif device_nb == 'default':
+                device_nb = 'none'
+                device_name = 'unnamed'
+                device_description = 'Fotonowy-MFT'
 
             else:
+                print(f'The device you entered ({device_nb}) has not been registered. Please first register the device, by using the function mf.register_devices().')
+                return
+
+            df_WR = DB.get_white_standards()
+            if white_standard in df_WR['Id'].values:
+                df_WR = df_WR.set_index('Id')
+                WR_nb = white_standard
+                WR_description = df_WR.loc[white_standard]['description']
+            elif white_standard == 'default':
+                WR_nb = 'none'
+                WR_description = 'Fotonowy fotolon PTFE'
+            elif white_standard == 'unknown':
+                WR_nb = 'none'
+                WR_description = 'unknown'
+            else:
+                print(f'The white reference you entered ({white_standard}) has not been registered. Please first register the white reference, by using the function mf.add_references().')
+                return
                 
-                if 'project_id' in db_objects.columns:
-                    db_objects = db_objects.drop('project_id', axis=1)
+            device_info = [
+                " ",
+                f'{device_nb}_{device_name}_{device_description}', 
+                'none',
+                'none',
+                'none',
+                '0° : 45°',
+                'unknown',
+                'unknown',
+                'none',
+                'none',
+                'Thorlabs, FT030',
+                f'LED{LED_nb}',
+                'none',
+                'none',
+                'none',
+                f'{WR_nb}_{WR_description}'   
+            ]
+
+
+            # analysis info values
                 
-                info_parameters = [
-                "[SINGLE MICROFADING ANALYSIS]",
-                "authors",
-                "date_time",
-                "comment",
-                "[PROJECT INFO]"] + list(db_projects.columns) + ["[OBJECT INFO]"] + list(db_objects.columns) + MFT_info_templates.device_info + MFT_info_templates.analysis_info + MFT_info_templates.beam_info
+            meas_nb = raw_file_cl.stem.split('_')[1]
+            meas_id = f'MF.{object_id}.{meas_nb}'
+            spec_comp = 'SCE_excluded'
 
-                df_authors = DB.get_persons()
+            int_time_sample = np.int32(df_info.loc['Sample integration time [ms]'].values[0])
+            int_time_whitestandard = np.int32(df_info.loc['White standard integration time [ms]'].values[0])
+            fwhm = MFT_info_dictionaries.beam_FWHM[LED_nb]
 
-                if authors == 'XX':
-                    authors_names = 'unknown'
-
-                elif '-' in authors or ' - ' in authors:                     
-                    list_authors = []
-                    for x in authors.split('-'):
-                        x = x.strip()
-                        df_author = df_authors[df_authors['initials'] == x]
-                        list_authors.append(f"{df_author['surname'].values[0]}, {df_author['name'].values[0]}")                    
-                    authors_names = '_'.join(list_authors)
-                    
-                else:                    
-                    df_author = df_authors[df_authors['initials'] == authors]
-                    authors_names = f"{df_author['surname'].values[0]}, {df_author['name'].values[0]}"
-
-                date_time = pd.to_datetime(df_info.loc['Date'].values[0])
-                date = date_time.date()
-                project_id = raw_file_cl.stem.split(' ')[0]
-                object_id = raw_file_cl.stem.split(' ')[1]
-                group = raw_file_cl.stem.split(' ')[2]
-                group_description = raw_file_cl.stem.split(' ')[3].split('_')[0]
-                project_info = list(db_projects.query(f'project_id == "{project_id}"').values[0])
-                object_info = list(db_objects.query(f'object_id == "{object_id}"').values[0])
-
-
-                # device info values
-                LED_nb = df_info.loc['LED'].values[0]
-
-                df_devices = DB.get_devices()                
-                if device_nb in df_devices['Id'].values:
-                    df_devices = df_devices.set_index('Id')                    
-                    device_name = df_devices.loc[device_nb]['name']
-                    device_description = df_devices.loc[device_nb]['description']
-
-                elif device_nb == 'default':
-                    device_nb = 'none'
-                    device_name = 'unnamed'
-                    device_description = 'Fotonowy-MFT'
-
-                else:
-                    print(f'The device you entered ({device_nb}) has not been registered. Please first register the device, by using the function mf.register_devices().')
-                    return
-
-                df_WR = DB.get_white_standards()
-                if white_standard in df_WR['Id'].values:
-                    df_WR = df_WR.set_index('Id')
-                    WR_nb = white_standard
-                    WR_description = df_WR.loc[white_standard]['description']
-                elif white_standard == 'default':
-                    WR_nb = 'none'
-                    WR_description = 'Fotonowy fotolon PTFE'
-                elif white_standard == 'unknown':
-                    WR_nb = 'none'
-                    WR_description = 'unknown'
-                else:
-                    print(f'The white reference you entered ({white_standard}) has not been registered. Please first register the white reference, by using the function mf.add_references().')
-                    return
-                
-                device_info = [
-                    " ",
-                    f'{device_nb}_{device_name}_{device_description}', 
-                    'none',
-                    'none',
-                    'none',
-                    '0° : 45°',
-                    'unknown',
-                    'unknown',
-                    'none',
-                    'none',
-                    'Thorlabs, FT030',
-                    f'LED{LED_nb}',
-                    'none',
-                    'none',
-                    'none',
-                    f'{WR_nb}_{WR_description}'   
-                ]
-
-
-                # analysis info values
-                
-                meas_nb = raw_file_cl.stem.split('_')[1]
-                meas_id = f'MF.{object_id}.{meas_nb}'
-                spec_comp = 'SCE_excluded'
-
-                int_time_sample = np.int32(df_info.loc['Sample integration time [ms]'].values[0])
-                int_time_whitestandard = np.int32(df_info.loc['White standard integration time [ms]'].values[0])
-                fwhm = MFT_info_dictionaries.beam_FWHM[LED_nb]
-
-                area = pi * (((fwhm/1e6)/2)**2)
-                power = np.round((irr * area) * 1e3, 3)
-                lum = np.round(area * (ill * 1e6),3)
-                current = int(df_info.loc['Curr'].values[0].split(' ')[0])       
+            area = pi * (((fwhm/1e6)/2)**2)
+            power = np.round((irr * area) * 1e3, 3)
+            lum = np.round(area * (ill * 1e6),3)
+            current = int(df_info.loc['Curr'].values[0].split(' ')[0])       
                            
-                analysis_info = [
-                    " ",
-                    meas_id,
-                    group, 
-                    group_description,
-                    background,
-                    spec_comp,
-                    int_time_sample,
-                    int_time_whitestandard,
-                    average, 
-                    duration_min, 
-                    interval_sec,
-                    1,
-                    illuminant,
-                    observer,
-                ]
+            analysis_info = [
+                " ",
+                meas_id,
+                group, 
+                group_description,
+                background,
+                spec_comp,
+                int_time_sample,
+                int_time_whitestandard,
+                average, 
+                duration_min, 
+                interval_sec,
+                1,
+                illuminant,
+                observer,
+            ]
 
 
-                # beam info                
+            # beam info                
                 
-                beam_info = [
-                    " ",
-                    'none',
-                    'none',
-                    fwhm,
-                    current,
-                    power,
-                    lum,
-                    np.int32(irr),
-                    np.round(ill, 3),
-                    np.round(df_cl['He_MJ/m2'].values[-1], 4),
-                    np.round(df_cl['Hv_Mlxh'].values[-1], 4),                   
-                ]
+            beam_info = [
+                " ",
+                'none',
+                'none',
+                fwhm,
+                current,
+                power,
+                lum,
+                np.int32(irr),
+                np.round(ill, 3),
+                np.round(df_cl['He_MJ/m2'].values[-1], 4),
+                np.round(df_cl['Hv_Mlxh'].values[-1], 4),                   
+            ]
 
-                info_values = [
-                    " ",
-                    authors_names,
-                    date_time,
-                    comment,
-                    " "] + project_info + [" "] + object_info + device_info + analysis_info + beam_info
+            info_values = [
+                " ",
+                authors_names,
+                date_time,
+                comment,
+                " "] + project_info + [" "] + object_info + device_info + analysis_info + beam_info
 
-                df_info = pd.DataFrame({'parameter':info_parameters})
-                df_info["value"] = pd.Series(info_values)            
+            df_info = pd.DataFrame({'parameter':info_parameters})
+            df_info["value"] = pd.Series(info_values)            
             
-            df_info = df_info.set_index('parameter')
+        df_info = df_info.set_index('parameter')
 
-            # define the output filename
-            if filenaming == 'none':
-                filename = stemName
+        # define the output filename
+        if filenaming == 'none':
+            filename = stemName
 
-            elif filenaming == 'auto':
-                group = stemName.split('_')[2]
-                group_description = stemName.split('_')[3]
-                object_type = df_info.loc['object_type']['value']
-                filename = f'{project_id}_{meas_id}_{group}_{group_description}_{object_type}_{date}'
+        elif filenaming == 'auto':
+            group = stemName.split('_')[2]
+            group_description = stemName.split('_')[3]
+            object_type = df_info.loc['object_type']['value']
+            filename = f'{project_id}_{meas_id}_{group}_{group_description}_{object_type}_{date}'
 
-            elif isinstance(filenaming, list):
+        elif isinstance(filenaming, list):
 
-                if 'date' in filenaming:
-                    new_df_info = df_info.copy()
-                    new_df_info.loc['date'] = str(df_info.loc['date_time']['value'].date())                    
+            if 'date' in filenaming:
+                new_df_info = df_info.copy()
+                new_df_info.loc['date'] = str(df_info.loc['date_time']['value'].date())                    
 
-                    filename = "_".join([new_df_info.loc[x]['value'].split("_")[0] if "_" in new_df_info.loc[x]['value'] else new_df_info.loc[x]['value'] for x in filenaming])                    
+                filename = "_".join([new_df_info.loc[x]['value'].split("_")[0] if "_" in new_df_info.loc[x]['value'] else new_df_info.loc[x]['value'] for x in filenaming])                    
 
-                else:                                  
-                    filename = "_".join([df_info.loc[x]['value'].split("_")[0] if "_" in df_info.loc[x]['value'] else df_info.loc[x]['value'] for x in filenaming])
+            else:                                  
+                filename = "_".join([df_info.loc[x]['value'].split("_")[0] if "_" in df_info.loc[x]['value'] else df_info.loc[x]['value'] for x in filenaming])
                
                
-            # export the dataframes to an excel file
-            if not Path(folder).exists():
-                print(f'The output folder you entered {folder} does not exist. Please make sure the output folder has been created.')
-                return 
+        # export the dataframes to an excel file
+        if not Path(folder).exists():
+            print(f'The output folder you entered {folder} does not exist. Please make sure the output folder has been created.')
+            return 
             
-            with pd.ExcelWriter(Path(folder) / f'{filename}.xlsx') as writer:
+        with pd.ExcelWriter(Path(folder) / f'{filename}.xlsx') as writer:
 
-                df_info.to_excel(writer, sheet_name='info', index=True)
-                df_cl.to_excel(writer, sheet_name="CIELAB", index=False)
+            df_info.to_excel(writer, sheet_name='info', index=True)
+            df_cl.to_excel(writer, sheet_name="CIELAB", index=False)
 
-                if interpolation == 'none':
-                    df_sp.to_excel(writer, sheet_name="spectra", index=True, index_label=f'wl-nm_t-sec')
+            if interpolation == 'none':
+                df_sp.to_excel(writer, sheet_name="spectra", index=True, index_label=f'wl-nm_t-sec')
 
-                else:
-                    df_sp.to_excel(writer, sheet_name="spectra", index=True, index_label=f'wl-nm_{abs_scales_name[interpolation].replace("_", "-")}')
+            else:
+                df_sp.to_excel(writer, sheet_name="spectra", index=True, index_label=f'wl-nm_{abs_scales_name[interpolation].replace("_", "-")}')
 
             
-            ###### DELETE FILE #######        
+        ###### DELETE FILE #######        
             
-            if delete_files:
-                meas_raw_files = [file for file in Path(os.getcwd()).iterdir() if str(raw_file_counts).replace('-spect_convert.txt', '') in file.name]            
-                [os.remove(file) for file in meas_raw_files]
+        if delete_files:
+            meas_raw_files = [file for file in Path(os.getcwd()).iterdir() if str(raw_file_counts).replace('-spect_convert.txt', '') in file.name]            
+            [os.remove(file) for file in meas_raw_files]
             
-            print(f'{raw_file_cl} has been successfully processed !')
+        print(f'{raw_file_cl} has been successfully processed !')
             
 
-            ###### DELETE FILE #######
-            if return_filename:
-                return Path(folder) / f'{filename}.xlsx'
+        ###### DELETE FILE #######
+        if return_filename:
+            return Path(folder) / f'{filename}.xlsx'
             
             
         
