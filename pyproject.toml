@@ -24,6 +24,8 @@ dependencies = [
     "seaborn",
     "uncertainties",
     "matplotlib",
+    "msdb",
+    "pillow",
     "pandas",
     "openpyxl",
     "jupyterlab",
@@ -39,5 +41,5 @@ Homepage = "https://github.com/g-patin/microfading"
 where = ["src"]
 
 [tool.setuptools.package-data]
-microfading = ['datasets/*', '*.json', '*.png']
+microfading = ['datasets/*', '*.json', '*.png', '*.tex']
 
