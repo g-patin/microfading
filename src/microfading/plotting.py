@@ -295,8 +295,8 @@ def CIELAB(data, stds=None, colors=None, fontsize=24, legend_labels=[], title=No
     
     if save == True:
         if path_fig == 'cwd':
-            path_fig = f'{os.getcwd()}/CIELAB.png'                    
-            
+            path_fig = f'{os.getcwd()}/CIELAB.png'                
+                
         fig.savefig(path_fig,dpi=300, facecolor='white')  
     
     
@@ -568,7 +568,7 @@ def delta(data: list, yerr=None, dose_unit:Optional[list] = ['He'], coordinates:
         return plt, ax1, ax2
 
 
-def spectra(data, stds=[], spectral_mode:Optional[str] = 'R', legend_labels=[], title='none', fontsize=24, fontsize_legend:Optional[int] = 22, legend_title='', x_range=(), colors:Union[str, list] = None, lw:Optional[int] = 2, ls:Union[str, list] = '-', text:Optional[str] = '', save=False, path_fig='cwd', derivation=False, *args, **kwargs):
+def spectra(data, stds=[], spectral_mode:Optional[str] = 'R', legend_labels=[], title='none', fontsize=24, fontsize_legend:Optional[int] = 22, legend_title='', x_range=(), colors:Union[str, list] = None, lw:Optional[int] = 2, ls:Union[str, list] = '-', text:Optional[str] = '', text_xy:Optional[tuple] = (0.02, 0.03), save=False, path_fig='cwd', derivation=False, *args, **kwargs):
     """
     Description: Plot the reflectance spectrum of one or several datasets.
 
@@ -668,6 +668,15 @@ def spectra(data, stds=[], spectral_mode:Optional[str] = 'R', legend_labels=[], 
     
     ax.set_xlabel('Wavelength $\lambda$ (nm)', fontsize = fontsize)
 
+    # Get current x-ticks
+    xticks = plt.gca().get_xticks()
+
+    # Remove the last tick if it exists
+    if len(xticks) > 0:
+        xticks = xticks[:-1]
+
+    plt.xticks(xticks)
+
     if derivation == False and spectral_mode.upper() == 'R':
         ax.set_ylabel('Reflectance factor', fontsize = fontsize)
     elif derivation == False and spectral_mode.lower() == 'dr':
@@ -699,20 +708,21 @@ def spectra(data, stds=[], spectral_mode:Optional[str] = 'R', legend_labels=[], 
     
     if text != '':
         props = dict(boxstyle='round', facecolor='white', alpha=0.7)
-        ax.text(0.01,0.05,text,transform=ax.transAxes,fontsize=fontsize-6,verticalalignment='top', bbox=props)
+        ax.text(text_xy[0],text_xy[1],text,transform=ax.transAxes,fontsize=fontsize-6,verticalalignment='top', bbox=props)
 
     plt.tight_layout()
+    
 
     if save == True:
         if path_fig == 'cwd':
             path_fig = f'{os.getcwd()}/SP.png'                    
             
-        fig.savefig(path_fig,dpi=300, facecolor='white')       
+        fig.savefig(path_fig,dpi=300, facecolor='white', bbox_inches="tight")       
 
     plt.show()
 
 
-def swatches_circle(data, data_type:Optional[str] = 'Lab', light_doses: Optional[list] = [0.5,1,2,5,15], JND:Optional[list] = [], dose_unit:Optional[str] = 'Hv', dE:Optional[bool] = True, fontsize: Optional[int] = 24, save:Optional[bool] = False, path_fig:Optional[str] = 'cwd', title:Optional[str] = None, background_grey: Optional [float] = 0.85):
+def swatches_circle(data, data_type:Optional[str] = 'Lab', orientation:Optional[str] = 'horizontal', light_doses:Optional[list] = [0.5,1,2,5,15], JND:Optional[list] = [], dose_unit:Optional[str] = 'Hv', dE:Optional[bool] = True, fontsize: Optional[int] = 24, save:Optional[bool] = False, path_fig:Optional[str] = 'cwd', title:Optional[str] = None, background_grey: Optional [float] = 0.85):
 
     if list(set([len(x) for x in data]))[0] == len(JND):
         xlabel = 'Just noticeable difference (JND)'
@@ -755,49 +765,103 @@ def swatches_circle(data, data_type:Optional[str] = 'Lab', light_doses: Optional
     for d_srgb,dE_val, title_value in zip(data_srgb, dE_values, title):
 
         N = len(d_srgb)
-        fig, ax = plt.subplots(1,1, figsize=((N-1)*5,6))        
 
-        ax.set_facecolor((background_grey,background_grey,background_grey))
-        fig.patch.set_facecolor((background_grey, background_grey, background_grey))
+        if orientation == 'horizontal':
 
-        if isinstance(title, str):
-            title_space = 0.05
-        else:
-            title_space = 0
+            fig, ax = plt.subplots(1,1, figsize=((N-1)*5))   
+        
+            ax.set_facecolor((background_grey,background_grey,background_grey))
+            fig.patch.set_facecolor((background_grey, background_grey, background_grey))
 
-        if dE:
-            y = 1
-            h = 0.7 + title_space
-        else:
-            y =0.9
-            h = 0.6 + title_space
+            if isinstance(title, str):
+                title_space = 0.05
+            else:
+                title_space = 0
 
-        cp_init = matplotlib.patches.Rectangle((0.05, 0.0), 0.9, y, edgecolor='None', fc=d_srgb[0], lw=2)
-        ax.add_patch(cp_init)
+            if dE:
+                y = 1
+                h = 0.7 + title_space
+            else:
+                y =0.9
+                h = 0.6 + title_space
 
-        i = 0
-        for d in d_srgb[1:]:
-            cp = matplotlib.patches.Ellipse(xy=(1/N + i, 0.5), width=0.6/(N-1), height=h, edgecolor='None', fc=d, lw=2)
-            ax.add_patch(cp)
-            i = i + (1/N)
+            cp_init = matplotlib.patches.Rectangle((0.05, 0.0), 0.9, y, edgecolor='None', fc=d_srgb[0], lw=2)
+            ax.add_patch(cp_init)
 
-        ax.xaxis.set_ticks_position(position='bottom')
-        ax.set_xticks(np.linspace(0,1,N+1)[1:-1])        
-        ax.set_xticklabels(light_doses[1:])
-        ax.set_yticks([])
+            i = 0
+            for d in d_srgb[1:]:
+                cp = matplotlib.patches.Ellipse(xy=(1/N + i, 0.5), width=0.6/(N-1), height=h, edgecolor='None', fc=d, lw=2)
+                ax.add_patch(cp)
+                i = i + (1/N)
 
-        ax.xaxis.set_tick_params(labelsize=fontsize)    
-        ax.set_xlabel(xlabel, fontsize=fontsize)
+            ax.xaxis.set_ticks_position(position='bottom')
+            ax.set_xticks(np.linspace(0,1,N+1)[1:-1])        
+            ax.set_xticklabels(light_doses[1:])
+            ax.set_yticks([])
 
-        ax.set_title(title_value, fontsize=fontsize+2)
+            ax.xaxis.set_tick_params(labelsize=fontsize)    
+            ax.set_xlabel(xlabel, fontsize=fontsize)
 
-        if dE:
-            ax_top = ax.secondary_xaxis('top')
-            ax_top.set_xlabel('$\Delta E^*_{00}$ values', fontsize=fontsize)
-            ax_top.set_xticks(np.linspace(0,1,N+1)[1:-1]) 
-            ax_top.set_xticklabels(dE_val)
-            ax_top.xaxis.set_tick_params(labelsize=fontsize) 
-            ax_top.spines['top'].set_visible(False) 
+            ax.set_title(title_value, fontsize=fontsize+2)
+
+            if dE:
+                ax_top = ax.secondary_xaxis('top')
+                ax_top.set_xlabel('$\Delta E^*_{00}$ values', fontsize=fontsize)
+                ax_top.set_xticks(np.linspace(0,1,N+1)[1:-1]) 
+                ax_top.set_xticklabels(dE_val)
+                ax_top.xaxis.set_tick_params(labelsize=fontsize) 
+                ax_top.spines['top'].set_visible(False) 
+        
+        
+        elif orientation == 'vertical':
+
+            fig, ax = plt.subplots(1,1, figsize=(6, (N-1)*4)) 
+
+            ax.set_facecolor((background_grey,background_grey,background_grey))
+            fig.patch.set_facecolor((background_grey, background_grey, background_grey))
+
+            if isinstance(title, str):
+                title_space = 0
+            else:
+                title_space = 0
+
+            if dE:
+                y = 0.9
+                h = 0.7 + title_space
+            else:
+                y = 0.9
+                h = 0.6 + title_space
+
+            cp_init = matplotlib.patches.Rectangle((0.0, 0.05), 1, y, edgecolor='None', fc=d_srgb[0], lw=2)
+            ax.add_patch(cp_init)
+
+            i = 0
+            for d in d_srgb[1:][::-1]:
+                cp = matplotlib.patches.Ellipse(xy=(0.5, 1/N + i), width=h, height=0.6/(N-1), edgecolor='None', fc=d, lw=2)
+                ax.add_patch(cp)
+                i = i + (1/N)
+
+            ax.yaxis.set_ticks_position(position='left')
+            ax.set_yticks(np.linspace(0,1,N+1)[1:-1])        
+            ax.set_yticklabels(light_doses[1:][::-1])
+            ax.set_xticks([])
+
+            ax.yaxis.set_tick_params(labelsize=fontsize)    
+            ax.set_ylabel(xlabel, fontsize=fontsize)
+
+            ax.set_title(title_value, fontsize=fontsize+2, y=0.97)
+
+            if dE:
+                ax_top = ax.secondary_yaxis('right')
+                ax_top.set_ylabel('$\Delta E^*_{00}$ values', fontsize=fontsize)
+                ax_top.set_yticks(np.linspace(0,1,N+1)[1:-1]) 
+                ax_top.set_yticklabels(dE_val[::-1])
+                ax_top.yaxis.set_tick_params(labelsize=fontsize) 
+                ax_top.spines['right'].set_visible(False) 
+
+
+
+
         
         ax.spines['top'].set_visible(False)
         ax.spines['right'].set_visible(False)
