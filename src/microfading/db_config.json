@@ -1,6 +1,10 @@
 {
+    "colorimetry": {},
     "databases": {},
+    "devices": {},
     "exposure": {},
+    "filters": {},
     "light_dose": {},
-    "colorimetry": {}
+    "lamps": {},
+    "institution": {}
 }
