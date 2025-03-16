@@ -22,6 +22,8 @@ from scipy.interpolate import RegularGridInterpolator
 import ipywidgets as ipw
 from ipywidgets import *
 from IPython.display import display, clear_output
+import subprocess
+from PIL import Image
 
 # underlying modules of the  microfading package
 from . import plotting
@@ -53,7 +55,7 @@ labels_eq = {
 #### DATABASES RELATED FUNCTIONS ####
 
 
-def DB():
+def is_DB():
     "Check whether the databases files were created."
 
     # instantiate a DB class object
@@ -666,12 +668,12 @@ def process_rawdata(files: list, device: str, filenaming:Optional[str] = 'none',
     Excel file
         It returns an excel file composed of three tabs (info, CIELAB, spectra).
     """
-
+    
     # Load the databases function and config file
     DB = databases.DB()
     db_config = DB.get_db_config()
     
-
+    
     # Set the db value
     if db == 'default':
         if len(db_config['databases']) == 0:
@@ -761,6 +763,13 @@ def set_light_dose():
     return DB.set_light_dose()
 
 
+def set_institution_info():
+
+    DB = databases.DB()
+    return DB.set_institution_info()
+
+
+
 #### MICROFADING CLASS ####         
 
 class MFT(object):
@@ -787,6 +796,45 @@ class MFT(object):
     def __repr__(self) -> str:
         return f'Microfading data class - Number of files = {len(self.files)}'
        
+    
+    def add_info(self, parameters:Union[list,str], values:Union[list,str]):
+
+        if isinstance(parameters, str):
+            parameters = [parameters]
+
+        if isinstance(values, str):
+            values = [values]
+
+        if len(parameters) == 1 and isinstance(values, list):
+            values = [values]
+
+
+        info_df = self.get_metadata()
+
+        for parameter, value in zip(parameters,values):
+                       
+            
+            # List available parameters if parameter not found
+            if parameter not in info_df.index:
+                raise ValueError(f"Parameter '{parameter}' not found in the 'info' sheet.\nAvailable parameters: {list(info_df.index)}")
+
+            info_df.loc[parameter] = value
+
+        
+        for col, file in zip(info_df.columns, self.files):
+
+            df_cl = pd.read_excel(file, sheet_name='CIELAB') 
+            df_sp = pd.read_excel(file, sheet_name='spectra') 
+            df_info = info_df[col]            
+            df_info.name = 'value'
+            
+            # Write all sheets back to the Excel file
+            with pd.ExcelWriter(file) as writer:
+
+                df_info.to_excel(writer, sheet_name='info', index=True)
+                df_cl.to_excel(writer, sheet_name="CIELAB", index=False)
+                df_sp.to_excel(writer, sheet_name="spectra", index=False)
+    
     
     def get_spectra(self, wl_range:Union[int, float, list, tuple] = 'all', dose_unit:Optional[str] = 'He', dose_values:Union[int, float, list, tuple] = 'all', spectral_mode:Optional[str] = 'rfl', smoothing:Optional[list] = [1,0]):
         """Retrieve the reflectance spectra related to the input files.
@@ -2397,7 +2445,7 @@ class MFT(object):
         return plotting.CIELAB(data=data_Lab, legend_labels=legend_labels, colors=colors, title=title, fontsize=fontsize, legend_fontsize=legend_fontsize, legend_position=legend_position, legend_title=legend_title, dE=dE, obs_ill=obs_ill, save=save, path_fig=path_fig)
 
 
-    def plot_swatches_circle(self, light_doses: Optional[list] = [0,0.5,1,2,5,15], JND:Optional[list] = [1,2,3,5,10], dose_unit:Union[str,tuple] = 'Hv', dE:Optional[bool] = True, fontsize: Optional[int] = 24, equation:Optional[str] = 'c0*(x**c1) + c2', initial_params:Optional[List[float]] = [0.1, 0.1], save:Optional[bool] = False, path_fig:Optional[str] = 'cwd', title:Optional[str] = None, report:Optional[bool] = False): 
+    def plot_swatches_circle(self, orientation:Optional[str] = 'horizontal', light_doses: Optional[list] = [0,0.5,1,2,5,15], JND:Optional[list] = [1,2,3,5,10], dose_unit:Union[str,tuple] = 'Hv', dE:Optional[bool] = True, fontsize: Optional[int] = 24, equation:Optional[str] = 'c0*(x**c1) + c2', initial_params:Optional[List[float]] = [0.1, 0.1], save:Optional[bool] = False, path_fig:Optional[str] = 'cwd', title:Optional[str] = None, report:Optional[bool] = False): 
         """Plot the microfading data with circular colored patches. 
 
         Parameters
@@ -2553,7 +2601,7 @@ class MFT(object):
             #print(wanted_Lab)
         
         
-            plotting.swatches_circle(data=[wanted_Lab], data_type='Lab', light_doses=light_doses, dose_unit=dose_unit, dE=dE, fontsize=fontsize, save=save, title=title, path_fig=path_fig)
+            plotting.swatches_circle(data=[wanted_Lab], data_type='Lab', orientation=orientation, light_doses=light_doses, dose_unit=dose_unit, dE=dE, fontsize=fontsize, save=save, title=title, path_fig=path_fig)
 
 
     def plot_delta(self, stds:Optional[bool] = True, coordinates:Optional[list] = ['dE00'], dose_unit:Optional[str] = 'He', legend_labels:Union[str, list] = 'default', initial_values:Optional[bool] = False, colors:Union[str,list] = None, lw:Union[int,list] = 'default', title:Optional[str] = None, fontsize:Optional[int] = 24, legend_fontsize:Optional[int] = 24, legend_title:Optional[str] = None, xlim:Optional[tuple] = None, save:Optional[bool] = False, path_fig:Optional[str] = 'cwd'):
@@ -2713,7 +2761,7 @@ class MFT(object):
         plotting.delta(data=nominal_data, yerr=stdev_data, dose_unit=[dose_unit], coordinates=coordinates, initial_values=initial_values, colors=colors, lw=lw, title=title, fontsize=fontsize, legend_labels=legend_labels, legend_fontsize=legend_fontsize, legend_title=legend_title, save=save, path_fig=path_fig)
 
 
-    def plot_sp(self, stdev:Optional[bool] = False, spectra:Optional[str] = 'i', dose_unit:Optional[str] = 'He', dose_values:Union[int, float, list, tuple] = 'all', spectral_mode:Optional[str] = 'R', legend_labels:Union[str,list] = 'default', title:Optional[str] = None, fontsize:Optional[int] = 24, fontsize_legend:Optional[int] = 24, legend_title='', wl_range:Optional[tuple] = None, colors:Union[str,list] = None, lw:Union[int, list] = 2, ls:Union[str, list] = '-', save=False, path_fig='cwd', derivation=False, smoothing=(1,0), report:Optional[bool] = False):
+    def plot_sp(self, stdev:Optional[bool] = False, spectra:Optional[str] = 'i', dose_unit:Optional[str] = 'He', dose_values:Union[int, float, list, tuple] = 'all', spectral_mode:Optional[str] = 'R', legend_labels:Union[str,list] = 'default', title:Optional[str] = None, fontsize:Optional[int] = 24, fontsize_legend:Optional[int] = 24, legend_title='', wl_range:Optional[tuple] = None, colors:Union[str,list] = None, lw:Union[int, list] = 2, ls:Union[str, list] = '-', text_xy:Optional[tuple] = (0.02,0.03), save=False, path_fig='cwd', derivation=False, smoothing=(1,0), report:Optional[bool] = False):
         """Plot the reflectance spectra corresponding to the associated microfading analyses.
 
         Parameters
@@ -2798,6 +2846,14 @@ class MFT(object):
         _type_
             It returns a figure that can be save as a png file.
         """
+
+        # Apply the report characteristics
+
+        if report:
+            save = True
+            colors = 'sample'
+            spectra = 'i+f'
+            fontsize = 30
 
         # Retrieve the metadata
         info = self.get_metadata()
@@ -2917,7 +2973,7 @@ class MFT(object):
             wanted_std = []
 
         
-        return plotting.spectra(data=wanted_data, stds=wanted_std, spectral_mode=spectral_mode, legend_labels=legend_labels, title=title, fontsize=fontsize, fontsize_legend=fontsize_legend, legend_title=legend_title, x_range=wl_range, colors=colors, lw=lw, ls=ls, text=text, save=save, path_fig=path_fig, derivation=derivation)
+        return plotting.spectra(data=wanted_data, stds=wanted_std, spectral_mode=spectral_mode, legend_labels=legend_labels, title=title, fontsize=fontsize, fontsize_legend=fontsize_legend, legend_title=legend_title, x_range=wl_range, colors=colors, lw=lw, ls=ls, text=text, text_xy=text_xy, save=save, path_fig=path_fig, derivation=derivation)
        
 
     def plot_sp_delta(self,spectra:Optional[tuple] = ('i','f'), dose_unit:Optional[str] = 'Hv', legend_labels:Union[str,list] = 'default', title:Optional[str] = None, fontsize:Optional[int] = 24, legend_fontsize:Optional[int] = 24, legend_title='', wl_range:Union[int,float,list,tuple] = None, colors:Union[str,list] = None, spectral_mode:Optional[str] = 'dR', derivation=False, smoothing=(1,0)):
@@ -3345,5 +3401,179 @@ class MFT(object):
             df_xy.append(xy_values)
 
         return pd.concat(df_xy, axis=1)
+    
+
+    def make_report(self, folder_figures, folder_report, type:Optional[str] = 'single', authors:Optional[str] = 'default'):
+
+        folder_figures = Path(folder_figures)
+        all_figure_files = os.listdir(folder_figures)        
+
+        def generate_latex_table(df):
+            table_rows = []
+            for _, row in df.iterrows():
+                table_rows.append(' & '.join(map(str, row.values)) + ' \\\\ ') 
+            return '\n'.join(table_rows)
+        
+
+        def combine_images(sp_report_path, swv_circles_report_path, dlch_report_path, output_path):
+
+            # Open the images
+            sp_report = Image.open(sp_report_path)
+            swv_circles_report = Image.open(swv_circles_report_path)
+            dlch_report = Image.open(dlch_report_path)
+
+            # Define the desired width for the images in the left column
+            desired_width_left = 800  # Adjust as needed
+            desired_width_right = 360  # Adjust as needed
+
+            # Calculate the scaling factors
+            sp_scaling_factor = desired_width_left / sp_report.width
+            swv_scaling_factor = desired_width_right / swv_circles_report.width
+            dlch_scaling_factor = desired_width_left / dlch_report.width
+
+            # Calculate the new sizes while maintaining aspect ratio
+            sp_new_size = (int(sp_report.width * sp_scaling_factor), int(sp_report.height * sp_scaling_factor))
+            swv_new_size = (int(swv_circles_report.width * swv_scaling_factor), int(swv_circles_report.height * swv_scaling_factor))
+            dlch_new_size = (int(dlch_report.width * dlch_scaling_factor), int(dlch_report.height * dlch_scaling_factor))
+
+            # Resize the images
+            sp_report_resized = sp_report.resize(sp_new_size, Image.LANCZOS)
+            swv_circles_report_resized = swv_circles_report.resize(swv_new_size, Image.LANCZOS)
+            dlch_report_resized = dlch_report.resize(dlch_new_size, Image.LANCZOS)
+
+            # Calculate the total width and height for the combined image
+            total_width = desired_width_left + desired_width_right            
+            total_height = sp_new_size[1] + dlch_new_size[1]            
+
+            # Create a new blank image with white background
+            combined_image = Image.new('RGB', (total_width, total_height), 'white')
+
+            # Paste the resized images into the combined image
+            combined_image.paste(sp_report_resized, (0, 0))
+            combined_image.paste(swv_circles_report_resized, (desired_width_left, 0))            
+            combined_image.paste(dlch_report_resized, (0, sp_new_size[1]))
+            
+            # Save the combined image
+            combined_image.save(output_path)
+
+
+
+
+        if type == 'single':
+
+            for file, id in zip(self.files, self.get_meas_ids):
+
+                                
+                figure1 = [file for file in all_figure_files if id in file and 'CIELAB-report' in file][0]                
+                figure_SP = [f'{folder_figures}/{file}' for file in all_figure_files if f'{id}' in file and 'SP-report' in file][0]
+                figure_dLCh = [f'{folder_figures}/{file}' for file in all_figure_files if f'{id}' in file and 'dLCh-report' in file][0]
+                figure_SW = [f'{folder_figures}/{file}' for file in all_figure_files if f'{id}' in file and 'SWVcircles-report' in file][0]
+                im_combined_path = Path(folder_figures) / f'{id}_report_SP-dLCh-SW.png'
+
+                # Combine the images
+                combine_images(figure_SP, figure_SW, figure_dLCh, im_combined_path)
+                
+                metadata = self.get_metadata()[id]
+
+                if authors == 'default':
+                    authors = metadata['authors'].replace('_','-')
+
+                host_institution = metadata['host_institution'].replace('_','-')
+
+                BWSE = metadata['BWSE']
+                if np.isnan(BWSE):
+                    BWSE = 'undefined'
+                else:
+                    BWSE = str(BWSE)
+
+                info_object = """
+                    \\textbf{Analysis id} & [analysisId] \\\\
+                    \\textbf{Analysis date} & [analysisDate] \\\\
+                    \\textbf{Object id} & [objectId] \\\\                
+                    \\textbf{Institution} & [institution] \\\\
+                    \\textbf{Name object} & [objectName] \\\\
+                    \\textbf{Artist} & [artist] \\\\
+                    \\textbf{Date} & [objectDate] \\\\
+                    \\textbf{Technique} & [technique] \\\\                                    
+                    \\textbf{MFT group} & [MFTgroup] \\\\
+                    \\textbf{MFT spot} & [group_description] \\\\
+                    \\textbf{Material} & [group_material] \\\\
+                    \\textbf{BWSE} & [BWSE] \\\\
+                    & \\\\
+                    \\textbf{MFT device} & [device] \\\\
+                    \\textbf{MFT lamp} & [lamp] \\\\
+                    \\textbf{MFT spot size} & [spotSize] \\\\
+                    \\textbf{Illuminance} & [ill] \\\\
+                    \\textbf{Irradiance} & [irr] \\\\
+                    \\textbf{Exposure dose} & [Hv] \\\\
+                    \\textbf{Radiant energy} & [He] \\\\
+                    \\textbf{Duration} & [duration] \\\\                 
+                """
+
+                
+                # define the mapping table
+                mapping_table_object = {
+                    '[analysisId]': id,
+                    '[analysisDate]': str(metadata['date_time']),
+                    '[objectId]': metadata['object_id'],                
+                    '[institution]': metadata['institution'],
+                    '[objectName]': metadata['object_name'], 
+                    '[artist]' : metadata['object_creator'],   
+                    '[objectDate]': str(metadata['object_date']),
+                    '[technique]' : metadata['object_technique'].replace('_','-'),
+                    '[group_material]': metadata['group_material'].replace('_','-'),
+                    '[NbAnalyses]': str(metadata['measurements_N']),  
+                    '[MFTgroup]': metadata['group'], 
+                    '[ill]': f'{metadata["illuminance_Ev_Mlx"]} Mlx',
+                    '[irr]': f'{metadata["irradiance_Ee_W/m^2"]} W/m2',
+                    '[Hv]': f'{metadata["exposureDose_Hv_Mlxh"]} Mlxh',
+                    '[He]': f'{metadata["radiantExposure_He_MJ/m^2"]} MJ/m2',
+                    '[duration]': f'{np.int32(metadata["duration_min"])} min', 
+                    '[device]' : metadata['device'].replace('_','-'),
+                    '[lamp]': str(metadata['lamp_fading']),
+                    '[group_description]': metadata['group_description'],      
+                    '[spotSize]': f'{metadata["FWHM_micron"]} microns',
+                    '[BWSE]': BWSE,
+                    }
+                #print(mapping_table_object).values()
+                for x in mapping_table_object.keys():                                 
+                    info_object = info_object.replace(x, mapping_table_object[x])            
+                
+
+                table_data = {'info_object': info_object}
+                
+                figure_paths = {
+                    'figure1': folder_figures / figure1,
+                    'figure2': im_combined_path,                                 
+                }
+
+                with open(Path(__file__).parent / 'MFT_report_single.tex', 'r') as template_file:
+                    template = template_file.read()
+
+                # Fill in placeholders with actual values
+                filled_template = template.replace('[PROJECTID]',metadata['project_id'])
+                filled_template = filled_template.replace('[ANALYSISID]', id)
+                filled_template = filled_template.replace('[LABORATORY]', host_institution)
+                filled_template = filled_template.replace('[YOURNAME]', authors)
+                filled_template = filled_template.replace('[TABLE1DATA]', table_data['info_object'])            
+                filled_template = filled_template.replace('[FIGURE1PATH]', str(figure_paths['figure1']))
+                filled_template = filled_template.replace('[FIGURE2PATH]', str(figure_paths['figure2']))                
+                
+
+                # Write filled template to .tex file
+                with open('temp_report.tex', 'w') as temp_file:
+                    temp_file.write(filled_template)
+
+                # Compile .tex file into PDF
+                subprocess.run(['pdflatex', 'temp_report.tex'])
+
+                # Move generated PDF to output file                
+                subprocess.run(['mv', 'temp_report.pdf', f'{folder_report}/MFT_rapport-analysis_{id}_02.pdf'])
+
+                # Clean up temporary .tex and auxiliary files
+                subprocess.run(['rm', 'temp_report.tex', 'temp_report.aux', 'temp_report.log'])
+
+
+                
 
     
