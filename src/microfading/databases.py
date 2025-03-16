@@ -159,7 +159,7 @@ class DB:
     
     
     def add_new_object(self):
-        """Add a new object in the DB_objects.csv file"""
+        """Add a new object in the objects_info.csv file"""
 
         db_projects = self.get_db(db='projects')
         projects_list = ['noProject'] + list(db_projects['project_id'].values)
@@ -347,7 +347,7 @@ class DB:
             with button_record_output:
                 button_record_output.clear_output(wait=True)
 
-                db_objects_file = self.folder_db / 'DB_objects.csv'
+                db_objects_file = self.folder_db / 'objects_info.csv'
                 db_objects = pd.read_csv(db_objects_file)            
                                 
                 creators = [f'{x[0]}, {x[1]}' if isinstance(x[1],str) else x[0] for x in self.get_creators().values]
@@ -504,7 +504,7 @@ class DB:
 
 
     def add_new_project(self):
-        """Add a new project in the DB_projects.csv file"""
+        """Add a new project in the projects_info.csv file"""
 
         db_projects = self.get_db(db='projects')
         existing_columns = list(db_projects.columns)
@@ -599,13 +599,13 @@ class DB:
 
         def button_record_pressed(b):
             """
-            Save the project info in the project database file (DB_projects.csv).
+            Save the project info in the project database file (projects_info.csv).
             """
 
             with button_record_output:
                 button_record_output.clear_output(wait=True)
 
-                Projects_DB_file = self.folder_db / 'DB_projects.csv'
+                Projects_DB_file = self.folder_db / 'projects_info.csv'
                 Projects_DB = pd.read_csv(Projects_DB_file)  
                 persons = self.get_persons()
 
@@ -791,17 +791,17 @@ class DB:
 
         # create the project database
         db_project = pd.DataFrame(columns=['project_id','institution','start_date','end_date','project_leader','co-researchers','keywords'])
-        db_project.to_csv(Path(folder_path) / 'DB_projects.csv', index=False)
+        db_project.to_csv(Path(folder_path) / 'projects_info.csv', index=False)
 
 
         # create the object database
         db_object = pd.DataFrame(columns=['object_id','object_category','object_type','object_technique','object_title','object_name','object_creator','object_date','object_owner','object_material','colorants','colorants_name','binding','ratio','thickness_um','color','status','project_id'])
-        db_object.to_csv(Path(folder_path) / 'DB_objects.csv', index=False)
+        db_object.to_csv(Path(folder_path) / 'objects_info.csv', index=False)
 
         
         # create several text files
 
-        with open(Path(folder_path) / 'MFT_devices.txt', 'w') as f:
+        with open(Path(folder_path) / 'devices.txt', 'w') as f:
             f.write('Id,name,description,process_function\n')
             
         with open(Path(folder_path) / 'white_standards.txt', 'w') as f:
@@ -894,14 +894,14 @@ class DB:
 
     def get_db(self, db:Optional[str] = 'all'):
 
-        if (Path(self.folder_db) / 'DB_projects.csv').exists():
-            db_projects = pd.read_csv(Path(self.folder_db) / 'DB_projects.csv')
+        if (Path(self.folder_db) / 'projects_info.csv').exists():
+            db_projects = pd.read_csv(Path(self.folder_db) / 'projects_info.csv')
         else:
             print(f'The DB_projects.csv file is not existing. Make sure to create one by running the function "create_DB" from the microfading package.')
             return
         
-        if (Path(self.folder_db) / 'DB_objects.csv').exists():        
-            db_objects = pd.read_csv(Path(self.folder_db) / 'DB_objects.csv')
+        if (Path(self.folder_db) / 'objects_info.csv').exists():        
+            db_objects = pd.read_csv(Path(self.folder_db) / 'objects_info.csv')
         else:
             print(f'The DB_objects.csv file is not existing. Make sure to create one by running the function "create_DB" from the microfading package.')
             return
@@ -967,12 +967,14 @@ class DB:
     
     def get_persons(self):
         
-        if (Path(self.folder_db) / 'persons.txt').exists():
-            df_persons = pd.read_csv(Path(self.folder_db) / 'persons.txt')
+        filename = 'users_info.txt'
+
+        if (Path(self.folder_db) / filename).exists():
+            df_persons = pd.read_csv(Path(self.folder_db) / filename)
             return df_persons
         
         else:
-            print(f'The file {Path(self.folder_db) / "persons.txt"} is not existing. Make sure to create one by running the function "create_DB" from the microfading package.')
+            print(f'The file {Path(self.folder_db) / filename} is not existing. Make sure to create one by running the function "create_DB" from the microfading package.')
             return
         
 
@@ -989,12 +991,14 @@ class DB:
 
     def get_devices(self):
 
-        if (Path(self.folder_db) / 'MFT_devices.txt').exists():
-            df_devices = pd.read_csv(Path(self.folder_db) / 'MFT_devices.txt')
+        filename = 'devices.txt'
+
+        if (Path(self.folder_db) / filename).exists():
+            df_devices = pd.read_csv(Path(self.folder_db) / filename)
             return df_devices
         
         else:
-            print(f'The file {Path(self.folder_db) / "MFT_devices.txt"} is not existing. Make sure to create one by running the function "create_DB" from the microfading package.')
+            print(f'The file {Path(self.folder_db) / filename} is not existing. Make sure to create one by running the function "create_DB" from the microfading package.')
             return
 
 
@@ -1046,6 +1050,24 @@ class DB:
             print("The exposure conditions info has not been registered. Please register using the 'set_exposure_conditions' function.")
             return None
         
+    
+    def get_lamps_info(self):
+
+        with open(self.config_file, "r") as f:
+            config = json.load(f)
+    
+        # Check if the 'light_dose' key exists in the config
+        if "light_dose" in config:
+            light_dose_info = config["lamps"]
+
+            # Convert user info to a DataFrame
+            df = pd.DataFrame.from_dict(light_dose_info, orient="index", columns=["value"])
+            return df
+        else:
+            print("The lamps info have not been registered. Please register using the 'set_lamp_info' function.")
+            return None
+
+
     
     def get_light_dose_info(self):
 
@@ -1327,6 +1349,69 @@ class DB:
         display(ipw.HBox([recording, button_record_output]))
 
     
+    def set_lamp_info(self):
+        """Register a lamp inside db_config.json file.
+        """
+        
+        wg_id = ipw.Text(
+            description = 'Lamp ID',
+            placeholder = 'Enter an ID',            
+            style = style,
+            layout=Layout(width="95%", height="30px"),
+        )
+
+        wg_description = ipw.Text(
+            description = 'Description',
+            placeholder = 'Enter info about the lamp',            
+            style = style,
+            layout=Layout(width="95%", height="30px"),
+        )
+
+        wg_size = ipw.Text(
+            description = 'Beam size (micron)',
+            placeholder = 'Enter a beam size (if applicable)',            
+            style = style,
+            layout=Layout(width="95%", height="30px"),
+        )        
+
+        recording = ipw.Button(
+            description='Save',
+            disabled=False,
+            button_style='', # 'success', 'info', 'warning', 'danger' or ''
+            tooltip='Click me',            
+        )
+
+        button_record_output = ipw.Output()
+
+        def button_record_pressed(b):
+            """
+            Save the lamp info in the db_config.json file.
+            """
+
+            button_record_output.clear_output(wait=True)
+
+            with open(self.config_file, "r") as f:
+                config = json.load(f)
+
+            # Update config with user data
+            config["lamps"] = {
+                wg_id.value: {'description': wg_description.value, 'beam_size_um':wg_size.value}                                             
+            }
+            # Save the updated config back to the JSON file
+            with open(self.config_file, "w") as f:
+                json.dump(config, f, indent=4)
+
+            
+            with button_record_output:
+                print('The lamp info have been recorded in the db_config.json file.')
+
+
+        recording.on_click(button_record_pressed)
+
+        display(ipw.VBox([wg_id, wg_description]))
+        display(ipw.HBox([recording, button_record_output]))
+    
+    
     def set_light_dose(self):
 
         wg_dose_unit = ipw.Dropdown(
@@ -1371,4 +1456,75 @@ class DB:
         recording.on_click(button_record_pressed)
 
         display(ipw.VBox([wg_dose_unit]))
+        display(ipw.HBox([recording, button_record_output]))
+
+
+    def set_institution_info(self):
+
+        wg_name = ipw.Text(
+            description = 'Institution name',
+            placeholder = 'Enter a name',            
+            style = style,
+            layout=Layout(width="95%", height="30px"),
+        )
+
+        wg_acronym = ipw.Text(
+            description = 'Institution acronym',
+            placeholder = 'Enter an acronym (optional)',            
+            style = style,
+            layout=Layout(width="95%", height="30px"),
+        )
+
+        wg_department = ipw.Text(
+            description = 'Department',
+            placeholder = 'Enter a department (optional)',            
+            style = style,
+            layout=Layout(width="95%", height="30px"),
+        )
+
+        wg_address = ipw.Text(
+            description = 'Institution address',
+            placeholder = 'Enter an address (optional)',            
+            style = style,
+            layout=Layout(width="95%", height="30px"),
+        )
+
+        recording = ipw.Button(
+            description='Save',
+            disabled=False,
+            button_style='', # 'success', 'info', 'warning', 'danger' or ''
+            tooltip='Click me',            
+        )
+
+        button_record_output = ipw.Output()
+
+        def button_record_pressed(b):
+            """
+            Save the institution info in the db_config.json file.
+            """
+
+            button_record_output.clear_output(wait=True)
+
+            with open(self.config_file, "r") as f:
+                config = json.load(f)
+
+            # Update config with user data
+            config["institution"] = {
+                "name": wg_name.value,
+                "acronym": wg_acronym.value,
+                "department": wg_department.value,
+                "address": wg_address.value,                                
+            }
+            # Save the updated config back to the JSON file
+            with open(self.config_file, "w") as f:
+                json.dump(config, f, indent=4)
+
+            
+            with button_record_output:
+                print('The institution info have been recorded in the db_config.json file.')
+
+
+        recording.on_click(button_record_pressed)
+
+        display(ipw.VBox([wg_name, wg_acronym, wg_department, wg_address]))
         display(ipw.HBox([recording, button_record_output]))
