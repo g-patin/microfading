@@ -55,7 +55,7 @@ Table 1. Description of the database files.
 |objects_techniques.txt | A list of techniques used to create the objects 
 |objects_types.txt | A list of global categories to define the objects
 |persons.txt | A list of persons (name, surname, and initials) performing the analyses
-|white_references.txt | Contain information related to white reference standards
+|white_standards.txt | Contain information related to white reference standards
 
 &nbsp;
 
@@ -75,7 +75,7 @@ Table 2. Description of the *get* functions.
 |`get_objects()` | returns a list of the microfaded objects
 |`get_persons()` | returns a list of persons that performed the microfading analyses
 |`get_devices()` | returns a list of the registered microfading devices
-|`get_white_references()` | returns a list of the registered white standard references
+|`get_white_standards()` | returns a list of the registered white standard references
 
 
 ## **Add functions**
@@ -90,7 +90,7 @@ Table 3. Description of the *add* functions.
 |`add_new_person()` | record information about a new person performing microfading measurements.
 |`add_new_project()` | record information about a new project
 |`add_devices()` | add a new microfading device
-|`add_references()` | add a new white standard reference 
+|`add_reference()` | add a new white standard reference 
 
 
 ## **Set functions**
@@ -105,7 +105,7 @@ Table 4. Description of the *set* functions.
 |`set_folder_DB()` | set the path of the databases files should be stored
 |`set_lighting_conditions()` | set the light exposure conditions default values
 
-The values defined in the *set* functions are stored inside the *db_config.json* file which you can find on your local computer inside the *site-packages* folder of the microfading package. The folder *site-packages* is where the python libraries are installed on your computer (see below).
+The values defined in the *set* functions are stored inside the *db_config.json* file which you can find on your local computer inside the *site-packages* folder of Anaconda. The folder *site-packages* is where the python libraries are installed on your computer (see below).
 
 ```python
 import microfading as mf
