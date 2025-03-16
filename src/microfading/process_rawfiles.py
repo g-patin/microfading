@@ -8,7 +8,6 @@ from typing import Optional, Union
 import scipy.interpolate as sip
 from scipy.interpolate import RegularGridInterpolator
 
-
 from . import databases
 from . import MFT_info_dictionaries
 from . import MFT_info_templates
@@ -269,7 +268,7 @@ def MFT_fotonowy(files: list, filenaming:Optional[str] = 'none', folder:Optional
             df_info.loc['radiantExposure_He_MJ/m^2'] = np.round(total_He, 3)
             df_info.loc['exposureDose_Hv_Mlxh'] = np.round(total_Hv, 3)
             df_info.loc['illuminance_Ev_Mlx'] = np.round(ill, 4)
-            df_info.loc['irradiance_Ee_W/m^2'] = int(irr)
+            df_info.loc['irradiance_Ee_W/m^2'] = int(irr)            
 
             current = int(df_info.loc['Curr'].values[0].split(' ')[0])
             df_info.loc['Curr'] = current
@@ -287,9 +286,10 @@ def MFT_fotonowy(files: list, filenaming:Optional[str] = 'none', folder:Optional
             info_parameters = [
             "[SINGLE MICROFADING ANALYSIS]",
             "authors",
+            "host_institution",
             "date_time",
             "comment",
-            "[PROJECT INFO]"] + list(db_projects.columns) + ["[OBJECT INFO]"] + list(db_objects.columns) + MFT_info_templates.device_info + MFT_info_templates.analysis_info + MFT_info_templates.beam_info
+            "[PROJECT INFO]"] + list(db_projects.columns) + ["[OBJECT INFO]"] + list(db_objects.columns) + MFT_info_templates.device_info + MFT_info_templates.analysis_info + MFT_info_templates.spot_info + MFT_info_templates.beam_info + MFT_info_templates.results_info
 
             df_authors = DB.get_persons()
 
@@ -308,12 +308,26 @@ def MFT_fotonowy(files: list, filenaming:Optional[str] = 'none', folder:Optional
                 df_author = df_authors[df_authors['initials'] == authors]
                 authors_names = f"{df_author['surname'].values[0]}, {df_author['name'].values[0]}"
 
+            
+            institution_info = DB.get_db_config()['institution']
+            if len(institution_info) > 0:
+                host_institution_name = institution_info['name']
+                host_institution_department = institution_info['department']
+
+                if len(host_institution_department) > 0:
+                    host_institution = f'{host_institution_name}_{host_institution_department}'
+                else:
+                    host_institution = host_institution_name
+            else:
+                host_institution = 'undefined'
+                print('You might want to register the infor of your institution in the db_config.json file -> mf.set_institution_info().')
+
             date_time = pd.to_datetime(df_info.loc['Date'].values[0])
             date = date_time.date()
             project_id = raw_file_cl.stem.split(' ')[0]
             object_id = raw_file_cl.stem.split(' ')[1]
             group = raw_file_cl.stem.split(' ')[2]
-            group_description = raw_file_cl.stem.split(' ')[3].split('_')[0]
+            group_description = raw_file_cl.stem.split(' ')[3].split('_')[0]            
             project_info = list(db_projects.query(f'project_id == "{project_id}"').values[0])
             object_info = list(db_objects.query(f'object_id == "{object_id}"').values[0])
 
@@ -388,10 +402,7 @@ def MFT_fotonowy(files: list, filenaming:Optional[str] = 'none', folder:Optional
                            
             analysis_info = [
                 " ",
-                meas_id,
-                group, 
-                group_description,
-                background,
+                meas_id,                
                 spec_comp,
                 int_time_sample,
                 int_time_whitestandard,
@@ -404,8 +415,25 @@ def MFT_fotonowy(files: list, filenaming:Optional[str] = 'none', folder:Optional
             ]
 
 
-            # beam info                
-                
+            # spot info
+            spot_image = ""
+            other_analyses = ""
+            spot_color = ""
+            spot_components = ""
+
+            spot_info = [
+                " ",
+                group, 
+                group_description,
+                spot_color,
+                spot_components,
+                background,
+                spot_image,
+                other_analyses,
+            ]
+
+
+            # beam info               
             beam_info = [
                 " ",
                 'none',
@@ -423,9 +451,10 @@ def MFT_fotonowy(files: list, filenaming:Optional[str] = 'none', folder:Optional
             info_values = [
                 " ",
                 authors_names,
+                host_institution,
                 date_time,
                 comment,
-                " "] + project_info + [" "] + object_info + device_info + analysis_info + beam_info
+                " "] + project_info + [" "] + object_info + device_info + analysis_info + spot_info + beam_info + [" ", " "]
 
             df_info = pd.DataFrame({'parameter':info_parameters})
             df_info["value"] = pd.Series(info_values)            
