@@ -24,6 +24,7 @@ from ipywidgets import *
 from IPython.display import display, clear_output
 import subprocess
 from PIL import Image
+from great_tables import GT, md, style, loc
 
 # underlying modules of the  microfading package
 from . import plotting
@@ -35,9 +36,9 @@ from . import process_rawfiles
 D65 = colour.CCS_ILLUMINANTS["cie_10_1964"]["D65"]
 
 labels_eq = {
-    'dE76': r'$\Delta E^*_{ab}$',
-    'dE94': r'$\Delta E^*_{94}$',
-    'dE00': r'$\Delta E^*_{00}$',         
+    'dE76': r'$\Delta E_{ab}$',
+    'dE94': r'$\Delta E_{94}$',
+    'dE00': r'$\Delta E_{00}$',         
     'dR_vis': r'$\Delta R_{vis}$',
     'dL*' : r'$\Delta L^*$',
     'da*' : r'$\Delta a^*$',
@@ -48,7 +49,10 @@ labels_eq = {
     'a*' : r'$a^*$',
     'b*' : r'$b^*$',
     'C*' : r'$C^*$',
-    'h' : r'$h$',          
+    'h' : r'$h$', 
+    'He' : 'MJ/m2',
+    'Hv' : 'Mlxh',      
+    'JND' : 'JND'  
 }
 
 
@@ -739,6 +743,14 @@ def set_colorimetry_info():
     return DB.set_colorimetry_info()
 
 
+def set_device_info():
+    """Record the device info in the db_config.json file of the microfading package.
+    """
+
+    DB = databases.DB()
+    return DB.set_device_info()
+
+
 def set_exposure_conditions():
     """Record the exposure lighting conditions in the db_config.json file of the microfading package.
     """
@@ -767,6 +779,12 @@ def set_institution_info():
 
     DB = databases.DB()
     return DB.set_institution_info()
+
+
+def set_report_figures():
+    
+    DB = databases.DB()
+    return DB.set_report_figures()
 
 
 
@@ -834,6 +852,712 @@ class MFT(object):
                 df_info.to_excel(writer, sheet_name='info', index=True)
                 df_cl.to_excel(writer, sheet_name="CIELAB", index=False)
                 df_sp.to_excel(writer, sheet_name="spectra", index=False)
+    
+    
+    def compute_delta(self, coordinates:Optional[list] = ['dE00'], dose_unit:Optional[list] = 'He', dose_values:Union[int, float, list, tuple] = 'all', derivation:Optional[bool] = False):
+        """Retrieve the CIE delta values for a given set of colorimetric coordinates corresponding to the given microfading analyses.
+
+        Parameters
+        ----------
+        coordinates : list, optional
+            List of colorimetric coordinates, by default ['dE00']
+            Any of the following coordinates can be added to the list: 'dE76', 'dE00', 'dR_vis' , 'L*', 'a*', 'b*', 'C*', 'h'.
+
+        dose_unit : str, optional
+            Define the light energy dose, by default 'He'
+            Any of the following units can be entered: 'He', 'Hv', 't'. Where 'He' corresponds to radiant energy (MJ/m2), 'Hv' to exposure dose (Mlxh), and 't' to times (sec)
+
+        dose_values : Union[int, float, list, tuple], optional
+            Dose values for which the colourimetric values will be returned, by default 'all'
+            When 'all', it returns the colourimetric values for all the dose values available in the given input data files.
+            A single dose value (an integer or a float number) can be entered.
+            A list of dose values, as integer or float, can also be entered.
+            A tuple of three values (min, max, step) will be used in a numpy.arange() function to return an array of dose values. 
+
+        derivation : bool, optional
+            Whether to return the first derivative values of the desired coordinates, by default False
+
+        Returns
+        -------
+        A list of pandas dataframes
+            It returns a a list of pandas dataframes where each column corresponds to a light energy dose or a desired coordinate.
+        """          
+
+        # Retrieve the data        
+        cielab_data = self.read_files(sheets=['CIELAB'])
+        cielab_data = [x[0] for x in cielab_data]       
+
+        # Rename the LabCh coordinates to dL*, da*, db*, dC*, dh
+        coordinates = [f'd{x}' if x in ['L*','a*','b*','C*','h'] else x for x in coordinates]
+
+        # Compute the delta values
+        deltas = self.get_cielab(coordinates=coordinates, dose_unit=dose_unit, dose_values=dose_values)
+
+        # Whether to compute the first derivation 
+        if derivation:
+            deltas = [pd.DataFrame(np.gradient(x.T.values, x.index, axis=1).T, columns=x.columns, index=x.index) for x in deltas]
+
+        return deltas     
+   
+    
+    def compute_fitting(self, plot:Optional[bool] = True, return_data:Optional[bool] = False, dose_unit:Optional[str] = 'Hv', coordinate:Optional[str] = 'dE00', equation:Optional[str] = 'power_3p', initial_params:Optional[List[float]] = 'auto', bounds:Optional[list] = (-np.inf, np.inf), x_range:Optional[Tuple[int]] = (0,5.1,0.1), save: Optional[bool] = False, path_fig: Optional[str] = 'cwd') -> Union[None, Tuple[np.ndarray, np.ndarray]]:
+        """Fit the values of a given colourimetric coordinates. 
+
+        Parameters
+        ----------
+        plot : bool, optional
+            Whether to show the fitted data, by default True
+
+        return_data : bool, optional
+            Whether to return the fitted data, by default False
+
+        dose_unit : string, optional
+            Unit of the light energy dose, by default 'He'
+            Any of the following units can be used: 'He', 'Hv', 't'. Where 'He' corresponds to radiant energy (MJ/m2), 'Hv' to exposure dose (Mlxh), and 't' to times (sec)
+
+        coordinate : string, optional
+            Select the desired colourimetric coordinate from the following list: ['L*', 'a*','b*', 'C*', 'h', 'dL*', 'da*','db*', 'dC*', 'dh', 'dE76', 'dE00', 'dR_vis'], by default 'dE00'
+
+        equation : str, optional
+            Mathematical equation used to fit the coordinate values, by default 'c0*(x**c1)'.
+            Any others mathematical can be given. The following equation is often relevant for fitting microfading data: '((x) / (c0 + (c1*x))) + c2'.
+
+        initial_params : Optional[List[float]], optional
+            Initial guesses of the 'c' parameters given in the equation (c0, c1, c2, etc.), by default [0.1, 0.0]
+
+        x_range : Optional[Tuple[int]], optional
+            Values along which the fitted values should be computed (start, end, step), by default (0, 1001, 1)
+
+        save : Optional[bool], optional
+            Whether to save the plot, by default False
+
+        path_fig : Optional[str], optional
+            Absolute path of the figure to be saved, by default 'default'
+
+        Returns
+        -------
+        Union[None, Tuple[np.ndarray, np.ndarray]]
+            _description_
+        """
+
+        # Retrieve the range light dose values
+        doses = {'He':'He_MJ/m2', 'Hv':'Hv_Mlxh', 't': 't_sec'}  
+        x_model = np.arange(*x_range)
+           
+        # Retrieve the data        
+        all_data = []
+
+        for data in self.get_data(data='cl'):
+            if 'mean' in data.columns.get_level_values(1):
+                cl_mean_data = data.xs(key='mean', axis=1, level=1)  # the mean colorimetric data
+                doses_data = data.xs(key='value', axis=1, level=1)   # the light energy data
+                
+                all_data.append(pd.concat([doses_data, cl_mean_data], axis=1))
+
+            else:
+                all_data.append(data.xs(key='value', axis=1, level=1))                
+
+        # Added the delta LabCh values to the data dataframes
+        coordinates = ['L*', 'a*', 'b*', 'C*', 'h']
+        data = [d.assign(**{f'd{coord}': d[coord] - d[coord].values[0] for coord in coordinates}) for d in all_data]
+                
+        # Select the wanted dose_unit and coordinate
+        selected_data = [x[[doses[dose_unit], coordinate]] for x in data]
+        selected_data = [x.set_index(x.columns[0]) for x in selected_data]
+        
+        # Define the fitting equation and bounds
+        config_functions = get_DB_config()['functions']
+        existing_equations = list(config_functions.keys())
+        
+        if equation in existing_equations:
+            bounds = eval(config_functions[equation]['bounds'])
+            equation = config_functions[equation]['expression']           
+                
+        # Define the function to fit
+        def fit_function(x, *params):
+            param_dict = {f'c{i}': param for i, param in enumerate(params)}
+            param_dict['x'] = x
+            return eval(equation, globals(), param_dict)        
+        
+        # Create an empty dataframe for the fitted data
+        fitted_data = pd.DataFrame(index=pd.Series(x_model))
+
+        # Empty list to store the labels
+        fitted_labels = []
+
+        # Emtpy list to store the optimized parameters
+        fitted_parameters = []
+
+        if initial_params == 'auto':
+            initial_params = ['auto']
+
+        initial_params = initial_params * len(self.files)
+
+        
+        for d, p in zip(selected_data,initial_params):
+
+            # retrieve the x(light dose) and y(coordinate) values
+            x_data, y_data = d.index, d.iloc[:,0].values
+
+            # estimate the initial parameters
+            if p == 'auto':  
+
+                y_diff = y_data[-1] - y_data[0]
+
+                if equation == "c0*x":
+                    if y_diff < 0:
+                        p = [-0.1]
+                    elif y_diff > 0:
+                        p = [0.1]
+                    elif y_diff == 0:
+                        p  = [0]
+
+                elif equation == "c0*x+c1":                    
+
+                    if y_diff < 0:
+                        c0 = -0.1
+                    elif y_diff > 0:
+                        c0 = 0.1
+                    elif y_diff == 0:
+                        c0  = 0
+
+                    c1 = y_data[0]
+                    p = [c0,c1]
+
+                elif equation == "c0*(x**c1)":                    
+
+                    if y_diff < 0:
+                        c0 = -0.1
+                    elif y_diff > 0:
+                        c0 = 0.1
+                    elif y_diff == 0:
+                        c0  = 0
+                    
+                    p = [c0,0.1]
+
+                elif equation == "c0*(x**c1)+c2":                    
+
+                    if y_diff < 0:
+                        c0 = -0.1
+                    elif y_diff > 0:
+                        c0 = 0.1
+                    elif y_diff == 0:
+                        c0  = 0
+                    
+                    c2 = y_data[0]
+                    p = [c0,0.1,c2]
+
+                
+                elif equation == "(c0/(1+np.exp(c1*x)))":                    
+
+                    if y_diff < 0:
+                        c0 = -0.1
+                    elif y_diff > 0:
+                        c0 = 0.1
+                    elif y_diff == 0:
+                        c0  = 0
+                                        
+                    p = [c0,-0.1]
+
+
+                elif equation == "(c0/(1+np.exp(c1*x)))+c2":                    
+
+                    if y_diff < 0:
+                        c0 = -0.1
+                    elif y_diff > 0:
+                        c0 = 0.1
+                    elif y_diff == 0:
+                        c0  = 0                    
+                    
+                    c2 = y_data[0]
+                    p = [c0,-0.1,c2]
+
+            
+            # perform the curve fitting, return the optimized parameters (popt) and the covariance matrix (pcov)
+            popt, pcov = curve_fit(fit_function, x_data, y_data, p0=p, bounds=bounds)
+            
+            # generate fitted y data
+            fitted_y = fit_function(x_model, *popt)
+            
+            # append it to the fitted_data dataframe
+            fitted_data = pd.concat([fitted_data, pd.DataFrame(fitted_y, index=pd.Series(x_model))], axis=1)
+            
+            # Calculate R-squared value
+            residuals = y_data - fit_function(x_data, *popt)
+            ss_res, ss_tot = np.sum(residuals**2), np.sum((y_data - np.mean(y_data))**2)        
+            r_squared = np.round(1 - (ss_res / ss_tot), 3)
+
+            # Create a string representation of the equation with optimized parameters
+            optimized_equation = equation
+            for i, param in enumerate(popt):
+                optimized_equation = optimized_equation.replace(f'c{i}', str(np.round(param,2)))
+
+            fitted_labels.append(f'{optimized_equation}, $R^2$ = {r_squared}')
+            fitted_parameters.append(popt)
+
+        fitted_data.columns = [f'{x.split(".")[-1]}, $y$ = {y}' for x,y in zip(self.get_meas_ids, fitted_labels)]         
+        
+        # Plot the data
+        if plot:            
+
+            labels_H = {
+                'Hv': 'Exposure dose $H_v$ (Mlxh)',
+                'He': 'Radiant Exposure $H_e$ (MJ/m²)',
+                't' : 'Exposure duration (seconds)'
+            }
+
+            sns.set_theme(context='paper', font='serif', palette='colorblind')
+            fig, ax = plt.subplots(1,1, figsize=(10,6))
+            fs = 24
+
+            
+            pd.concat(selected_data, axis=1).plot(ax=ax, color='0.7', ls='-', lw=5, legend=False)
+            fitted_data.plot(ax=ax, lw=2, ls='--')
+
+            ax.set_xlabel(labels_H[dose_unit], fontsize=fs)
+            ax.set_ylabel(labels_eq[coordinate],fontsize=fs)
+            
+            ax.set_xlim(0)    
+
+            ax.xaxis.set_tick_params(labelsize=fs)
+            ax.yaxis.set_tick_params(labelsize=fs)   
+
+            plt.tight_layout()    
+            
+            
+            # Whether to save the figure
+            if save:
+
+                filename = f'MFT_{coordinate}-fitted.png'
+
+                if save:      
+                    
+                    if path_fig == 'cwd':
+                        path_fig = f'{os.getcwd()}/{filename}' 
+
+                    plt.savefig(path_fig, dpi=300, facecolor='white')
+
+            plt.show()
+        
+        if return_data:
+            return fitted_parameters, fitted_data, pcov, r_squared   
+    
+    
+    def compute_JND(self, dose_unit:Optional[str] = 'Hv', JND_dE = 1.5, light_intensity=50, daily_exposure:Optional[int] = 10, yearly_exposure:Optional[int] = 365, fitting = True):
+        """Compute the just noticeable difference (JND) corresponding to each input data file.
+
+        Parameters
+        ----------
+        dose_unit : Optional[str], optional
+            Unit of the light dose energy, by default 'Hv'
+            Any of the following units can be entered: 'He', 'Hv', 't'. Where 'He' corresponds to radiant energy (MJ/m2), 'Hv' to exposure dose (Mlxh), and 't' to times (sec)
+
+        JND_dE : float, optional
+            The dE00 value corresponding to one JND, by default 1.5
+
+        light_intensity : int, optional
+            The illuminance or the irradiance value of the intended light source, by default 50
+
+        daily_exposure : Optional[int], optional
+            Amount of exposure hours per day, by default 10
+
+        yearly_exposure : Optional[int], optional
+            Amount of exposure days per year, by default 365
+
+        fitting : bool, optional
+            Whether to fit the microfading data necessary to compute the JND value, by default True
+
+        Returns
+        -------
+        A list of numerical values as string (uncertainty string with a nominal and standard deviation value)
+            It returns a list of numerical values corresponding to the amount of years necessary to reach one JND. 
+        """
+
+        H_step = 0.01
+        dE_fitted = self.compute_fitting(dose_unit='Hv', x_range=(0,5.1,H_step), return_data=True, plot=False)[1]
+        dE_rate = np.gradient(dE_fitted.T.values, H_step, axis=1)
+        dE_rate_mean = [np.mean(x[-20:]) for x in dE_rate]
+        dE_rate_std = [np.std(x[-20:]) for x in dE_rate]
+
+        rates = [ufloat(x, y) for x,y in zip(dE_rate_mean, dE_rate_std)]
+
+        times_years = []
+
+        for rate in rates:
+
+            if dose_unit == 'Hv':
+                
+                JND_dose = (JND_dE / rate) * 1e6                     # in lxh
+                time_hours = JND_dose / light_intensity
+                time_years = time_hours / (daily_exposure * yearly_exposure)            
+
+            if dose_unit == 'He':
+                JND_dose = (JND_dE / rate) * 1e6                     # in J/m²
+                time_sec = JND_dose / light_intensity
+                time_hours = time_sec / 3600
+                time_years = time_hours / (daily_exposure * yearly_exposure)
+
+            times_years.append(time_years)
+
+        return times_years
+    
+    
+    def compute_mean(self, return_data:Optional[bool] = True, criterion:Optional[str] = 'spot_group', dose_unit:Optional[str] = 'He', save:Optional[bool] = False, folder:Optional[str] = '.', filename:Optional[str] = 'default'):
+        """Compute mean and standard deviation values of several microfading measurements.
+
+        Parameters
+        ----------
+        return_data : Optional[bool], optional
+            Whether to return the data, by default True        
+
+        criterion : Optional[str], optional
+            _description_, by default 'group'            
+
+        save : Optional[bool], optional
+            Whether to save the average data as an excel file, by default False
+
+        folder : Optional[str], optional
+            Folder where the excel file will be saved, by default 'default'
+            When 'default', the file will be saved in the same folder as the input files
+            When '.', the file will be saved in the current working directory
+            One can also enter a valid path as a string.
+
+        filename : Optional[str], optional
+            Filename of the excel file containing the average values, by default 'default'
+            When 'default', it will use the filename of the first input file
+            One can also enter a filename, but without a filename extension.
+
+        Returns
+        -------
+        tuple, excel file
+            It returns a tuple composed of three elements (info, CIELAB data, spectral data). When 'save' is set to True, an excel is created to stored the tuple inside three distinct excel sheet (info, CIELAB, spectra).
+
+        Raises
+        ------
+        RuntimeError
+            _description_
+        """
+
+        if len(self.files) < 2:        
+            raise RuntimeError('Not enough files. At least two measurement files are required to compute the average values.')
+        
+
+        def mean_std_with_nan(arrays):
+            '''Compute the mean of several numpy arrays of different shapes.'''
+            
+            # Find the maximum shape
+            max_shape = np.max([arr.shape for arr in arrays], axis=0)
+                    
+            # Create arrays with NaN values
+            nan_arrays = [np.full(max_shape, np.nan) for _ in range(len(arrays))]
+                    
+            # Fill NaN arrays with actual values
+            for i, arr in enumerate(arrays):
+                nan_arrays[i][:arr.shape[0], :arr.shape[1]] = arr
+                    
+            # Calculate mean
+            mean_array = np.nanmean(np.stack(nan_arrays), axis=0)
+
+            # Calculate std
+            std_array = np.nanstd(np.stack(nan_arrays), axis=0)
+                    
+            return mean_array, std_array
+        
+        
+        def to_float(x):
+            try:
+                return float(x)
+            except ValueError:
+                return x
+
+
+        ###### SPECTRAL DATA #######
+
+        data_sp = self.get_data(data='sp')
+
+        # Get the energy dose step
+        #H_values = [x.columns.astype(float) for x in data_sp]       
+        H_values = [x.values.flatten() for x in self.get_doses(dose_unit=dose_unit)]
+        step_H = sorted(set([x[2] - x[1] for x in H_values]))[0]
+        highest_He = np.max([x[-1] for x in H_values])
+
+        # Average the spectral data
+        sp = mean_std_with_nan(data_sp)
+        sp_mean = sp[0]
+        sp_std = sp[1] 
+       
+
+        # Wanted energy dose values          
+        wanted_H = np.round(np.arange(0,highest_He+step_H,step_H),2)  
+
+        if len(wanted_H) != sp_mean.shape[1]:            
+            wanted_H = np.linspace(0,highest_He,sp_mean.shape[1])
+
+        # Retrieve the wavelength range
+        wl = self.get_wavelength.iloc[:,0]
+        
+
+        # Create a multi-index pandas DataFrame
+        doses_dict = {'He': 'He_MJ/m2', 'Hv': 'Hv_Mlxh', 't': 't_sec'}
+        H_tuples = [(dose, measurement) for dose in wanted_H for measurement in ['mean', 'std']]
+        multiindex_cols = pd.MultiIndex.from_tuples(H_tuples, names=[doses_dict[dose_unit], 'Measurement'])
+        
+        data_df_sp = np.empty((len(wl), len(wanted_H) * 2))       
+        data_df_sp[:, 0::2] = sp_mean
+        data_df_sp[:, 1::2] = sp_std
+        df_sp_final = pd.DataFrame(data_df_sp,columns=multiindex_cols, index=wl)
+        df_sp_final.index.name = 'wavelength_nm'
+                  
+           
+
+        ###### COLORIMETRIC DATA #######
+
+        data_cl = self.get_data(data='cl')
+        columns_cl = data_cl[0].columns.get_level_values(0)
+
+        # Average the colorimetric data    
+        cl = mean_std_with_nan(data_cl)
+        cl_mean = cl[0]
+        cl_std = cl[1]
+
+        # Create a multi-index pandas DataFrame
+        cl_tuples = [(x, measurement) for x in data_cl[0].columns.get_level_values(0) for measurement in ['mean', 'std']]
+        multiindex_cols = pd.MultiIndex.from_tuples(cl_tuples, names=['coordinates', 'Measurement'])
+        
+        data_df_cl = np.empty((cl_mean.shape[0], cl_mean.shape[1] * 2))       
+        data_df_cl[:, 0::2] = cl_mean
+        data_df_cl[:, 1::2] = cl_std
+        df_cl_final = pd.DataFrame(data_df_cl,columns=multiindex_cols, )
+        
+        df_cl_final.drop([('He_MJ/m2','std'), ('Hv_Mlxh','std'), ('t_sec','std')], axis=1, inplace=True)
+        
+        mapper = {('He_MJ/m2', 'mean'): ('He_MJ/m2', 'value'), ('Hv_Mlxh', 'mean'): ('Hv_Mlxh', 'value'), ('t_sec', 'mean'): ('t_sec', 'value')}
+        df_cl_final.columns = pd.MultiIndex.from_tuples([mapper.get(x, x) for x in df_cl_final.columns])
+        
+    
+        cl_cols = df_cl_final.columns
+        cl_cols_level1 = [x[0] for x in cl_cols]
+        cl_cols_level2 = [x[1] for x in cl_cols]
+        df_cl_final.columns = np.arange(0,df_cl_final.shape[1])
+
+        df_cl_final = pd.concat([pd.DataFrame(data=np.array([cl_cols_level2])), df_cl_final])
+        df_cl_final.columns = cl_cols_level1
+        df_cl_final = df_cl_final.set_index(df_cl_final.columns[0])
+        
+
+        ###### INFO #######
+        
+        data_info = self.get_metadata().fillna('none')
+        
+        # Select the first column as a template
+        df_info = data_info.iloc[:,0]
+        
+
+        # Rename title file
+        df_info.rename({'[SINGLE MICROFADING ANALYSIS]': '[MEAN MICROFADING ANALYSES]'}, inplace=True)
+
+        # Date time
+        most_recent_dt = max(data_info.loc['date_time'])
+        df_info.loc['date_time'] = most_recent_dt
+        
+        # Project data info
+        df_info.loc['project_id'] = '_'.join(sorted(set(data_info.loc['project_id'].values)))
+        df_info.loc['project_leader'] = '_'.join(sorted(set(data_info.loc['project_leader'].values)))
+        df_info.loc['co-researchers'] = '_'.join(sorted(set(data_info.loc['co-researchers'].values)))
+        df_info.loc['start_date'] = '_'.join(sorted(set(data_info.loc['start_date'].values)))
+        df_info.loc['end_date'] = '_'.join(sorted(set(data_info.loc['end_date'].values)))
+        df_info.loc['keywords'] = '_'.join(sorted(set(data_info.loc['keywords'].values)))
+
+        # Object data info
+        if len(set([x.split('_')[0] for x in data_info.loc['institution'].values])) > 1:
+            df_info.loc['institution'] = '_'.join(sorted(set([x.split('_')[0] for x in data_info.loc['institution'].values])))
+        
+        df_info.loc['object_id'] = '_'.join(sorted(set(data_info.loc['object_id'].values)))
+        df_info.loc['object_category'] = '_'.join(sorted(set(data_info.loc['object_category'].values)))
+        df_info.loc['object_type'] = '_'.join(sorted(set(data_info.loc['object_type'].values)))
+        df_info.loc['object_technique'] = '_'.join(sorted(set(data_info.loc['object_technique'].values)))
+        df_info.loc['object_title'] = '_'.join(sorted(set(data_info.loc['object_title'].values)))
+        df_info.loc['object_name'] = '_'.join(sorted(set(data_info.loc['object_name'].values)))
+        df_info.loc['object_creator'] = '_'.join(sorted(set(data_info.loc['object_creator'].values)))
+        df_info.loc['object_date'] = '_'.join(sorted(set(data_info.loc['object_date'].values)))
+        df_info.loc['object_material'] = '_'.join(sorted(set(data_info.loc['object_material'].values)))
+        df_info.loc['color'] = '_'.join(sorted(set(data_info.loc['color'].values)))
+        df_info.loc['colorants'] = '_'.join(sorted(set(data_info.loc['colorants'].values)))
+        df_info.loc['colorants_name'] = '_'.join(sorted(set(data_info.loc['colorants_name'].values)))
+        df_info.loc['binding'] = '_'.join(sorted(set(data_info.loc['binding'].values)))
+        df_info.loc['ratio'] = '_'.join(sorted(set(data_info.loc['ratio'].values)))
+        df_info.loc['thickness_um'] = '_'.join(sorted(set(data_info.loc['thickness_um'].values)))
+        df_info.loc['status'] = '_'.join(sorted(set(data_info.loc['status'].values)))
+
+        # Device data info
+        if len(set(data_info.loc['device'].values)) > 1:
+            df_info.loc['device'] = '_'.join(sorted(set([x.split('_')[0] for x in data_info.loc['device'].values])))
+        
+        df_info.loc['measurement_mode'] = '_'.join(sorted(set(data_info.loc['measurement_mode'].values)))
+        df_info.loc['zoom'] = '_'.join(sorted(set(data_info.loc['zoom'].values)))
+        df_info.loc['iris'] =  '_'.join(set([str(x) if f'{x}'.isnumeric() else x for x in list(data_info.loc['iris'].values)]))
+        df_info.loc['geometry'] = '_'.join(sorted(set(data_info.loc['geometry'].values)))
+        df_info.loc['distance_ill_mm'] = '_'.join(set([str(x) if f'{x}'.isnumeric() else x for x in list(data_info.loc['distance_ill_mm'].values)]))
+        df_info.loc['distance_coll_mm'] = '_'.join(set([str(x) if f'{x}'.isnumeric() else x for x in list(data_info.loc['distance_coll_mm'].values)]))
+         
+
+        if len(set(data_info.loc['fiber_fading'].values)) > 1:
+            df_info.loc['fiber_fading'] = '_'.join(sorted(set([x.split('_')[0] for x in data_info.loc['fiber_fading'].values])))
+
+        if len(set(data_info.loc['fiber_ill'].values)) > 1:
+            df_info.loc['fiber_ill'] = '_'.join(sorted(set([x.split('_')[0] for x in data_info.loc['fiber_ill'].values])))
+
+        if len(set(data_info.loc['fiber_coll'].values)) > 1:
+            df_info.loc['fiber_coll'] = '_'.join(sorted(set([x.split('_')[0] for x in data_info.loc['fiber_coll'].values])))
+
+        if len(set(data_info.loc['lamp_fading'].values)) > 1:
+            df_info.loc['lamp_fading'] = '_'.join(sorted(set([x.split('_')[0] for x in data_info.loc['lamp_fading'].values])))
+
+        if len(set(data_info.loc['lamp_ill'].values)) > 1:
+            df_info.loc['lamp_ill'] = '_'.join(sorted(set([x.split('_')[0] for x in data_info.loc['lamp_ill'].values])))
+
+        if len(set(data_info.loc['filter_fading'].values)) > 1:
+            df_info.loc['filter_fading'] = '_'.join(sorted(set([x.split('_')[0] for x in data_info.loc['filter_fading'].values])))
+
+        if len(set(data_info.loc['filter_ill'].values)) > 1:
+            df_info.loc['filter_ill'] = '_'.join(sorted(set([x.split('_')[0] for x in data_info.loc['filter_ill'].values])))
+
+        if len(set(data_info.loc['white_standard'].values)) > 1:
+            df_info.loc['white_standard'] = '_'.join(sorted(set([x.split('_')[0] for x in data_info.loc['white_standard'].values])))
+        
+
+        # Analysis data info
+        
+        criterion_value = df_info.loc[criterion]
+        object_id = df_info.loc['object_id']
+        if criterion == 'group':            
+            df_info.loc['meas_id'] = f'MF.{object_id}.{criterion_value}'
+        elif criterion == 'object' or criterion == 'project':
+             df_info.loc['meas_id'] = f'MF.{criterion_value}'
+        else:
+            print('Choose one of the following options for the criterion parameter: ["group", "object", "project"]')
+
+        meas_nbs = '-'.join([x.split('.')[-1] for x in self.get_meas_ids])
+        df_info.loc['spot_group'] = f'{"-".join(sorted(set(data_info.loc["spot_group"].values)))}_{meas_nbs}'    
+        df_info.loc['spot_description'] = '_'.join(sorted(set(data_info.loc['spot_description'].values)))
+        df_info.loc['background'] = '_'.join(sorted(set(data_info.loc['background'].values)))  
+
+        if len(set(data_info.loc['specular_component'].values)) > 1:
+            df_info.loc['specular_component'] = '_'.join(sorted(set([x.split('_')[0] for x in data_info.loc['specular_component'].values]))) 
+
+        
+        df_info.loc['integration_time_sample_ms'] = np.round(np.mean(data_info.loc['integration_time_sample_ms'].astype(float).values),1)
+        df_info.loc['integration_time_whitestandard_ms'] = np.round(np.mean(data_info.loc['integration_time_whitestandard_ms'].astype(float).values),1)
+        df_info.loc['average'] = '_'.join([str(x) for x in sorted(set(data_info.loc['average'].astype(str).values))]) 
+        df_info.loc['duration_min'] = np.round(np.mean(data_info.loc['duration_min'].values),1)
+        df_info.loc['interval_sec'] = '_'.join([str(x) for x in sorted(set(data_info.loc['interval_sec'].values))])
+        df_info.loc['measurements_N'] = '_'.join([str(x) for x in sorted(set(data_info.loc['measurements_N'].astype(str).values))])
+        df_info.loc['illuminant'] = '_'.join(sorted(set(data_info.loc['illuminant'].values)))
+        df_info.loc['observer'] = '_'.join(sorted(set(data_info.loc['observer'].values)))
+
+
+        # Beam data info
+
+        df_info.loc['beam_photo'] = '_'.join(sorted(set(data_info.loc['beam_photo'].values)))
+        df_info.loc['resolution_micron/pixel'] = '_'.join(set([str(x) if f'{x}'.isnumeric() else x for x in list(data_info.loc['resolution_micron/pixel'].values)]))
+
+        fwhm = data_info.loc['FWHM_micron']
+        fwhm_avg = np.mean([i for i in [to_float(x) for x in fwhm] if isinstance(i, (int, float))])
+        df_info.loc['FWHM_micron'] = fwhm_avg
+
+        power_infos = data_info.loc['radiantFlux_mW'].values
+        power_values = []
+        
+        for power_info in power_infos:
+            if "_" in str(power_info):
+                power_value = ufloat_fromstr(power_info.split('_')[0])
+                power_values.append(power_value)                            
+
+            else: 
+                power_values.append(power_info)               
+                
+        power_mean = np.round(np.mean(power_values),3)
+        power_std = np.round(np.std(power_values),3)
+        df_info.loc['radiantFlux_mW'] = f'{ufloat(power_mean,power_std)}'    
+                 
+
+        irr_values = [str(ufloat(x,0)) if isinstance(x, int) else x for x in data_info.loc['irradiance_Ee_W/m^2'] ] 
+        irr_mean = np.int32(np.mean([unumpy.nominal_values(ufloat_fromstr(x)) for x in irr_values]))
+        irr_std = np.int32(np.std([unumpy.nominal_values(ufloat_fromstr(x)) for x in irr_values]))
+        irr_avg = ufloat(irr_mean, irr_std)    
+        df_info.loc['irradiance_Ee_W/m^2'] = irr_avg
+       
+        lm = [x for x in data_info.loc['luminuousFlux_lm'].values]
+        lm_avg = np.round(np.mean(lm),3)
+        df_info.loc['luminuousFlux_lm'] = lm_avg
+
+        ill = [x for x in data_info.loc['illuminance_Ev_Mlx']]
+        ill_avg = np.round(np.mean(ill),3)
+        df_info.loc['illuminance_Ev_Mlx'] = ill_avg
+
+        
+        # Results data info
+        df_info.loc['radiantExposure_He_MJ/m^2'] = df_cl_final.index.values[-1]
+        df_info.loc['exposureDose_Hv_Mlxh'] = np.round(df_cl_final['Hv_Mlxh'].values[-1],4)
+        
+
+        # Rename the column
+        df_info.name = 'value'
+                
+        
+        ###### SAVE THE MEAN DATAFRAMES #######
+        
+        if save:  
+
+            # set the folder
+            if folder == ".":
+                folder = Path('.')  
+
+            elif folder == 'default':
+                folder = Path(self.files[0]).parent
+
+            else:
+                if Path(folder).exists():
+                    folder = Path(folder)         
+
+            # set the filename
+            if filename == 'default':
+                filename = f'{Path(self.files[0]).stem}_MEAN{Path(self.files[0]).suffix}'
+
+            else:
+                filename = f'{filename}.xlsx'
+
+            
+            # create a excel writer object
+            with pd.ExcelWriter(folder / filename) as writer:
+
+                df_info.to_excel(writer, sheet_name='info', index=True)
+                df_cl_final.to_excel(writer, sheet_name="CIELAB", index=True)
+                df_sp_final.to_excel(writer, sheet_name='spectra', index=True)
+
+            print(f'{folder / filename} successfully created.')
+        
+
+        ###### RETURN THE MEAN DATAFRAMES #######
+            
+        if return_data:
+            return df_info, df_cl_final, df_sp_final
+    
+    
+    def compute_sp_derivate(self):
+        """Compute the first derivative values of reflectance spectra.
+
+        Returns
+        -------
+        a list of pandas dataframes
+            It returns the first derivative values of the reflectance spectra inside dataframes where each column corresponds to a single spectra.
+        """
+
+        sp = self.get_data(data='sp')                    
+
+        sp_derivation = [pd.DataFrame(pd.concat([pd.DataFrame(np.gradient(x.iloc[:,:], axis=0), index=pd.Series(x.index), columns=x.columns)], axis=1),index=pd.Series(x.index), columns=x.columns) for x in sp]
+
+        return sp_derivation
     
     
     def get_spectra(self, wl_range:Union[int, float, list, tuple] = 'all', dose_unit:Optional[str] = 'He', dose_values:Union[int, float, list, tuple] = 'all', spectral_mode:Optional[str] = 'rfl', smoothing:Optional[list] = [1,0]):
@@ -987,7 +1711,8 @@ class MFT(object):
         Parameters
         ----------
         coordinates : Optional[list], optional
-            Select the desired colourimetric coordinates from the following list: ['L*', 'a*','b*', 'C*', 'h', 'dL*', 'da*','db*', 'dC*', 'dh', 'dE76', 'dE00', 'dR_vis'], by default ['dE00']
+            Select the desired colorimetric coordinates from the following list: ['L*', 'a*','b*', 'C*', 'h', 'dL*', 'da*','db*', 'dC*', 'dh', 'dE76', 'dE00', 'dR_vis'], by default ['dE00']
+            When 'all', it returns all the colorimetric coordinates.
 
         dose_unit : Optional[str], optional
             Unit of the light dose energy, by default ['He']
@@ -1009,7 +1734,7 @@ class MFT(object):
             It returns the values of the wanted colour coordinates inside dataframes where each coordinate corresponds to a column.
         """
         
-        # create a dictionary to store the light dose units
+        # Create a dictionary to store the light dose units
         dose_units = {'He':'He_MJ/m2', 'Hv':'Hv_Mlxh', 't': 't_sec'}
 
 
@@ -1058,9 +1783,13 @@ class MFT(object):
                 all_data.append(pd.concat([data,data_dLabCh], axis=1))
 
         
-        # Select the wanted dose_unit and coordinate        
-        wanted_data = [x[[dose_units[dose_unit]] + coordinates] for x in all_data]        
-        wanted_data = [x.set_index(x.columns[0]) for x in wanted_data]        
+        # Select the wanted dose_unit and coordinate
+        if coordinates == 'all':
+            wanted_data = all_data
+            wanted_data = [x.set_index((dose_units[dose_unit],'value')) for x in wanted_data]
+        else:       
+            wanted_data = [x[[dose_units[dose_unit]] + coordinates] for x in all_data]       
+            wanted_data = [x.set_index(x.columns[0]) for x in wanted_data]        
         
         if isinstance(dose_values, str):
             if dose_values == 'all':
@@ -1090,292 +1819,57 @@ class MFT(object):
         
         return interpolated_data       
     
-
-    def compute_delta(self, coordinates:Optional[list] = ['dE00'], dose_unit:Optional[list] = 'He', dose_values:Union[int, float, list, tuple] = 'all', derivation:Optional[bool] = False):
-        """Retrieve the CIE delta values for a given set of colorimetric coordinates corresponding to the given microfading analyses.
-
-        Parameters
-        ----------
-        coordinates : list, optional
-            List of colorimetric coordinates, by default ['dE00']
-            Any of the following coordinates can be added to the list: 'dE76', 'dE00', 'dR_vis' , 'L*', 'a*', 'b*', 'C*', 'h'.
-
-        dose_unit : str, optional
-            Define the light energy dose, by default 'He'
-            Any of the following units can be entered: 'He', 'Hv', 't'. Where 'He' corresponds to radiant energy (MJ/m2), 'Hv' to exposure dose (Mlxh), and 't' to times (sec)
-
-        dose_values : Union[int, float, list, tuple], optional
-            Dose values for which the colourimetric values will be returned, by default 'all'
-            When 'all', it returns the colourimetric values for all the dose values available in the given input data files.
-            A single dose value (an integer or a float number) can be entered.
-            A list of dose values, as integer or float, can also be entered.
-            A tuple of three values (min, max, step) will be used in a numpy.arange() function to return an array of dose values. 
-
-        derivation : bool, optional
-            Whether to return the first derivative values of the desired coordinates, by default False
-
-        Returns
-        -------
-        A list of pandas dataframes
-            It returns a a list of pandas dataframes where each column corresponds to a light energy dose or a desired coordinate.
-        """          
-
-        # Retrieve the data        
-        cielab_data = self.read_files(sheets=['CIELAB'])
-        cielab_data = [x[0] for x in cielab_data]       
-
-        # Rename the LabCh coordinates to dL*, da*, db*, dC*, dh
-        coordinates = [f'd{x}' if x in ['L*','a*','b*','C*','h'] else x for x in coordinates]
-
-        # Compute the delta values
-        deltas = self.get_cielab(coordinates=coordinates, dose_unit=dose_unit, dose_values=dose_values)
-
-        # Whether to compute the first derivation 
-        if derivation:
-            deltas = [pd.DataFrame(np.gradient(x.T.values, x.index, axis=1).T, columns=x.columns, index=x.index) for x in deltas]
-
-        return deltas       
-
-
-    def compute_fitting(self, plot:Optional[bool] = True, return_data:Optional[bool] = False, dose_unit:Optional[str] = 'Hv', coordinate:Optional[str] = 'dE00', equation:Optional[str] = 'c0*(x**c1)', initial_params:Optional[List[float]] = [[0.1, 0.0]], x_range:Optional[Tuple[int]] = (0, 5.1, 0.1), save: Optional[bool] = False, path_fig: Optional[str] = 'cwd') -> Union[None, Tuple[np.ndarray, np.ndarray]]:
-        """Fit the values of a given colourimetric coordinates. 
+      
+    def get_illuminant(self, illuminant:Optional[str] = 'D65', observer:Optional[str] = '10'):
+        """Set the illuminant values
 
         Parameters
         ----------
-        plot : bool, optional
-            Whether to show the fitted data, by default True
+        illuminant : Optional[str], optional
+            Select the illuminant, by default 'D65'
+            It can be any value within the following list: ['A', 'B', 'C', 'D50', 'D55', 'D60', 'D65', 'D75', 'E', 'FL1', 'FL2', 'FL3', 'FL4', 'FL5', 'FL6', 'FL7', 'FL8', 'FL9', 'FL10', 'FL11', 'FL12', 'FL3.1', 'FL3.2', 'FL3.3', 'FL3.4', 'FL3.5', 'FL3.6', 'FL3.7', 'FL3.8', 'FL3.9', 'FL3.10', 'FL3.11', 'FL3.12', 'FL3.13', 'FL3.14', 'FL3.15', 'HP1', 'HP2', 'HP3', 'HP4', 'HP5', 'LED-B1', 'LED-B2', 'LED-B3', 'LED-B4', 'LED-B5', 'LED-BH1', 'LED-RGB1', 'LED-V1', 'LED-V2', 'ID65', 'ID50', 'ISO 7589 Photographic Daylight', 'ISO 7589 Sensitometric Daylight', 'ISO 7589 Studio Tungsten', 'ISO 7589 Sensitometric Studio Tungsten', 'ISO 7589 Photoflood', 'ISO 7589 Sensitometric Photoflood', 'ISO 7589 Sensitometric Printer']
 
-        return_data : bool, optional
-            Whether to return the fitted data, by default False
-
-        dose_unit : string, optional
-            Unit of the light energy dose, by default 'He'
-            Any of the following units can be used: 'He', 'Hv', 't'. Where 'He' corresponds to radiant energy (MJ/m2), 'Hv' to exposure dose (Mlxh), and 't' to times (sec)
-
-        coordinate : string, optional
-            Select the desired colourimetric coordinate from the following list: ['L*', 'a*','b*', 'C*', 'h', 'dL*', 'da*','db*', 'dC*', 'dh', 'dE76', 'dE00', 'dR_vis'], by default 'dE00'
-
-        equation : str, optional
-            Mathematical equation used to fit the coordinate values, by default 'c0*(x**c1)'.
-            Any others mathematical can be given. The following equation is often relevant for fitting microfading data: '((x) / (c0 + (c1*x))) + c2'.
-
-        initial_params : Optional[List[float]], optional
-            Initial guesses of the 'c' parameters given in the equation (c0, c1, c2, etc.), by default [0.1, 0.0]
-
-        x_range : Optional[Tuple[int]], optional
-            Values along which the fitted values should be computed (start, end, step), by default (0, 1001, 1)
-
-        save : Optional[bool], optional
-            Whether to save the plot, by default False
-
-        path_fig : Optional[str], optional
-            Absolute path of the figure to be saved, by default 'default'
+        observer : Optional[str], optional
+            Standard observer in degree, by default '10'
+            It can be either '2' or '10'
 
         Returns
         -------
-        Union[None, Tuple[np.ndarray, np.ndarray]]
-            _description_
+        tuple
+            It returns a tuple with two set of values: the chromaticity coordinates of the illuminants (CCS) and the spectral distribution of the illuminants (SDS).
         """
 
-        # Retrieve the range light dose values
-        doses = {'He':'He_MJ/m2', 'Hv':'Hv_Mlxh', 't': 't_sec'}  
-        x_values = np.arange(*x_range)
-           
-        # Retrieve the data
-        original_data = self.get_data(data='cl')
+        observers = {
+            '10': "cie_10_1964",
+            '2' : "cie_2_1931"
+        }
+       
+        CCS = colour.CCS_ILLUMINANTS[observers[observer]][illuminant]
+        SDS = colour.SDS_ILLUMINANTS[illuminant]
 
-        selected_data = []
+        return CCS, SDS
 
-        for data in original_data:
-            if 'mean' in data.columns.get_level_values(1):
-                cl_data = data.xs(key='mean', axis=1, level=1)
-                doses_data = data.xs(key='value', axis=1, level=1)
-                
-                selected_data.append(pd.concat([doses_data,cl_data], axis=1))
-
-            else:
-                selected_data.append(data.xs(key='value', axis=1, level=1)) 
-
-        #original_data = self.get_data(data='dE') if self.data_category == 'interim' else self.get_data(data='dE')[0].astype(float)
-                
-
-        # Added the delta LabCh values to the data dataframes
-        coordinates = ['L*', 'a*', 'b*', 'C*', 'h']
-        data = [d.assign(**{f'd{coord}': d[coord] - d[coord].values[0] for coord in coordinates}) for d in selected_data]
-                
-        # Select the wanted dose_unit and coordinate
-        wanted_data = [x[[doses[dose_unit], coordinate]] for x in data]
-        wanted_data = [x.set_index(x.columns[0]) for x in wanted_data]
-        
-        # Define the function to fit
-        def fit_function(x, *params):
-            param_dict = {f'c{i}': param for i, param in enumerate(params)}
-            param_dict['x'] = x
-            return eval(equation, globals(), param_dict)
-    
-        # Define boundaries for the parameters
-        #bounds = ([-np.inf] * len(initial_params), [np.inf, 1]) if len(initial_params) == 2 else ([-np.inf] * len(initial_params), [np.inf, 1, np.inf])
-
-        # Create an empty dataframe for the fitted data
-        fitted_data = pd.DataFrame(index=pd.Series(x_values))
-
-        # Empty list to store the labels
-        fitted_labels = []
-
-        # Emtpy list to store the optimized parameters
-        fitted_parameters = []
-
-        initial_params = initial_params * len(self.files)
-
-        for d, i in zip(wanted_data,initial_params):
-            # retrieve the x(light dose) and y(coordinate) values
-            x, y = d.index, d.iloc[:,0]
-                  
-            # perform the curve fitting
-            optimized_params, _ = curve_fit(fit_function, x, y, p0=i, ) # bounds=bounds
-            
-            # generate fitted y data
-            fitted_y = fit_function(x_values, *optimized_params)
-            
-            # append it to the fitted_data dataframe
-            fitted_data = pd.concat([fitted_data, pd.DataFrame(fitted_y, index=pd.Series(x_values))], axis=1)
-            
-            # Calculate R-squared value
-            residuals = y - fit_function(x, *optimized_params)
-            ss_res, ss_tot = np.sum(residuals**2), np.sum((y - np.mean(y))**2)        
-            r_squared = np.round(1 - (ss_res / ss_tot), 3)
-
-            # Create a string representation of the equation with optimized parameters
-            optimized_equation = equation
-            for i, param in enumerate(optimized_params):
-                optimized_equation = optimized_equation.replace(f'c{i}', str(np.round(param,2)))
-
-            fitted_labels.append(f'{optimized_equation}, $R^2$ = {r_squared}')
-            fitted_parameters.append(optimized_params)
-
-        fitted_data.columns = [f'{x.split(".")[-1]}, $y$ = {y}' for x,y in zip(self.get_meas_ids, fitted_labels)]         
-        
-        if plot:
-            labels_eq = {
-                'L*': r'CIE $L^*$',
-                'a*': r'CIE $a^*$',
-                'b*': r'CIE $b^*$',
-                'C*': r'CIE $C^*$',
-                'h': r'CIE $h$',
-                'dE76': r'$\Delta E^*_{ab}$',
-                'dE00': r'$\Delta E^*_{00}$',
-                'dR_VIS': r'$\Delta R_{\rm vis}$',
-                'dL*': r'CIE $\Delta L^*$',
-                'da*': r'CIE $\Delta a^*$',
-                'db*': r'CIE $\Delta b^*$',
-                'dC*': r'CIE $\Delta C^*$',
-                'dh': r'CIE $\Delta h$',
-            }
-
-            labels_H = {
-                'Hv': 'Exposure dose $H_v$ (Mlxh)',
-                'He': 'Radiant Exposure $H_e$ (MJ/m²)',
-                't' : 'Exposure duration (seconds)'
-            }
-
-            sns.set_theme(context='paper', font='serif', palette='colorblind')
-            fig, ax = plt.subplots(1,1, figsize=(10,6))
-            fs = 24
-
-            
-            pd.concat(wanted_data, axis=1).plot(ax=ax, color='0.7', ls='-', lw=5, legend=False)
-            fitted_data.plot(ax=ax, lw=2, ls='--')
-
-            #meas_line, = ax.plot(x,y, ls='-', lw=3)            
-            #fitted_line, = ax.plot(x_values,fitted_y, ls='--', lw=2)
-
-            ax.set_xlabel(labels_H[dose_unit], fontsize=fs)
-            ax.set_ylabel(labels_eq[coordinate],fontsize=fs)
-            
-            #title = f'Microfading, {self.Id}, data fitting'
-            #ax.set_title(title, fontsize = fs-4)   
-            
-            '''
-            if coordinate.startswith('d'):                
-                ax.set_ylim(0) 
-            '''
-
-            ax.set_xlim(0)    
-
-            ax.xaxis.set_tick_params(labelsize=fs)
-            ax.yaxis.set_tick_params(labelsize=fs)
-        
-            #plt.legend([meas_line,fitted_line], ["original data",f"$f(x) = {optimized_equation}$\n$R^2 = {r_squared:.3f}$"],fontsize=fs-6)
-            #plt.tight_layout()
-            
-
-            if save:
-
-                filename = self.make_filename('dEfit')
-
-                if save:            
-                    if path_fig == 'default':
-                        path_fig = self.get_folder_figures() / filename
-
-                    if path_fig == 'cwd':
-                        path_fig = f'{os.getcwd()}/{filename}' 
-
-                    plt.savefig(path_fig, dpi=300, facecolor='white')
-
-            plt.show()
-        
-        if return_data:
-            return fitted_parameters, fitted_data
-
-
-    def read_files(self, sheets:Optional[list] = ['info', 'CIELAB', 'spectra']):
-        """Read the data files given as argument when defining the instance of the MFT class.
+     
+    def get_observer(self, observer:Optional[str] = '10'):
+        """Set the observer.
 
         Parameters
         ----------
-        sheets : Optional[list], optional
-            Name of the excel sheets to be selected, by default ['info', 'CIELAB', 'spectra']
+        observer : Optional[str], optional
+            Standard observer in degree, by default '10'
+            It can be either '2' or '10'
 
         Returns
-        -------
-        A list of list of pandas dataframes
-            The content of each input data file is returned as a list pandas dataframes (3 dataframes maximum, one dataframe per sheet). Ultimately, the function returns a list of list, so that when there are several input data files, each list - related a single file - corresponds to a single element of a list.            
+        -------        
+            Returns the x_bar,  y_bar, z_bar spectra between 360 and 830 nm.
         """
-        
-        files = []        
-                
-        for file in self.files:
-            
-            df_info = pd.read_excel(file, sheet_name='info')
-            df_sp = pd.read_excel(file, sheet_name='spectra', header=[0,1], index_col=0)
-            df_cl = pd.read_excel(file, sheet_name='CIELAB', header=[0,1])                      
 
+        observers = {
+            '10': "CIE 1964 10 Degree Standard Observer",
+            '2' : "CIE 1931 2 Degree Standard Observer"
+        }
 
-            if sheets == ['info', 'CIELAB', 'spectra']:
-                files.append([df_info, df_cl, df_sp])
-
-            elif sheets == ['info']:
-                files.append([df_info])
-
-            elif sheets == ['CIELAB']:
-                files.append([df_cl])
-
-            elif sheets == ['spectra']:
-                files.append([df_sp])
-
-            elif sheets == ['spectra', 'CIELAB']:
-                files.append([df_sp, df_cl])
-
-            elif sheets == ['CIELAB','spectra']:
-                files.append([df_cl, df_sp])
-
-            elif sheets == ['info','CIELAB']:
-                files.append([df_info, df_cl])
-
-            elif sheets == ['info','spectra']:
-                files.append([df_info, df_sp])
-
-        return files
+        return colour.colorimetry.MSDS_CMFS_STANDARD_OBSERVER[observers[observer]]   
      
 
     def get_data(self, data:Union[str, list] = 'all', xarray:Optional[bool] = False):
@@ -1589,67 +2083,8 @@ class MFT(object):
             return df_metadata
         
         else:            
-            return df_metadata.loc[labels]
-       
-
-    def compute_JND(self, dose_unit:Optional[str] = 'Hv', JND_dE = 1.5, light_intensity=50, daily_exposure:Optional[int] = 10, yearly_exposure:Optional[int] = 365, fitting = True):
-        """Compute the just noticeable difference (JND) corresponding to each input data file.
-
-        Parameters
-        ----------
-        dose_unit : Optional[str], optional
-            Unit of the light dose energy, by default 'Hv'
-            Any of the following units can be entered: 'He', 'Hv', 't'. Where 'He' corresponds to radiant energy (MJ/m2), 'Hv' to exposure dose (Mlxh), and 't' to times (sec)
-
-        JND_dE : float, optional
-            The dE00 value corresponding to one JND, by default 1.5
-
-        light_intensity : int, optional
-            The illuminance or the irradiance value of the intended light source, by default 50
-
-        daily_exposure : Optional[int], optional
-            Amount of exposure hours per day, by default 10
-
-        yearly_exposure : Optional[int], optional
-            Amount of exposure days per year, by default 365
-
-        fitting : bool, optional
-            Whether to fit the microfading data necessary to compute the JND value, by default True
-
-        Returns
-        -------
-        A list of numerical values as string (uncertainty string with a nominal and standard deviation value)
-            It returns a list of numerical values corresponding to the amount of years necessary to reach one JND. 
-        """
-
-        H_step = 0.01
-        dE_fitted = self.compute_fitting(dose_unit='Hv', x_range=(0,5.1,H_step), return_data=True, plot=False)[1]
-        dE_rate = np.gradient(dE_fitted.T.values, H_step, axis=1)
-        dE_rate_mean = [np.mean(x[-20:]) for x in dE_rate]
-        dE_rate_std = [np.std(x[-20:]) for x in dE_rate]
-
-        rates = [ufloat(x, y) for x,y in zip(dE_rate_mean, dE_rate_std)]
-
-        times_years = []
-
-        for rate in rates:
-
-            if dose_unit == 'Hv':
-                
-                JND_dose = (JND_dE / rate) * 1e6                     # in lxh
-                time_hours = JND_dose / light_intensity
-                time_years = time_hours / (daily_exposure * yearly_exposure)            
-
-            if dose_unit == 'He':
-                JND_dose = (JND_dE / rate) * 1e6                     # in J/m²
-                time_sec = JND_dose / light_intensity
-                time_hours = time_sec / 3600
-                time_years = time_hours / (daily_exposure * yearly_exposure)
-
-            times_years.append(time_years)
-
-        return times_years
-
+            return df_metadata.loc[labels]     
+   
 
     def get_Lab(self, illuminant:Optional[str] = 'default', observer:Optional[str] = 'default', dose_unit: Optional[str] = 'He', dose_values:Union[int, float, list, tuple] = 'all'):
         """
@@ -1812,1304 +2247,7 @@ class MFT(object):
         else:
             print(f'The info tab of the microfading interim file(s) {self.files} does not contain an object_id parameter.')
             return None
-
-
-    def compute_mean(self, return_data:Optional[bool] = True, criterion:Optional[str] = 'group', dose_unit:Optional[str] = 'He', save:Optional[bool] = False, folder:Optional[str] = '.', filename:Optional[str] = 'default'):
-        """Compute mean and standard deviation values of several microfading measurements.
-
-        Parameters
-        ----------
-        return_data : Optional[bool], optional
-            Whether to return the data, by default True        
-
-        criterion : Optional[str], optional
-            _description_, by default 'group'            
-
-        save : Optional[bool], optional
-            Whether to save the average data as an excel file, by default False
-
-        folder : Optional[str], optional
-            Folder where the excel file will be saved, by default 'default'
-            When 'default', the file will be saved in the same folder as the input files
-            When '.', the file will be saved in the current working directory
-            One can also enter a valid path as a string.
-
-        filename : Optional[str], optional
-            Filename of the excel file containing the average values, by default 'default'
-            When 'default', it will use the filename of the first input file
-            One can also enter a filename, but without a filename extension.
-
-        Returns
-        -------
-        tuple, excel file
-            It returns a tuple composed of three elements (info, CIELAB data, spectral data). When 'save' is set to True, an excel is created to stored the tuple inside three distinct excel sheet (info, CIELAB, spectra).
-
-        Raises
-        ------
-        RuntimeError
-            _description_
-        """
-
-        if len(self.files) < 2:        
-            raise RuntimeError('Not enough files. At least two measurement files are required to compute the average values.')
-        
-
-        def mean_std_with_nan(arrays):
-            '''Compute the mean of several numpy arrays of different shapes.'''
-            
-            # Find the maximum shape
-            max_shape = np.max([arr.shape for arr in arrays], axis=0)
-                    
-            # Create arrays with NaN values
-            nan_arrays = [np.full(max_shape, np.nan) for _ in range(len(arrays))]
-                    
-            # Fill NaN arrays with actual values
-            for i, arr in enumerate(arrays):
-                nan_arrays[i][:arr.shape[0], :arr.shape[1]] = arr
-                    
-            # Calculate mean
-            mean_array = np.nanmean(np.stack(nan_arrays), axis=0)
-
-            # Calculate std
-            std_array = np.nanstd(np.stack(nan_arrays), axis=0)
-                    
-            return mean_array, std_array
-        
-        
-        def to_float(x):
-            try:
-                return float(x)
-            except ValueError:
-                return x
-
-
-        ###### SPECTRAL DATA #######
-
-        data_sp = self.get_data(data='sp')
-
-        # Get the energy dose step
-        #H_values = [x.columns.astype(float) for x in data_sp]       
-        H_values = [x.values.flatten() for x in self.get_doses(dose_unit=dose_unit)]
-        step_H = sorted(set([x[2] - x[1] for x in H_values]))[0]
-        highest_He = np.max([x[-1] for x in H_values])
-
-        # Average the spectral data
-        sp = mean_std_with_nan(data_sp)
-        sp_mean = sp[0]
-        sp_std = sp[1] 
-       
-
-        # Wanted energy dose values          
-        wanted_H = np.round(np.arange(0,highest_He+step_H,step_H),2)  
-
-        if len(wanted_H) != sp_mean.shape[1]:            
-            wanted_H = np.linspace(0,highest_He,sp_mean.shape[1])
-
-        # Retrieve the wavelength range
-        wl = self.get_wavelength.iloc[:,0]
-        
-
-        # Create a multi-index pandas DataFrame
-        doses_dict = {'He': 'He_MJ/m2', 'Hv': 'Hv_Mlxh', 't': 't_sec'}
-        H_tuples = [(dose, measurement) for dose in wanted_H for measurement in ['mean', 'std']]
-        multiindex_cols = pd.MultiIndex.from_tuples(H_tuples, names=[doses_dict[dose_unit], 'Measurement'])
-        
-        data_df_sp = np.empty((len(wl), len(wanted_H) * 2))       
-        data_df_sp[:, 0::2] = sp_mean
-        data_df_sp[:, 1::2] = sp_std
-        df_sp_final = pd.DataFrame(data_df_sp,columns=multiindex_cols, index=wl)
-        df_sp_final.index.name = 'wavelength_nm'
-                  
-           
-
-        ###### COLORIMETRIC DATA #######
-
-        data_cl = self.get_data(data='cl')
-        columns_cl = data_cl[0].columns.get_level_values(0)
-
-        # Average the colorimetric data    
-        cl = mean_std_with_nan(data_cl)
-        cl_mean = cl[0]
-        cl_std = cl[1]
-
-        # Create a multi-index pandas DataFrame
-        cl_tuples = [(x, measurement) for x in data_cl[0].columns.get_level_values(0) for measurement in ['mean', 'std']]
-        multiindex_cols = pd.MultiIndex.from_tuples(cl_tuples, names=['coordinates', 'Measurement'])
-        
-        data_df_cl = np.empty((cl_mean.shape[0], cl_mean.shape[1] * 2))       
-        data_df_cl[:, 0::2] = cl_mean
-        data_df_cl[:, 1::2] = cl_std
-        df_cl_final = pd.DataFrame(data_df_cl,columns=multiindex_cols, )
-        
-        df_cl_final.drop([('He_MJ/m2','std'), ('Hv_Mlxh','std'), ('t_sec','std')], axis=1, inplace=True)
-        
-        mapper = {('He_MJ/m2', 'mean'): ('He_MJ/m2', 'value'), ('Hv_Mlxh', 'mean'): ('Hv_Mlxh', 'value'), ('t_sec', 'mean'): ('t_sec', 'value')}
-        df_cl_final.columns = pd.MultiIndex.from_tuples([mapper.get(x, x) for x in df_cl_final.columns])
-        
-    
-        cl_cols = df_cl_final.columns
-        cl_cols_level1 = [x[0] for x in cl_cols]
-        cl_cols_level2 = [x[1] for x in cl_cols]
-        df_cl_final.columns = np.arange(0,df_cl_final.shape[1])
-
-        df_cl_final = pd.concat([pd.DataFrame(data=np.array([cl_cols_level2])), df_cl_final])
-        df_cl_final.columns = cl_cols_level1
-        df_cl_final = df_cl_final.set_index(df_cl_final.columns[0])
-        
-
-        ###### INFO #######
-        
-        data_info = self.get_metadata().fillna('none')
-        
-        # Select the first column as a template
-        df_info = data_info.iloc[:,0]
-        
-
-        # Rename title file
-        df_info.rename({'[SINGLE MICROFADING ANALYSIS]': '[MEAN MICROFADING ANALYSES]'}, inplace=True)
-
-        # Date time
-        most_recent_dt = max(data_info.loc['date_time'])
-        df_info.loc['date_time'] = most_recent_dt
-        
-        # Project data info
-        df_info.loc['project_id'] = '_'.join(sorted(set(data_info.loc['project_id'].values)))
-        df_info.loc['lead_researcher'] = '_'.join(sorted(set(data_info.loc['lead_researcher'].values)))
-        df_info.loc['co-researchers'] = '_'.join(sorted(set(data_info.loc['co-researchers'].values)))
-        df_info.loc['start_date'] = '_'.join(sorted(set(data_info.loc['start_date'].values)))
-        df_info.loc['end_date'] = '_'.join(sorted(set(data_info.loc['end_date'].values)))
-        df_info.loc['keywords'] = '_'.join(sorted(set(data_info.loc['keywords'].values)))
-
-        # Object data info
-        if len(set([x.split('_')[0] for x in data_info.loc['institution'].values])) > 1:
-            df_info.loc['institution'] = '_'.join(sorted(set([x.split('_')[0] for x in data_info.loc['institution'].values])))
-        
-        df_info.loc['object_id'] = '_'.join(sorted(set(data_info.loc['object_id'].values)))
-        df_info.loc['object_category'] = '_'.join(sorted(set(data_info.loc['object_category'].values)))
-        df_info.loc['object_type'] = '_'.join(sorted(set(data_info.loc['object_type'].values)))
-        df_info.loc['object_technique'] = '_'.join(sorted(set(data_info.loc['object_technique'].values)))
-        df_info.loc['object_title'] = '_'.join(sorted(set(data_info.loc['object_title'].values)))
-        df_info.loc['object_name'] = '_'.join(sorted(set(data_info.loc['object_name'].values)))
-        df_info.loc['object_creator'] = '_'.join(sorted(set(data_info.loc['object_creator'].values)))
-        df_info.loc['object_date'] = '_'.join(sorted(set(data_info.loc['object_date'].values)))
-        df_info.loc['object_support'] = '_'.join(sorted(set(data_info.loc['object_support'].values)))
-        df_info.loc['color'] = '_'.join(sorted(set(data_info.loc['color'].values)))
-        df_info.loc['colorants'] = '_'.join(sorted(set(data_info.loc['colorants'].values)))
-        df_info.loc['colorants_name'] = '_'.join(sorted(set(data_info.loc['colorants_name'].values)))
-        df_info.loc['binding'] = '_'.join(sorted(set(data_info.loc['binding'].values)))
-        df_info.loc['ratio'] = '_'.join(sorted(set(data_info.loc['ratio'].values)))
-        df_info.loc['thickness_um'] = '_'.join(sorted(set(data_info.loc['thickness_um'].values)))
-        df_info.loc['status'] = '_'.join(sorted(set(data_info.loc['status'].values)))
-
-        # Device data info
-        if len(set(data_info.loc['device'].values)) > 1:
-            df_info.loc['device'] = '_'.join(sorted(set([x.split('_')[0] for x in data_info.loc['device'].values])))
-        
-        df_info.loc['measurement_mode'] = '_'.join(sorted(set(data_info.loc['measurement_mode'].values)))
-        df_info.loc['zoom'] = '_'.join(sorted(set(data_info.loc['zoom'].values)))
-        df_info.loc['iris'] =  '_'.join(set([str(x) if f'{x}'.isnumeric() else x for x in list(data_info.loc['iris'].values)]))
-        df_info.loc['geometry'] = '_'.join(sorted(set(data_info.loc['geometry'].values)))
-        df_info.loc['distance_ill_mm'] = '_'.join(set([str(x) if f'{x}'.isnumeric() else x for x in list(data_info.loc['distance_ill_mm'].values)]))
-        df_info.loc['distance_coll_mm'] = '_'.join(set([str(x) if f'{x}'.isnumeric() else x for x in list(data_info.loc['distance_coll_mm'].values)]))
-         
-
-        if len(set(data_info.loc['fiber_fading'].values)) > 1:
-            df_info.loc['fiber_fading'] = '_'.join(sorted(set([x.split('_')[0] for x in data_info.loc['fiber_fading'].values])))
-
-        if len(set(data_info.loc['fiber_ill'].values)) > 1:
-            df_info.loc['fiber_ill'] = '_'.join(sorted(set([x.split('_')[0] for x in data_info.loc['fiber_ill'].values])))
-
-        if len(set(data_info.loc['fiber_coll'].values)) > 1:
-            df_info.loc['fiber_coll'] = '_'.join(sorted(set([x.split('_')[0] for x in data_info.loc['fiber_coll'].values])))
-
-        if len(set(data_info.loc['lamp_fading'].values)) > 1:
-            df_info.loc['lamp_fading'] = '_'.join(sorted(set([x.split('_')[0] for x in data_info.loc['lamp_fading'].values])))
-
-        if len(set(data_info.loc['lamp_ill'].values)) > 1:
-            df_info.loc['lamp_ill'] = '_'.join(sorted(set([x.split('_')[0] for x in data_info.loc['lamp_ill'].values])))
-
-        if len(set(data_info.loc['filter_fading'].values)) > 1:
-            df_info.loc['filter_fading'] = '_'.join(sorted(set([x.split('_')[0] for x in data_info.loc['filter_fading'].values])))
-
-        if len(set(data_info.loc['filter_ill'].values)) > 1:
-            df_info.loc['filter_ill'] = '_'.join(sorted(set([x.split('_')[0] for x in data_info.loc['filter_ill'].values])))
-
-        if len(set(data_info.loc['white_standard'].values)) > 1:
-            df_info.loc['white_standard'] = '_'.join(sorted(set([x.split('_')[0] for x in data_info.loc['white_standard'].values])))
-        
-
-        # Analysis data info
-        
-        criterion_value = df_info.loc[criterion]
-        object_id = df_info.loc['object_id']
-        if criterion == 'group':            
-            df_info.loc['meas_id'] = f'MF.{object_id}.{criterion_value}'
-        elif criterion == 'object' or criterion == 'project':
-             df_info.loc['meas_id'] = f'MF.{criterion_value}'
-        else:
-            print('Choose one of the following options for the criterion parameter: ["group", "object", "project"]')
-
-        meas_nbs = '-'.join([x.split('.')[-1] for x in self.get_meas_ids])
-        df_info.loc['group'] = f'{"-".join(sorted(set(data_info.loc["group"].values)))}_{meas_nbs}'    
-        df_info.loc['group_description'] = '_'.join(sorted(set(data_info.loc['group_description'].values)))
-        df_info.loc['background'] = '_'.join(sorted(set(data_info.loc['background'].values)))  
-
-        if len(set(data_info.loc['specular_component'].values)) > 1:
-            df_info.loc['specular_component'] = '_'.join(sorted(set([x.split('_')[0] for x in data_info.loc['specular_component'].values]))) 
-
-        
-        df_info.loc['integration_time_sample_ms'] = np.round(np.mean(data_info.loc['integration_time_sample_ms'].astype(float).values),1)
-        df_info.loc['integration_time_whitestandard_ms'] = np.round(np.mean(data_info.loc['integration_time_whitestandard_ms'].astype(float).values),1)
-        df_info.loc['average'] = '_'.join([str(x) for x in sorted(set(data_info.loc['average'].astype(str).values))]) 
-        df_info.loc['duration_min'] = np.round(np.mean(data_info.loc['duration_min'].values),1)
-        df_info.loc['interval_sec'] = '_'.join([str(x) for x in sorted(set(data_info.loc['interval_sec'].values))])
-        df_info.loc['measurements_N'] = '_'.join([str(x) for x in sorted(set(data_info.loc['measurements_N'].astype(str).values))])
-        df_info.loc['illuminant'] = '_'.join(sorted(set(data_info.loc['illuminant'].values)))
-        df_info.loc['observer'] = '_'.join(sorted(set(data_info.loc['observer'].values)))
-
-
-        # Beam data info
-
-        df_info.loc['beam_photo'] = '_'.join(sorted(set(data_info.loc['beam_photo'].values)))
-        df_info.loc['resolution_micron/pixel'] = '_'.join(set([str(x) if f'{x}'.isnumeric() else x for x in list(data_info.loc['resolution_micron/pixel'].values)]))
-
-        fwhm = data_info.loc['FWHM_micron']
-        fwhm_avg = np.mean([i for i in [to_float(x) for x in fwhm] if isinstance(i, (int, float))])
-        df_info.loc['FWHM_micron'] = fwhm_avg
-
-        power_infos = data_info.loc['radiantFlux_mW'].values
-        power_values = []
-        
-        for power_info in power_infos:
-            if "_" in str(power_info):
-                power_value = ufloat_fromstr(power_info.split('_')[0])
-                power_values.append(power_value)                            
-
-            else: 
-                power_values.append(power_info)               
-                
-        power_mean = np.round(np.mean(power_values),3)
-        power_std = np.round(np.std(power_values),3)
-        df_info.loc['radiantFlux_mW'] = f'{ufloat(power_mean,power_std)}'    
-                 
-
-        irr_values = [str(ufloat(x,0)) if isinstance(x, int) else x for x in data_info.loc['irradiance_Ee_W/m^2'] ] 
-        irr_mean = np.int32(np.mean([unumpy.nominal_values(ufloat_fromstr(x)) for x in irr_values]))
-        irr_std = np.int32(np.std([unumpy.nominal_values(ufloat_fromstr(x)) for x in irr_values]))
-        irr_avg = ufloat(irr_mean, irr_std)    
-        df_info.loc['irradiance_Ee_W/m^2'] = irr_avg
-       
-        lm = [x for x in data_info.loc['luminuousFlux_lm'].values]
-        lm_avg = np.round(np.mean(lm),3)
-        df_info.loc['luminuousFlux_lm'] = lm_avg
-
-        ill = [x for x in data_info.loc['illuminance_Ev_Mlx']]
-        ill_avg = np.round(np.mean(ill),3)
-        df_info.loc['illuminance_Ev_Mlx'] = ill_avg
-
-        
-        # Results data info
-        df_info.loc['radiantExposure_He_MJ/m^2'] = df_cl_final.index.values[-1]
-        df_info.loc['exposureDose_Hv_Mlxh'] = np.round(df_cl_final['Hv_Mlxh'].values[-1],4)
-        
-
-        # Rename the column
-        df_info.name = 'value'
-                
-        
-        ###### SAVE THE MEAN DATAFRAMES #######
-        
-        if save:  
-
-            # set the folder
-            if folder == ".":
-                folder = Path('.')  
-
-            elif folder == 'default':
-                folder = Path(self.files[0]).parent
-
-            else:
-                if Path(folder).exists():
-                    folder = Path(folder)         
-
-            # set the filename
-            if filename == 'default':
-                filename = f'{Path(self.files[0]).stem}_MEAN{Path(self.files[0]).suffix}'
-
-            else:
-                filename = f'{filename}.xlsx'
-
-            
-            # create a excel writer object
-            with pd.ExcelWriter(folder / filename) as writer:
-
-                df_info.to_excel(writer, sheet_name='info', index=True)
-                df_cl_final.to_excel(writer, sheet_name="CIELAB", index=True)
-                df_sp_final.to_excel(writer, sheet_name='spectra', index=True)
-
-            print(f'{folder / filename} successfully created.')
-        
-
-        ###### RETURN THE MEAN DATAFRAMES #######
-            
-        if return_data:
-            return df_info, df_cl_final, df_sp_final
   
-
-    def plots(self, plots=['CIELAB', 'SP', 'SW', 'dE', 'dLab']):
-        """Create plots
-
-        Parameters
-        ----------
-        plots : list, optional
-            _description_, by default ['CIELAB', 'SP', 'SW', 'dE', 'dLab']
-        """
-
-        for plot in plots:
-            if plot == 'CIELAB':
-                self.plot_CIELAB(legend_labels='default', legend_fontsize=18)
-
-            elif plot == 'SP':
-                self.plot_sp(spectra='i+f')
-
-            elif plot == 'SW':
-                self.plot_swatches_circle()
-
-            elif plot == 'dE':
-                self.plot_delta()
-
-  
-    def plot_bars(self, BWS_lines:Optional[bool] = True, coordinate:Optional[str] = 'dE00', dose_unit:Optional[str] = 'Hv', dose_value:Union[int, float] = 0.5, xlabels:Union[str, list] = 'default', fontsize:Optional[int] = 24, rotate_xlabels:Optional[int] = 0, position_xlabels:Optional[str] = 'center', position_text:Optional[tuple] = (0.03,0.92), colors:Union[str,float,list]=None, save:Optional[bool] = False, path_fig:Optional[str] = 'cwd'):
-        """Plot a bar graph of a given colorimetric coordinate for a given light dose value.
-
-        Parameters
-        ----------
-        BWS_lines : Optional[bool], optional
-            Whether to display the blue wool standard values as horizontal lines or as bars, by default True
-
-        coordinate : Optional[str], optional
-            Colorimetric coordinate to be displayed, by default 'dE00'
-            It can be any coordinates among the following list : ['L*','a*','b*','C*','h','dL*','da*','db*','dC*','dh','dE76','dE00','dR_vis'].
-
-        dose_unit : Optional[str], optional
-            Unit of the light energy dose, by default 'Hv'
-            Any of the following units can be used: 'He', 'Hv', 't'. Where 'He' corresponds to radiant energy (MJ/m2), 'Hv' to exposure dose (Mlxh), and 't' to times (sec)
-
-        dose_value : Union[int, float], optional
-            Values of the light dose energy, by default 0.5
-
-        xlabels : Union[str, list], optional
-            Values of the labels on the x-axis (one label per bar), by default 'default'
-            When 'default', it takes the measurement id as label.
-
-        fontsize : Optional[int], optional
-            Fontsize of the plot (title, ticks, and labels), by default 24
-
-        rotate_xlabels : Optional[int], optional
-            Whether to rotate the labels on the x-axis, by default 0
-            It can be any integer value between 0 and 360.
-
-        position_xlabels : Optional[str], optional
-            Position of the labels according to each bar ('center', 'left', 'right'), by default 'center'
-
-        position_text : Optional[tuple], optional
-            Position (x,y) of the text with the exposure dose value, by default (0.03,0.92)
-
-        colors : Union[str,float,list], optional
-            Colors of the bar, by default None
-            When 'sample', the color of each bar will be based on srgb values computed from the reflectance values. 
-            A single string or float value can also be used to define the color of all the bars (see matplotlib colour values). 
-            A list string can also be given, in that case, the number of element in the list should be equal to the number of bars. 
-
-        save : bool, optional
-            Whether to save the figure, by default False
-
-        path_fig : str, optional
-            Absolute path required to save the figure, by default 'cwd'
-            When 'cwd', it will save the figure in the current working directory.
-        """
-
-        # ['L*','a*','b*','C*','h','dL*','da*','db*','dC*','dh','dE76','dE00','dR_vis']
-      
-        # Define the light dose value      
-        doses_dic = {'He':'He_MJ/m2', 'Hv':'Hv_Mlxh', 't':'t_sec'}
-        max_doses = [x.values[0] for x in self.get_doses(dose_unit=dose_unit, max_doses=True)]
-
-        if dose_value > np.min(max_doses):
-            print(f'The choosen dose_value ({dose_value} {doses_dic[dose_unit].split("_")[1]}) is bigger than one of the final dose values. Thus the dose_value has been set to {np.min(max_doses)} {doses_dic[dose_unit].split("_")[1]}, which is the lowest final dose value.')
-            dose_value = np.min(max_doses)
-
-
-        # Define the labels on the x-axis
-        if xlabels == 'default':
-            xlabels = self.get_meas_ids
-
-        elif xlabels == 'meas_nb':
-            xlabels = [x.split('.')[-1] for x in self.get_meas_ids]
-
-        elif xlabels in [x for x in self.get_metadata().index if '[' not in x]:
-            xlabels = self.get_metadata(labels=xlabels).values
-
-        
-        # Define the colour of the bars
-        if colors == 'sample':
-            colors = [x for x in self.get_sRGB(dose_values=0).values.reshape(len(self.files),-1)]
-        
-        elif isinstance(colors, str):
-            colors = [colors] * len(self.files)
-
-        elif isinstance(colors, float):
-            colors = [str(colors)] * len(self.files)
-              
-
-        # Gather the data and relevant info inside a dataframe
-        all_data = self.get_cielab(coordinates=[coordinate], dose_unit=dose_unit, dose_values=dose_value)
-        cl_data = [x.iloc[0].values[0] for x in all_data]
-        cl_data_std = [x.iloc[0].values[1] if 'std' in x.columns.get_level_values(1) else 0 for x in all_data]
-
-        plot_data = {
-            'y': cl_data,
-            'y_std': cl_data_std, 
-            'xlabels': xlabels,
-            'type': self.get_metadata(labels='object_type').values,
-            'name': self.get_metadata(labels='object_name').values,
-            'colors': colors
-        }
-        
-        df_data = pd.DataFrame.from_dict(plot_data)
-        
-        
-        # Create the plot
-        sns.set_theme(font='serif')
-        fig, ax = plt.subplots(1,1, figsize=(15,8))
-
-        if BWS_lines == True:         
-            
-            df_BWS = df_data[df_data['type'] == 'BWS']
-            df_data = df_data[df_data['type'] != 'BWS']
-
-            ls_dic = {'BW1':'-','BW2':'--','BW3':'-.','BW4':':'}
-            
-            for col in df_BWS.T.columns:
-                data_BWS = df_BWS.T[col]
-                ax.axhline(data_BWS['y'], color='blue', ls =ls_dic[data_BWS['name']], label=data_BWS['name'])
-                ax.axhspan(ymin=data_BWS['y']-data_BWS['y_std'], ymax=data_BWS['y']+data_BWS['y_std'], alpha=0.5, color='0.75', ec='none')        
-        
-
-        x = np.arange(0,len(df_data))
-
-        
-        if colors == None:
-            colors = None
-        else:
-            colors = df_data['colors']
-
-        ax.bar(x=x, height=df_data['y'], yerr=df_data['y_std'], capsize=5, color=colors, edgecolor='none')
-
-        ax.xaxis.set_tick_params(labelsize=fontsize)
-        ax.yaxis.set_tick_params(labelsize=fontsize)
-
-        ax.xaxis.grid() # horizontal lines only
-
-        ax.set_xlabel('Microfading analyses numbers', fontsize=fontsize)
-        ax.set_ylabel(labels_eq[coordinate], fontsize=fontsize)
-
-        
-        ax.set_xticks(x)
-        ax.set_xticklabels(df_data['xlabels'], rotation=rotate_xlabels, ha=position_xlabels)
-
-        ax.text(x=position_text[0], y=position_text[1], s=f'Light dose = {dose_value} {doses_dic[dose_unit].split("_")[1]}', fontsize=fontsize-6, transform=ax.transAxes, ha='left', va='top')
-
-        if BWS_lines == True:
-            ax.legend(fontsize=fontsize-4)
-
-        plt.tight_layout()
-
-        if save == True:
-            if path_fig == 'cwd':
-                path_fig = f'{os.getcwd()}/{coordinate}-bar.png'                    
-                
-            fig.savefig(path_fig,dpi=300, facecolor='white') 
-
-        plt.show()     
-
-
-    def plot_CIELAB(self, stds=[], dose_unit:Optional[str] = 'He', dose_values:Union[int, float, list, tuple] = 'all', colors:Union[str,list] = None, title:Optional[str] = None, fontsize:Optional[int] = 20, legend_labels:Union[str,list] = 'default', legend_position:Optional[str] = 'in', legend_fontsize:Optional[int] = 20, legend_title:Optional[str] = None, dE:Optional[bool] = False, obs_ill:Optional[bool] = True, save:Optional[bool] = False, path_fig:Optional[str] = 'cwd'):
-        """Plot the Lab values related to input the microfading files.
-
-        Parameters
-        ----------
-        stds : list, optional
-            A list of standard variation values respective to each element given in the data parameter, by default []
-
-        dose_unit : str, optional
-            Unit of the light energy dose, by default 'He'
-            Any of the following units can be used: 'He', 'Hv', 't'. Where 'He' corresponds to radiant energy (MJ/m2), 'Hv' to exposure dose (Mlxh), and 't' to times (sec)
-
-        dose_values : [int, float, list, tuple], optional        
-            Values of the light dose energy, by default 'all'
-            A single value (integer or float number), a list of multiple numerical values, or range values with a tuple (start, end, step) can be entered.
-            When 'all', it takes the values found in the data.   
-
-        colors : [str, list], optional
-            Define the colors of the data points, by default None
-            When 'sample', the color of each points will be based on srgb values computed from the reflectance values. Alternatively, a single string value can be used to define the color (see matplotlib colour values) or a list of matplotlib colour values can be used.     
-
-        title : str, optional
-            Whether to add a title to the plot, by default None
-
-        fontsize : int, optional
-            Fontsize of the plot (title, ticks, and labels), by default 24
-
-        legend_labels : [str, list], optional
-            A list of labels respective to each element given in the data parameter that will be shown in the legend. When the list is empty there is no legend displayed, by default 'default'
-            When 'default', each label will composed of the Id number of the number followed by a short description
-
-        legend_position : str, optional
-            Position of the legend, by default 'in'
-            The legend can either be inside the figure ('in') or outside ('out')
-
-        legend_fontsize : int, optional
-            Fontsize of the legend, by default 24
-
-        legend_title : str, optional
-            Add a title above the legend, by default ''
-
-        dE : bool, optional
-            Whether to display the dE00 curves in the bottom left suplots instead of the CIELAB 2D space, by default False
-            NOT IMPLEMENTED YET ! LEAVE PARAMETER TO FALSE
-            
-        obs_ill : bool, optional
-            Whether to display the observer and illuminant values, by default True
-
-        save : bool, optional
-            Whether to save the figure, by default False
-
-        path_fig : str, optional
-            Absolute path required to save the figure, by default 'cwd'
-            When 'cwd', it will save the figure in the current working directory.
-
-        Returns
-        -------
-        png file
-            It returns a figure with 4 subplots that can be saved as a png file.
-        """
-
-        data_Lab = self.get_cielab(coordinates=['L*', 'a*', 'b*'], dose_unit=dose_unit, dose_values=dose_values)
-        data_Lab = [x.T.values for x in data_Lab]
-       
-
-        # Retrieve the metadata
-        info = self.get_metadata()
-        ids = [x for x in self.get_meas_ids if 'BW' not in x] 
-
-        if 'group_description' in info.index:                
-            group_descriptions = info.loc['group_description'].values
-
-        else:
-            group_descriptions = [''] * len(self.files)
-               
-        
-
-        # Define the colour of the curves
-        if colors == 'sample':
-            pass           
-
-        elif isinstance(colors, str):
-            colors = [colors] * len(self.files)
-
-        elif colors == None:
-            colors = [None] * len(self.files)
-        
-        # Define the labels
-        if legend_labels == 'default':
-            legend_labels = [f'{x}-{y}' for x,y in zip(self.get_meas_ids,group_descriptions)]
-            legend_title = 'Measurement $n^o$'
-
-        # Whether to plot the observer and illuminant info
-        if obs_ill:
-            DB = databases.DB()
-            if len(DB.get_colorimetry_info()) == 0:
-                observer = '10deg'
-                illuminant = 'D65'
-            else:
-                observer = DB.get_colorimetry_info().loc['observer']['value']
-                illuminant = DB.get_colorimetry_info().loc['illuminant']['value']
-
-            dic_obs = {'10deg':'$\mathrm{10^o}$', '2deg':'$\mathrm{2^o}$'}            
-            obs_ill = f'{dic_obs[observer]}-{illuminant}'
-        
-        else:
-            obs_ill = None
-
-        return plotting.CIELAB(data=data_Lab, legend_labels=legend_labels, colors=colors, title=title, fontsize=fontsize, legend_fontsize=legend_fontsize, legend_position=legend_position, legend_title=legend_title, dE=dE, obs_ill=obs_ill, save=save, path_fig=path_fig)
-
-
-    def plot_swatches_circle(self, orientation:Optional[str] = 'horizontal', light_doses: Optional[list] = [0,0.5,1,2,5,15], JND:Optional[list] = [1,2,3,5,10], dose_unit:Union[str,tuple] = 'Hv', dE:Optional[bool] = True, fontsize: Optional[int] = 24, equation:Optional[str] = 'c0*(x**c1) + c2', initial_params:Optional[List[float]] = [0.1, 0.1], save:Optional[bool] = False, path_fig:Optional[str] = 'cwd', title:Optional[str] = None, report:Optional[bool] = False): 
-        """Plot the microfading data with circular colored patches. 
-
-        Parameters
-        ----------
-        light_doses : list, optional
-            Light doses in Mlxh for which a coloured patches will be created, by default [0,0.5,1,2,5,1]
-            There has been at least two numerical values in the list. The first value corresponds to the color background of the plot and is usually set to 0. The other values will be plotted as circular patches.
-
-        JND : list, optional
-            Whether to plot circular patches of just noticeable differences, by default [1,2,3,5,10]
-            NOT YET IMPLEMENTED
-
-        dose_unit : [str, tuple], optional
-            Unit of the light energy dose, by default 'Hv'
-            Any of the following units can be used: 'He', 'Hv', 't'. Where 'He' corresponds to radiant energy (MJ/m2), 'Hv' to exposure dose (Mlxh), and 't' to times (hours) (exh,50,10,365)
-        
-        dE : bool, optional
-            Whether to include the dE00 value between the background and each circular patche, by default True
-
-        fontsize : int, optional
-            Fontsize of the plot (title, ticks, and labels), by default 24        
-
-        equation : str, optional
-            Mathematical equation used to fit the coordinate values, by default 'c0*(x**c1) + c2'.
-            Any others mathematical can be given. The following equation can also be used for fitting microfading data: '((x) / (c0 + (c1*x)))'.
-
-        initial_params : List[float], optional
-            Initial guesses of the 'c' parameters given in the equation (c0, c1, c2, etc.), by default [0.1, 0.0]
-            In the default values, only c0 and c1 are provided ; c2 is retrieved from the initial value of each colorimetric coordinate plot.
-
-        save : bool, optional
-            Whether to save the figure, by default False
-
-        path_fig : str, optional
-            Absolute path required to save the figure, by default 'cwd'
-            When 'cwd', it will save the figure in the current working directory.
-
-        title : str, optional
-            Whether to add a title to the plot, by default None, by default None        
-
-        report : bool, optional
-            _description_, by default False
-
-        Returns
-        -------
-        _type_
-            _description_
-        """
-       
-
-        if title == 'default':
-            title = list(self.get_meas_ids)
-
-        x_range=(0, light_doses[-1]+0.05, 0.05)   
-        x_values = np.arange(*x_range)     
-        Lab = self.get_cielab(coordinates=['L*','a*','b*'], dose_unit=dose_unit)          
-        data_Lab = [] 
-
-        # Define the function to fit
-        def fit_function(x, *params):
-            param_dict = {f'c{i}': param for i, param in enumerate(params)}
-            param_dict['x'] = x
-            return eval(equation, globals(), param_dict) 
-
-        
-        
-        for el in Lab:
-
-            x = el.index.values
-            df_Lab_extrapolated = pd.DataFrame(index=x_values) 
-
-            for c in ['L*','a*','b*']:                    
-                
-                y = el[c].values.flatten()
-                initial_value = y[0]
-                initial_params=initial_params + [initial_value]
-
-                def fit_function(x, *params):
-                    param_dict = {f'c{i}': param for i, param in enumerate(params)}
-                    param_dict['x'] = x
-                    return eval(equation, globals(), param_dict) 
-
-                #bounds = ([-np.inf] * len(initial_params), [np.inf, 1]) if len(initial_params) == 2 else ([-np.inf] * len(initial_params), [np.inf, 1, np.inf])
-
-                # perform the curve fitting
-                optimized_params, _ = curve_fit(fit_function, x, y, p0=initial_params) # bounds=bounds)
-                
-                # generate fitted y data
-                fitted_y = fit_function(x_values, *optimized_params)
-                #return fitted_y
-
-                # Calculate R-squared value
-                residuals = y - fit_function(x, *optimized_params)
-                ss_res, ss_tot = np.sum(residuals**2), np.sum((y - np.mean(y))**2)        
-                r_squared = np.round(1 - (ss_res / ss_tot), 3)
-
-                #print(f'1st, {c}, R_sq = {r_squared}')
-
-                if r_squared < 0.1:
-
-                    initial_params=[0,0.1, initial_value]
-
-                    def fit_function(x, *params):
-                        param_dict = {f'c{i}': param for i, param in enumerate(params)}
-                        param_dict['x'] = x
-                        return eval(equation, globals(), param_dict) 
-                    
-                    # perform the curve fitting
-                    optimized_params, _ = curve_fit(fit_function, x, y, p0=initial_params) # bounds=bounds)
-                    
-                    # generate fitted y data
-                    fitted_y = fit_function(x_values, *optimized_params)
-
-                    # Calculate R-squared value
-                    residuals = y - fit_function(x, *optimized_params)
-                    ss_res, ss_tot = np.sum(residuals**2), np.sum((y - np.mean(y))**2)        
-                    r_squared = np.round(1 - (ss_res / ss_tot), 3)
-
-                    #print(f'2nd, {c}, R_sq = {r_squared}')
-
-                    if r_squared < 0.1:
-                        initial_params=[-0.1,0.1, initial_value]
-
-                        def fit_function(x, *params):
-                            param_dict = {f'c{i}': param for i, param in enumerate(params)}
-                            param_dict['x'] = x
-                            return eval(equation, globals(), param_dict) 
-                        
-                        # perform the curve fitting
-                        optimized_params, _ = curve_fit(fit_function, x, y, p0=initial_params) # bounds=bounds)
-                        
-                        # generate fitted y data
-                        fitted_y = fit_function(x_values, *optimized_params)
-
-                        # Calculate R-squared value
-                        residuals = y - fit_function(x, *optimized_params)
-                        ss_res, ss_tot = np.sum(residuals**2), np.sum((y - np.mean(y))**2)        
-                        r_squared = np.round(1 - (ss_res / ss_tot), 3)
-                    
-
-                #extrapolated_values = self.compute_fitting(return_data=True, x_range=x_range, dose_unit='Hv', coordinate=c, initial_params=[0.1,0.1,initial_value], equation=equation)
-
-                df_Lab_extrapolated[c] = fitted_y
-
-
-
-            #return df_Lab_extrapolated  
-            df_Lab_extrapolated.index = np.round(df_Lab_extrapolated.index,2)
-            wanted_Lab = df_Lab_extrapolated.loc[light_doses].values
-            #wanted_srgb = colour.XYZ_to_sRGB(colour.Lab_to_XYZ(wanted_Lab), d65).clip(0, 1)
-            #data_srgb.append(wanted_srgb)
-            data_Lab.append(wanted_Lab)
-            #print(wanted_Lab)
-        
-        
-            plotting.swatches_circle(data=[wanted_Lab], data_type='Lab', orientation=orientation, light_doses=light_doses, dose_unit=dose_unit, dE=dE, fontsize=fontsize, save=save, title=title, path_fig=path_fig)
-
-
-    def plot_delta(self, stds:Optional[bool] = True, coordinates:Optional[list] = ['dE00'], dose_unit:Optional[str] = 'He', legend_labels:Union[str, list] = 'default', initial_values:Optional[bool] = False, colors:Union[str,list] = None, lw:Union[int,list] = 'default', title:Optional[str] = None, fontsize:Optional[int] = 24, legend_fontsize:Optional[int] = 24, legend_title:Optional[str] = None, xlim:Optional[tuple] = None, save:Optional[bool] = False, path_fig:Optional[str] = 'cwd'):
-        """Plot the delta values of choosen colorimetric coordinates related to the microfading analyses.
-
-        Parameters
-        ----------
-        stds : bool, optional
-            Whether to show the standard deviation values if any, by default True.
-
-        coordinates : list, optional
-            List of colorimetric coordinates, by default ['dE00']
-            Any of the following coordinates can be added to the list: 'dE76', 'dE00', 'dR_vis' , 'L*', 'a*', 'b*', 'C*', 'h'.
-
-        dose_unit : str, optional
-            Unit of the light energy dose, by default 'He'
-            Any of the following units can be used: 'He', 'Hv', 't'. Where 'He' corresponds to radiant energy (MJ/m2), 'Hv' to exposure dose (Mlxh), and 't' to times (sec)
-
-        legend_labels : Union[str, list], optional
-            A list of labels respective to each element given in the data parameter that will be shown in the legend. When the list is empty there is no legend displayed, by default 'default'
-            When 'default', each label will composed of the Id number of the number followed by a short description
-
-        colors : Union[str, list], optional
-            Define the colors of the curves, by default None
-            When 'sample', the color of each line will be based on srgb values computed from the reflectance values. Alternatively, a single string value can be used to define the color (see matplotlib colour values) and will be applied to all the lines. Or a list of matplotlib colour values can be used. With a single coordinate, the list should have the same length as measurement files. With multiple coordinates, the list should have the same length as coordinates.
-
-        lw : Union[int,list], optional
-            Width of the lines, by default 'default'
-            When 'default', it attributes a given a width according to each coordinates, otherwise it gives a value of 2.
-            A single value (an integer) can be entered and applied to all the lines.
-            A list of integers can also be entered. With a single coordinate, the list should have the same length as measurement files. With multiple coordinates, the list should have the same length as coordinates.
-
-        title : str, optional
-            Whether to add a title to the plot, by default None
-
-        fontsize : int, optional
-            Fontsize of the plot (title, ticks, and labels), by default 24
-
-        legend_fontsize : int, optional
-            Fontsize of the legend, by default 24
-
-        legend_title : str, optional
-            Add a title above the legend, by default ''
-
-        xlim : tuple, optional
-            A tuple of two integers that define the left and right limits of the x-axis , by default None.
-
-        save : bool, optional
-            Whether to save the figure, by default False
-
-        path_fig : str, optional
-            Absolute path required to save the figure, by default 'cwd'
-            When 'cwd', it will save the figure in the current working directory.
-        """
-
-        # Retrieve the data
-        if xlim == None:
-            dose_values = 'all'
-        elif isinstance(xlim, tuple):
-            dose_values = (xlim[0], xlim[1], 0.05)
-                
-        all_data = self.compute_delta(coordinates=coordinates, dose_unit=dose_unit, dose_values=dose_values)
-        nominal_data = []
-        stdev_data = []
-
-        for data in all_data:
-
-            if sorted(set(data.columns.get_level_values(1))) == ['mean', 'std']:
-                nominal = data.xs(key='mean', axis=1, level=1)
-                if stds:
-                    stdev = data.xs(key='std', axis=1, level=1)   
-                else:
-                    stdev = nominal.copy()   
-                    stdev.iloc[:,:] = 0         
-
-            else:
-                                
-                nominal = data
-                stdev = data.copy()
-                stdev.iloc[:,:] = 0
-                
-
-            nominal_data.append(nominal.reset_index().T.values)
-            stdev_data.append(stdev.T.values)
-
-        
-        
-        # Retrieve the metadata
-        info = self.get_metadata()
-        ids = [x for x in self.get_meas_ids]
-        meas_nbs = [x.split('.')[-1] for x in ids]
-
-        if 'group_description' in info.index:                
-            group_descriptions = info.loc['group_description'].values
-
-        else:
-            group_descriptions = [''] * len(self.files)
-               
-
-        # Set the labels values
-        if legend_labels == 'default':                       
-            legend_labels = [f'{x}-{y}' for x,y in zip(ids, group_descriptions)] 
-
-        elif legend_labels == '':
-            legend_labels = []
-        
-        elif isinstance(legend_labels, list):
-            legend_labels = legend_labels
-            '''
-            labels_list = []
-            for i,Id in enumerate(self.get_meas_ids):
-                label = Id.split('.')[-1]
-                for el in labels:
-                    label = label + f'-{self.get_metadata().loc[el].values[i]}'
-                labels_list.append(label)
-
-            labels = labels_list
-            '''
-
-        # Add the initial values of the colorimetric coordinates
-        
-        if initial_values:  
-            initial_values = {}          
-            for coord in coordinates:
-                if coord in ['dL*', 'da*', 'db*', 'dC*', 'dh']:
-                    initial_value = self.get_cielab(coordinates=[coord[1:]])[0][coord[1:]].iloc[0,:].values[0]
-                    initial_values[coord[1:]] = initial_value
-        else:
-            initial_values = {}  
-
-        if len(meas_nbs) > 1:
-            initial_values = {}
-
-        # Set the color of the lines according to the sample
-        if colors == 'sample':
-            colors = list(self.get_sRGB(dose_values=0).values.reshape(len(meas_nbs),-1))
-            colors = colors * len(coordinates)
-        
-        # Whether to add a title or not
-        if title == 'default':
-            title = 'MFT'            
-        elif title == 'none':
-            title = None
-        else:
-            title = title 
-
-        # Define the saving folder in case the figure should be saved
-        filename = ''
-        if save:
-            if path_fig == 'default':
-                path_fig = self.get_dir(folder_type='figures') / filename                
-
-            if path_fig == 'cwd':
-                path_fig = f'{os.getcwd()}/{filename}' 
-        
-        
-        plotting.delta(data=nominal_data, yerr=stdev_data, dose_unit=[dose_unit], coordinates=coordinates, initial_values=initial_values, colors=colors, lw=lw, title=title, fontsize=fontsize, legend_labels=legend_labels, legend_fontsize=legend_fontsize, legend_title=legend_title, save=save, path_fig=path_fig)
-
-
-    def plot_sp(self, stdev:Optional[bool] = False, spectra:Optional[str] = 'i', dose_unit:Optional[str] = 'He', dose_values:Union[int, float, list, tuple] = 'all', spectral_mode:Optional[str] = 'R', legend_labels:Union[str,list] = 'default', title:Optional[str] = None, fontsize:Optional[int] = 24, fontsize_legend:Optional[int] = 24, legend_title='', wl_range:Optional[tuple] = None, colors:Union[str,list] = None, lw:Union[int, list] = 2, ls:Union[str, list] = '-', text_xy:Optional[tuple] = (0.02,0.03), save=False, path_fig='cwd', derivation=False, smoothing=(1,0), report:Optional[bool] = False):
-        """Plot the reflectance spectra corresponding to the associated microfading analyses.
-
-        Parameters
-        ----------
-        stdev : bool, optional
-            Whether to show the standard deviation values, by default False
-
-        spectra : Optional[str], optional
-            Define which spectra to display, by default 'i'
-            'i' for initial spectral, 
-            'f' for final spectra,
-            'i+f' for initial and final spectra, 
-            'all' for all the spectra, 
-            'doses' for spectra at different dose values indicated by the dose_unit and dose_values parameters
-
-        dose_unit : str, optional
-            Unit of the light energy dose, by default 'He'
-            Any of the following units can be used: 'He', 'Hv', 't'. Where 'He' corresponds to radiant energy (MJ/m2), 'Hv' to exposure dose (Mlxh), and 't' to times (sec). It only works if the 'spectra' parameters has been set to 'doses'.
-
-        dose_values : Union[int, float, list, tuple], optional
-            Values of the light dose energy, by default 'all'
-            A single value (integer or float number), a list of multiple numerical values, or range values with a tuple (start, end, step) can be entered.
-            When 'all', it takes the values found in the data. It only works if the 'spectra' parameters has been set to 'doses'.
-
-        spectral_mode : string, optional
-            When 'R', it returns the reflectance spectra            
-            When 'A', it returns the absorption spectra using the following equation: A = -log(R)
-
-        legend_labels : Union[str, list], optional
-            A list of labels respective to each element given in the data parameter that will be shown in the legend. When the list is empty there is no legend displayed, by default 'default'
-            When 'default', each label will composed of the Id number of the number followed by a short description
-
-        title : str, optional
-            Whether to add a title to the plot, by default None
-
-        fontsize : int, optional
-            Fontsize of the plot (title, ticks, and labels), by default 24
-
-        fontsize_legend : int, optional
-            Fontsize of the legend, by default 24
-
-        legend_title : str, optional
-            Add a title above the legend, by default ''
-
-        wl_range : tuple, optional
-            Define the wavelength range with a two-values tuple corresponding to the lowest and highest wavelength values, by default None
-
-        colors : Union[str, list], optional
-            Define the colors of the reflectance curves, by default None
-            When 'sample', the color of each line will be based on srgb values computed from the reflectance values. Alternatively, a single string value can be used to define the color (see matplotlib colour values) or a list of matplotlib colour values can be used. 
-
-        lw : Union[int, list], optional
-            Define the width of the plot lines, by default 2
-            It can be a single integer value that will apply to all the curves. Or a list of integers can be used where the number of integer elements should match the number of reflectance curves.
-
-        ls : Union[str, list], optional
-            Define the line style of the plot lines, by default '-'
-            It can be a string ('-', '--', ':', '-.') that will apply to all the curves. Or a list of string can be used where the number of string elements should match the number of reflectance curves.
-
-        save : bool, optional
-            Whether to save the figure, by default False
-
-        path_fig : str, optional
-            Absolute path required to save the figure, by default 'cwd'
-            When 'cwd', it will save the figure in the current working directory.
-
-        derivation : bool, optional
-            Wether to compute and display the first derivative values of the spectra, by default False
-
-        smooth : bool, optional
-            Whether to smooth the reflectance curves, by default False
-
-        smooth_params : list, optional
-            Parameters related to the Savitzky-Golay filter, by default [10,1]
-            Enter a list of two integers where the first value corresponds to the window_length and the second to the polyorder value. 
-
-        report : Optional[bool], optional
-            Configure some aspects of the figure for use in a report, by default False
-
-        Returns
-        -------
-        _type_
-            It returns a figure that can be save as a png file.
-        """
-
-        # Apply the report characteristics
-
-        if report:
-            save = True
-            colors = 'sample'
-            spectra = 'i+f'
-            fontsize = 30
-
-        # Retrieve the metadata
-        info = self.get_metadata()
-
-        if 'group_description' in info.index:                
-            group_descriptions = info.loc['group_description'].values
-
-        else:
-            group_descriptions = [''] * len(self.files)
-
-
-        # Define the colour of the curves
-        if colors == 'sample':
-            colors = self.get_sRGB().iloc[0,:].values.clip(0,1).reshape(len(self.files),-1)
-
-        elif isinstance(colors, str):
-            colors = [colors] * len(self.files)
-
-        elif colors == None:
-            colors = [None] * len(self.files)
-            
-        # Define the labels
-        if legend_labels == 'default':
-            legend_labels = [f'{x}-{y}' for x,y in zip(self.get_meas_ids,group_descriptions)]
-            legend_title = 'Measurement $n^o$'
-
-        # Select the spectral data
-        if spectra == 'i':            
-            data_sp_all = self.get_spectra(wl_range=wl_range, smoothing=smoothing)
-            data_sp = [x[x.columns.get_level_values(0)[0]] for x in data_sp_all]            
-
-            text = 'Initial spectra'
-
-        elif spectra == 'f':
-            data_sp_all = self.get_spectra(wl_range=wl_range, smoothing=smoothing)
-            data_sp =[x[x.columns.get_level_values(0)[-1]] for x in data_sp_all] 
-
-            text = 'Final spectra'
-
-        elif spectra == 'i+f':
-            data_sp_all = self.get_spectra(wl_range=wl_range, smoothing=smoothing)
-            data_sp = [x[x.columns.get_level_values(0)[[0]+[-1]]] for x in data_sp_all]            
-            
-            ls = ['-', '--'] * len(data_sp)
-            lw = [3,2] * len(data_sp)
-            black_lines = ['k'] * len(data_sp)            
-            colors = list(itertools.chain.from_iterable(zip(colors, black_lines)))            
-            
-
-            if legend_labels == 'default':
-                meas_labels = [f'{x}-{y}' for x,y in zip(self.get_meas_ids,group_descriptions)]
-            else:
-                meas_labels = legend_labels
-            none_labels = [None] * len(meas_labels)
-            legend_labels = [item for pair in zip(meas_labels, none_labels) for item in pair]
-
-            text = 'Initial and final spectra (black dashed lines)'
-
-        elif spectra == 'doses':
-            data_sp = self.get_spectra(wl_range=wl_range, dose_unit=dose_unit,dose_values=dose_values, smoothing=smoothing)
-
-            
-            dose_units = {'He': 'MJ/m2', 'Hv': 'Mlxh', 't': 'sec'}
-            legend_title = f'Light dose values'
-            legend_labels = [f'{str(x)} {dose_units[dose_unit]}' for x in dose_values] * len(data_sp)
-
-            text = ''
-            
-            ls_list = ['-','--','-.',':','-','--','-.',':','-','--','-.',':',]
-            ls = ls_list[:len(dose_values)] * len(data_sp)        
-            srgb_i = self.get_sRGB().iloc[0,:].values.reshape(-1, 3)            
-            colors = np.repeat(srgb_i, data_sp[0].shape[1], axis=0).clip(0,1)          
-
-        else:
-            print(f'"{spectra}" is not an adequate value. Enter a value for the parameter "spectra" among the following list: "i", "f", "i+f", "doses".')
-            return           
-                                
-        # whether to compute the absorption spectra
-        if spectral_mode == 'abs':
-            data_sp = [np.log(x) * (-1) for x in data_sp]
-        
-        # Reset the index
-        data = [x.reset_index() for x in data_sp]
-        
-        # Whether to compute the first derivative
-        if derivation:
-            data = [pd.concat([x.iloc[:,0], pd.DataFrame(np.gradient(x.iloc[:,1:], axis=0))], axis=1) for x in data]
-
-        # Compile the spectra to plot inside a list
-        wanted_data = []  
-        wanted_std = []
-
-        # Set the wavelength column as index
-        data = [x.set_index(x.columns.get_level_values(0)[0]) for x in data]          
-             
-        # Add the std values
-        if stdev:            
-            try:     
-                
-                values_data = [x.T.iloc[::2].values for x in data]
-                values_wl = [x.index for x in data]
-                for el1, wl in zip(values_data, values_wl):
-                    for el2 in el1:
-                        wanted_data.append((wl,el2))
-
-                values_std = [x.T.iloc[1::2].values for x in data]                
-                for el1 in values_std:
-                    for el2 in el1:
-                        wanted_std.append(el2)
-            except IndexError:
-                wanted_std = []
-            
-        else:
-            for el in data:                
-                data_values = [ (el.index,x) for x in el.T.values]
-                wanted_data = wanted_data + data_values 
-            wanted_std = []
-
-        
-        return plotting.spectra(data=wanted_data, stds=wanted_std, spectral_mode=spectral_mode, legend_labels=legend_labels, title=title, fontsize=fontsize, fontsize_legend=fontsize_legend, legend_title=legend_title, x_range=wl_range, colors=colors, lw=lw, ls=ls, text=text, text_xy=text_xy, save=save, path_fig=path_fig, derivation=derivation)
-       
-
-    def plot_sp_delta(self,spectra:Optional[tuple] = ('i','f'), dose_unit:Optional[str] = 'Hv', legend_labels:Union[str,list] = 'default', title:Optional[str] = None, fontsize:Optional[int] = 24, legend_fontsize:Optional[int] = 24, legend_title='', wl_range:Union[int,float,list,tuple] = None, colors:Union[str,list] = None, spectral_mode:Optional[str] = 'dR', derivation=False, smoothing=(1,0)):
-
-        if spectra == ('i','f'):
-
-            sp_data = [x.iloc[:,[0,-1]] for x in self.get_spectra(wl_range=wl_range, spectral_mode=spectral_mode)]
-            sp_delta = [x.iloc[:,1] - x.iloc[:,0] for x in sp_data]
-            wanted_data = [(x.index, x.values) for x in sp_delta]
-
-        elif spectra[0] == 'i':
-            
-            sp1 = [x.iloc[:,0] for x in self.get_spectra(wl_range=wl_range, spectral_mode=spectral_mode)]
-            sp2 = [x.values.flatten() for x in self.get_spectra(dose_unit=dose_unit, dose_values=float(spectra[1]),wl_range=wl_range, spectral_mode=spectral_mode)]
-            
-            wanted_data = [(x.index,np.array(y)-np.array(x)) for x,y in zip(sp1,sp2)]
-
-        elif spectra[1] == 'f':
-
-            sp1 = [x.values.flatten() for x in self.get_spectra(dose_unit=dose_unit, dose_values=float(spectra[0]), wl_range=wl_range, spectral_mode=spectral_mode)]            
-            sp2 = [x.iloc[:,-1] for x in self.get_spectra(wl_range=wl_range, spectral_mode=spectral_mode)]            
-            
-            wanted_data = [(y.index,np.array(y)-np.array(x)) for x,y in zip(sp1,sp2)]
-        
-        else:
-
-            wavelengths = self.get_wavelength.T.values
-            sp1 = [x.values.flatten() for x in self.get_spectra(dose_unit=dose_unit, dose_values=float(spectra[0]),wl_range=wl_range, spectral_mode=spectral_mode)]
-            sp2 = [x.values.flatten() for x in self.get_spectra(dose_unit=dose_unit, dose_values=float(spectra[1]),wl_range=wl_range, spectral_mode=spectral_mode)]
-            
-            wanted_data = [(w,np.array(y)-np.array(x)) for w,x,y in zip(wavelengths,sp1,sp2)]   
-                 
-        # Retrieve the metadata
-        info = self.get_metadata()
-
-        if 'group_description' in info.index:                
-            group_descriptions = info.loc['group_description'].values
-
-        else:
-            group_descriptions = [''] * len(self.files)        
-        
-        
-        # Define the colour of the curves
-        if colors == 'sample':
-            colors = self.get_sRGB().iloc[0,:].values.clip(0,1).reshape(len(self.files),-1)
-
-        elif isinstance(colors, str):
-            colors = [colors] * len(self.files)
-
-        elif colors == None:
-            colors = [None] * len(self.files)
-
-        # Define the labels
-        if legend_labels == 'default':
-            legend_labels = [f'{x}-{y}' for x,y in zip(self.get_meas_ids,group_descriptions)]
-            legend_title = 'Measurement $n^o$'
-             
-        # Whether to compute the first derivative
-        if derivation:
-            pass  # to implement
-            #wanted_data = [x.reset_index() for x in wanted_data]
-            #wanted_data = [pd.concat([x.iloc[:,0], pd.DataFrame(np.gradient(x.iloc[:,1:], axis=0))], axis=1) for x in wanted_data]
-            #wanted_data = [x.set_index(x.columns.get_level_values(0)[0]) for x in wanted_data] 
-
-        
-        #return wanted_data
-        plotting.spectra(data=wanted_data, spectral_mode=spectral_mode, x_range=wl_range, colors=colors, fontsize_legend=legend_fontsize, legend_labels=legend_labels, legend_title=legend_title, title=title, fontsize=fontsize, derivation=derivation)
-
-
-    def get_illuminant(self, illuminant:Optional[str] = 'D65', observer:Optional[str] = '10'):
-        """Set the illuminant values
-
-        Parameters
-        ----------
-        illuminant : Optional[str], optional
-            Select the illuminant, by default 'D65'
-            It can be any value within the following list: ['A', 'B', 'C', 'D50', 'D55', 'D60', 'D65', 'D75', 'E', 'FL1', 'FL2', 'FL3', 'FL4', 'FL5', 'FL6', 'FL7', 'FL8', 'FL9', 'FL10', 'FL11', 'FL12', 'FL3.1', 'FL3.2', 'FL3.3', 'FL3.4', 'FL3.5', 'FL3.6', 'FL3.7', 'FL3.8', 'FL3.9', 'FL3.10', 'FL3.11', 'FL3.12', 'FL3.13', 'FL3.14', 'FL3.15', 'HP1', 'HP2', 'HP3', 'HP4', 'HP5', 'LED-B1', 'LED-B2', 'LED-B3', 'LED-B4', 'LED-B5', 'LED-BH1', 'LED-RGB1', 'LED-V1', 'LED-V2', 'ID65', 'ID50', 'ISO 7589 Photographic Daylight', 'ISO 7589 Sensitometric Daylight', 'ISO 7589 Studio Tungsten', 'ISO 7589 Sensitometric Studio Tungsten', 'ISO 7589 Photoflood', 'ISO 7589 Sensitometric Photoflood', 'ISO 7589 Sensitometric Printer']
-
-        observer : Optional[str], optional
-            Standard observer in degree, by default '10'
-            It can be either '2' or '10'
-
-        Returns
-        -------
-        tuple
-            It returns a tuple with two set of values: the chromaticity coordinates of the illuminants (CCS) and the spectral distribution of the illuminants (SDS).
-        """
-
-        observers = {
-            '10': "cie_10_1964",
-            '2' : "cie_2_1931"
-        }
-       
-        CCS = colour.CCS_ILLUMINANTS[observers[observer]][illuminant]
-        SDS = colour.SDS_ILLUMINANTS[illuminant]
-
-        return CCS, SDS
-
-     
-    def get_observer(self, observer:Optional[str] = '10'):
-        """Set the observer.
-
-        Parameters
-        ----------
-        observer : Optional[str], optional
-            Standard observer in degree, by default '10'
-            It can be either '2' or '10'
-
-        Returns
-        -------        
-            Returns the x_bar,  y_bar, z_bar spectra between 360 and 830 nm.
-        """
-
-        observers = {
-            '10': "CIE 1964 10 Degree Standard Observer",
-            '2' : "CIE 1931 2 Degree Standard Observer"
-        }
-
-        return colour.colorimetry.MSDS_CMFS_STANDARD_OBSERVER[observers[observer]]
-    
-
-    def compute_sp_derivate(self):
-        """Compute the first derivative values of reflectance spectra.
-
-        Returns
-        -------
-        a list of pandas dataframes
-            It returns the first derivative values of the reflectance spectra inside dataframes where each column corresponds to a single spectra.
-        """
-
-        sp = self.get_data(data='sp')                    
-
-        sp_derivation = [pd.DataFrame(pd.concat([pd.DataFrame(np.gradient(x.iloc[:,:], axis=0), index=pd.Series(x.index), columns=x.columns)], axis=1),index=pd.Series(x.index), columns=x.columns) for x in sp]
-
-        return sp_derivation
-    
 
     def get_sRGB(self, illuminant='default', observer='default', dose_unit: Optional[str] = 'He', dose_values:Union[int, float, list, tuple] = 'all', clip:Optional[bool] = True):
         """Compute the sRGB values. 
@@ -3402,12 +2540,983 @@ class MFT(object):
 
         return pd.concat(df_xy, axis=1)
     
+    
+    def plots(self, plots=['CIELAB', 'SP', 'SW', 'dE', 'dLab']):
+        """Create plots
 
-    def make_report(self, folder_figures, folder_report, type:Optional[str] = 'single', authors:Optional[str] = 'default'):
+        Parameters
+        ----------
+        plots : list, optional
+            _description_, by default ['CIELAB', 'SP', 'SW', 'dE', 'dLab']
+        """
 
-        folder_figures = Path(folder_figures)
-        all_figure_files = os.listdir(folder_figures)        
+        for plot in plots:
+            if plot == 'CIELAB':
+                self.plot_CIELAB(legend_labels='default', legend_fontsize=18)
 
+            elif plot == 'SP':
+                self.plot_sp(spectra='i+f')
+
+            elif plot == 'SW':
+                self.plot_swatches_circle()
+
+            elif plot == 'dE':
+                self.plot_delta()
+
+  
+    def plot_bars(self, BWS_lines:Optional[bool] = True, coordinate:Optional[str] = 'dE00', dose_unit:Optional[str] = 'Hv', dose_value:Union[int, float] = 0.5, xlabels:Union[str, list] = 'default', fontsize:Optional[int] = 24, rotate_xlabels:Optional[int] = 0, position_xlabels:Optional[str] = 'center', position_text:Optional[tuple] = (0.03,0.92), colors:Union[str,float,list]=None, save:Optional[bool] = False, path_fig:Optional[str] = 'cwd'):
+        """Plot a bar graph of a given colorimetric coordinate for a given light dose value.
+
+        Parameters
+        ----------
+        BWS_lines : Optional[bool], optional
+            Whether to display the blue wool standard values as horizontal lines or as bars, by default True
+
+        coordinate : Optional[str], optional
+            Colorimetric coordinate to be displayed, by default 'dE00'
+            It can be any coordinates among the following list : ['L*','a*','b*','C*','h','dL*','da*','db*','dC*','dh','dE76','dE00','dR_vis'].
+
+        dose_unit : Optional[str], optional
+            Unit of the light energy dose, by default 'Hv'
+            Any of the following units can be used: 'He', 'Hv', 't'. Where 'He' corresponds to radiant energy (MJ/m2), 'Hv' to exposure dose (Mlxh), and 't' to times (sec)
+
+        dose_value : Union[int, float], optional
+            Values of the light dose energy, by default 0.5
+
+        xlabels : Union[str, list], optional
+            Values of the labels on the x-axis (one label per bar), by default 'default'
+            When 'default', it takes the measurement id as label.
+
+        fontsize : Optional[int], optional
+            Fontsize of the plot (title, ticks, and labels), by default 24
+
+        rotate_xlabels : Optional[int], optional
+            Whether to rotate the labels on the x-axis, by default 0
+            It can be any integer value between 0 and 360.
+
+        position_xlabels : Optional[str], optional
+            Position of the labels according to each bar ('center', 'left', 'right'), by default 'center'
+
+        position_text : Optional[tuple], optional
+            Position (x,y) of the text with the exposure dose value, by default (0.03,0.92)
+
+        colors : Union[str,float,list], optional
+            Colors of the bar, by default None
+            When 'sample', the color of each bar will be based on srgb values computed from the reflectance values. 
+            A single string or float value can also be used to define the color of all the bars (see matplotlib colour values). 
+            A list string can also be given, in that case, the number of element in the list should be equal to the number of bars. 
+
+        save : bool, optional
+            Whether to save the figure, by default False
+
+        path_fig : str, optional
+            Absolute path required to save the figure, by default 'cwd'
+            When 'cwd', it will save the figure in the current working directory.
+        """
+
+        # ['L*','a*','b*','C*','h','dL*','da*','db*','dC*','dh','dE76','dE00','dR_vis']
+      
+        # Define the light dose value      
+        doses_dic = {'He':'He_MJ/m2', 'Hv':'Hv_Mlxh', 't':'t_sec'}
+        max_doses = [x.values[0] for x in self.get_doses(dose_unit=dose_unit, max_doses=True)]
+
+        if dose_value > np.min(max_doses):
+            print(f'The choosen dose_value ({dose_value} {doses_dic[dose_unit].split("_")[1]}) is bigger than one of the final dose values. Thus the dose_value has been set to {np.min(max_doses)} {doses_dic[dose_unit].split("_")[1]}, which is the lowest final dose value.')
+            dose_value = np.min(max_doses)
+
+
+        # Define the labels on the x-axis
+        if xlabels == 'default':
+            xlabels = self.get_meas_ids
+
+        elif xlabels == 'meas_nb':
+            xlabels = [x.split('.')[-1] for x in self.get_meas_ids]
+
+        elif xlabels in [x for x in self.get_metadata().index if '[' not in x]:
+            xlabels = self.get_metadata(labels=xlabels).values
+
+        
+        # Define the colour of the bars
+        if colors == 'sample':
+            colors = [x for x in self.get_sRGB(dose_values=0).values.reshape(len(self.files),-1)]
+        
+        elif isinstance(colors, str):
+            colors = [colors] * len(self.files)
+
+        elif isinstance(colors, float):
+            colors = [str(colors)] * len(self.files)
+              
+
+        # Gather the data and relevant info inside a dataframe
+        all_data = self.get_cielab(coordinates=[coordinate], dose_unit=dose_unit, dose_values=dose_value)
+        cl_data = [x.iloc[0].values[0] for x in all_data]
+        cl_data_std = [x.iloc[0].values[1] if 'std' in x.columns.get_level_values(1) else 0 for x in all_data]
+
+        plot_data = {
+            'y': cl_data,
+            'y_std': cl_data_std, 
+            'xlabels': xlabels,
+            'type': self.get_metadata(labels='object_type').values,
+            'name': self.get_metadata(labels='object_name').values,
+            'colors': colors
+        }
+        
+        df_data = pd.DataFrame.from_dict(plot_data)
+        
+        
+        # Create the plot
+        sns.set_theme(font='serif')
+        fig, ax = plt.subplots(1,1, figsize=(15,8))
+
+        if BWS_lines == True:         
+            
+            df_BWS = df_data[df_data['type'] == 'BWS']
+            df_data = df_data[df_data['type'] != 'BWS']
+
+            ls_dic = {'BW1':'-','BW2':'--','BW3':'-.','BW4':':'}
+            
+            for col in df_BWS.T.columns:
+                data_BWS = df_BWS.T[col]
+                ax.axhline(data_BWS['y'], color='blue', ls =ls_dic[data_BWS['name']], label=data_BWS['name'])
+                ax.axhspan(ymin=data_BWS['y']-data_BWS['y_std'], ymax=data_BWS['y']+data_BWS['y_std'], alpha=0.5, color='0.75', ec='none')        
+        
+
+        x = np.arange(0,len(df_data))
+
+        
+        if colors == None:
+            colors = None
+        else:
+            colors = df_data['colors']
+
+        ax.bar(x=x, height=df_data['y'], yerr=df_data['y_std'], capsize=5, color=colors, edgecolor='none')
+
+        ax.xaxis.set_tick_params(labelsize=fontsize)
+        ax.yaxis.set_tick_params(labelsize=fontsize)
+
+        ax.xaxis.grid() # horizontal lines only
+
+        ax.set_xlabel('Microfading analyses numbers', fontsize=fontsize)
+        ax.set_ylabel(labels_eq[coordinate], fontsize=fontsize)
+
+        
+        ax.set_xticks(x)
+        ax.set_xticklabels(df_data['xlabels'], rotation=rotate_xlabels, ha=position_xlabels)
+
+        ax.text(x=position_text[0], y=position_text[1], s=f'Light dose = {dose_value} {doses_dic[dose_unit].split("_")[1]}', fontsize=fontsize-6, transform=ax.transAxes, ha='left', va='top')
+
+        if BWS_lines == True:
+            ax.legend(fontsize=fontsize-4)
+
+        plt.tight_layout()
+
+        if save == True:
+            if path_fig == 'cwd':
+                path_fig = f'{os.getcwd()}/{coordinate}-bar.png'                    
+                
+            fig.savefig(path_fig,dpi=300, facecolor='white') 
+
+        plt.show()     
+
+
+    def plot_CIELAB(self, stds=[], dose_unit:Optional[str] = 'He', dose_values:Union[int, float, list, tuple] = 'all', colors:Union[str,list] = None, title:Optional[str] = None, fontsize:Optional[int] = 20, legend_labels:Union[str,list] = 'default', legend_position:Optional[str] = 'in', legend_fontsize:Optional[int] = 20, legend_title:Optional[str] = None, dE:Optional[bool] = False, obs_ill:Optional[bool] = True, save:Optional[bool] = False, path_fig:Optional[str] = 'cwd', report:Optional[bool] = False):
+        """Plot the Lab values related to input the microfading files.
+
+        Parameters
+        ----------
+        stds : list, optional
+            A list of standard variation values respective to each element given in the data parameter, by default []
+
+        dose_unit : str, optional
+            Unit of the light energy dose, by default 'He'
+            Any of the following units can be used: 'He', 'Hv', 't'. Where 'He' corresponds to radiant energy (MJ/m2), 'Hv' to exposure dose (Mlxh), and 't' to times (sec)
+
+        dose_values : [int, float, list, tuple], optional        
+            Values of the light dose energy, by default 'all'
+            A single value (integer or float number), a list of multiple numerical values, or range values with a tuple (start, end, step) can be entered.
+            When 'all', it takes the values found in the data.   
+
+        colors : [str, list], optional
+            Define the colors of the data points, by default None
+            When 'sample', the color of each points will be based on srgb values computed from the reflectance values. Alternatively, a single string value can be used to define the color (see matplotlib colour values) or a list of matplotlib colour values can be used.     
+
+        title : str, optional
+            Whether to add a title to the plot, by default None
+
+        fontsize : int, optional
+            Fontsize of the plot (title, ticks, and labels), by default 24
+
+        legend_labels : [str, list], optional
+            A list of labels respective to each element given in the data parameter that will be shown in the legend. When the list is empty there is no legend displayed, by default 'default'
+            When 'default', each label will composed of the Id number of the number followed by a short description
+
+        legend_position : str, optional
+            Position of the legend, by default 'in'
+            The legend can either be inside the figure ('in') or outside ('out')
+
+        legend_fontsize : int, optional
+            Fontsize of the legend, by default 24
+
+        legend_title : str, optional
+            Add a title above the legend, by default ''
+
+        dE : bool, optional
+            Whether to display the dE00 curves in the bottom left suplots instead of the CIELAB 2D space, by default False
+            NOT IMPLEMENTED YET ! LEAVE PARAMETER TO FALSE
+            
+        obs_ill : bool, optional
+            Whether to display the observer and illuminant values, by default True
+
+        save : bool, optional
+            Whether to save the figure, by default False
+
+        path_fig : str, optional
+            Absolute path required to save the figure, by default 'cwd'
+            When 'cwd', it will save the figure in the current working directory.
+
+        Returns
+        -------
+        png file
+            It returns a figure with 4 subplots that can be saved as a png file.
+        """
+
+        data_Lab = self.get_cielab(coordinates=['L*', 'a*', 'b*'], dose_unit=dose_unit, dose_values=dose_values)
+        data_Lab = [x.T.values for x in data_Lab]
+       
+
+        # Retrieve the metadata
+        info = self.get_metadata()
+        ids = [x for x in self.get_meas_ids if 'BW' not in x] 
+
+        if 'group_description' in info.index:                
+            group_descriptions = info.loc['group_description'].values
+
+        else:
+            group_descriptions = [''] * len(self.files)
+               
+        
+
+        # Define the colour of the curves
+        if colors == 'sample':
+            pass           
+
+        elif isinstance(colors, str):
+            colors = [colors] * len(self.files)
+
+        elif colors == None:
+            colors = [None] * len(self.files)
+        
+        # Define the labels
+        if legend_labels == 'default':
+            legend_labels = [f'{x}-{y}' for x,y in zip(self.get_meas_ids,group_descriptions)]
+            legend_title = 'Measurement $n^o$'
+
+        # Whether to plot the observer and illuminant info
+        if obs_ill:
+            DB = databases.DB()
+            if len(DB.get_colorimetry_info()) == 0:
+                observer = '10deg'
+                illuminant = 'D65'
+            else:
+                observer = DB.get_colorimetry_info().loc['observer']['value']
+                illuminant = DB.get_colorimetry_info().loc['illuminant']['value']
+
+            dic_obs = {'10deg':'$\mathrm{10^o}$', '2deg':'$\mathrm{2^o}$'}            
+            obs_ill = f'{dic_obs[observer]}-{illuminant}'
+        
+        else:
+            obs_ill = None
+
+        return plotting.CIELAB(data=data_Lab, legend_labels=legend_labels, colors=colors, title=title, fontsize=fontsize, legend_fontsize=legend_fontsize, legend_position=legend_position, legend_title=legend_title, dE=dE, obs_ill=obs_ill, save=save, path_fig=path_fig)
+
+
+    def plot_swatches_circle(self, orientation:Optional[str] = 'horizontal', light_doses:Optional[list] = [0,0.5,1,2,5,15], JND:Optional[list] = [1,2,3,5,10], dose_unit:Union[str,tuple] = 'Hv', dE:Optional[bool] = True, fontsize:Optional[int] = 24, equation:Optional[str] = 'power_3p', initial_params:Optional[List[float]] = 'auto', bounds:Optional[list] = (-np.inf, np.inf), save:Optional[bool] = False, path_fig:Optional[str] = 'cwd', title:Optional[str] = None, report:Optional[bool] = False): 
+        """Plot the microfading data with circular colored patches. 
+
+        Parameters
+        ----------
+
+        light_doses : list, optional
+            Light doses in Mlxh for which a coloured patches will be created, by default [0,0.5,1,2,5,1]
+            There has been at least two numerical values in the list. The first value corresponds to the color background of the plot and is usually set to 0. The other values will be plotted as circular patches.
+
+        JND : list, optional
+            Whether to plot circular patches of just noticeable differences, by default [1,2,3,5,10]
+            NOT YET IMPLEMENTED
+
+        dose_unit : [str, tuple], optional
+            Unit of the light energy dose, by default 'Hv'
+            Any of the following units can be used: 'He', 'Hv', 't'. Where 'He' corresponds to radiant energy (MJ/m2), 'Hv' to exposure dose (Mlxh), and 't' to times (hours) (exh,50,10,365)
+        
+        dE : bool, optional
+            Whether to include the dE00 value between the background and each circular patche, by default True
+
+        fontsize : int, optional
+            Fontsize of the plot (title, ticks, and labels), by default 24        
+
+        equation : str, optional
+            Mathematical equation used to fit the coordinate values, by default 'c0*(x**c1) + c2'.
+            Any others mathematical can be given. The following equation can also be used for fitting microfading data: '((x) / (c0 + (c1*x)))'.
+
+        initial_params : List[float], optional
+            Initial guesses of the 'c' parameters given in the equation (c0, c1, c2, etc.), by default [0.1, 0.0]
+            In the default values, only c0 and c1 are provided ; c2 is retrieved from the initial value of each colorimetric coordinate plot.
+
+        save : bool, optional
+            Whether to save the figure, by default False
+
+        path_fig : str, optional
+            Absolute path required to save the figure, by default 'cwd'
+            When 'cwd', it will save the figure in the current working directory.
+
+        title : str, optional
+            Whether to add a title to the plot, by default None, by default None        
+
+        report : bool, optional
+            _description_, by default False
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
+       
+        # Define the title
+        if title == 'default':
+            title = list(self.get_meas_ids)
+
+        
+        # Compute the extrapolated Lab values
+        list_extrapolated_Lab = []
+
+        for coord in ['L*','a*','b*']:            
+
+            fitted_coord = self.compute_fitting(coordinate=coord, plot=False, return_data=True, dose_unit=dose_unit, equation=equation,initial_params=initial_params, bounds=bounds,x_range=(light_doses[0], light_doses[-1]+1, 0.1))[1].loc[light_doses]
+            
+            list_extrapolated_Lab.append(fitted_coord.T.values)
+                    
+        
+        # Run the plotting function for each filehow to b
+        for i in range(0, len(self.files)):
+            wanted_Lab = pd.DataFrame([x[i] for x in list_extrapolated_Lab]).T.values
+            
+            plotting.swatches_circle(data=[wanted_Lab], data_type='Lab', orientation=orientation, light_doses=light_doses, dose_unit=dose_unit, dE=dE, fontsize=fontsize, save=save, title=title, path_fig=path_fig)        
+      
+
+    def plot_swatches_rectangle(self, swatches:Optional[tuple] = ('i',1), labels:Optional[list] = 'default', bottom_scale:Optional[str] = 'JND', top_label:Optional[str] = 'Hv', colorbar:Optional[bool] = False, fontsize:Optional[int] = 24, title:Optional[str] = None, save:Optional[bool] = False, path_fig:Optional[str] = 'cwd'):
+
+        # Adapt bottom scale for JND
+        if bottom_scale == 'JND' and isinstance(swatches[1], (int,float)):
+            bottom_scale = 'dE00'
+            swatches = (swatches[0], np.round(swatches[1]*1.3,2))
+        
+        # Doses dic
+        doses_dic = {'He': 'MJ/m2', 'Hv':'Mlxh'}
+
+
+        # Define the dose_unit
+        if bottom_scale == 'He' or bottom_scale == 'Hv':
+            dose_unit = bottom_scale
+
+        elif top_label == 'He' or top_label == 'Hv':
+            dose_unit = top_label
+        
+        
+        # Retrieve the analyses light dose values
+        doses = [x['value'] for x in self.get_doses(dose_unit=dose_unit, max_doses=True)]
+        dose_min = np.min(doses)
+        
+        
+        # Define the Lab values for the top colour swatches
+        if swatches[0] == 'i':
+            dose_value_top = 0
+            top_text = 'Initial'
+
+        elif isinstance(swatches[0], (int, float)):
+            if swatches[0] > dose_min:
+                print(f'Please, choose an initial dose value lower or equal to the final experimental light dose ({np.round(dose_min,2)} {doses_dic[dose_unit]}).')
+                return
+            else:
+                dose_value_top = swatches[0] 
+                top_text = f'{swatches[0]} {doses_dic[dose_unit]}'  
+        else:
+            print('Enter valid values for the swatches parameter, ie. a tuple of integer or float.')
+            return
+                
+        Lab_top = [x.values[0] for x in self.get_cielab(coordinates=['L*','a*', 'b*'], dose_unit=dose_unit, dose_values=dose_value_top)]
+        
+                
+        # Define the Lab values for the bottom colour swatches
+        
+        if swatches[1] == 'f':                          # Select last measured values
+            Lab_bottom = [x.iloc[-1].values for x in self.get_cielab(coordinates=['L*','a*', 'b*'], dose_unit=dose_unit)]
+            bottom_text = 'Final'
+            wanted_dose = [x['value'] for x in self.get_doses(dose_unit=dose_unit, max_doses=True)]
+
+        elif isinstance(swatches[1], (int,float)):      # Select the values according to a dE or H value
+
+            Lab_bottom = []
+
+            if bottom_scale in ['He','Hv']:             # According to a dose value (He or Hv)
+            
+                for coord in ['L*','a*', 'b*']:               
+
+                    coord_bottom = self.compute_fitting(plot=False, return_data=True,coordinate=coord,dose_unit=dose_unit, x_range=(0,swatches[1]+1,0.1))[1].loc[swatches[1]].values
+                    Lab_bottom.append(coord_bottom) 
+
+                Lab_bottom = pd.DataFrame(Lab_bottom).T.values  
+
+            
+            elif bottom_scale in ['dE76','dE00','dR_vis']:    # According to a dE or dR value
+                
+                max_doses = {'He':2000.1, 'Hv':200.1}
+                dE_fitted = self.compute_fitting(plot=False, return_data=True,coordinate=bottom_scale,dose_unit=dose_unit, x_range=(0,max_doses[dose_unit],0.1))[1]                
+
+                wanted_doses = []
+                for col in dE_fitted.columns:
+
+                    dE_data = dE_fitted[col]
+                    
+
+                    if dE_data.values[-1] > swatches[1]:
+                        wanted_doses.append(interp1d(dE_data.values, dE_data.index)([swatches[1]])[0])
+                    
+                    else:
+                        wanted_doses.append(dE_data.index[-1])
+
+                for i, wanted_dose in enumerate(wanted_doses):
+                    for coord in ['L*','a*', 'b*']:
+                        coord_bottom = self.compute_fitting(plot=False, return_data=True,coordinate=coord,dose_unit=dose_unit, x_range=(0,wanted_dose+0.1,0.1))[1].values[-1][i]
+                        
+                        
+                        Lab_bottom.append(coord_bottom)
+
+                Lab_bottom = pd.DataFrame(Lab_bottom).T.values[0]
+                Lab_bottom = Lab_bottom.reshape(len(wanted_doses),-1)
+                
+            
+            bottom_text = f'{swatches[1]} {labels_eq[bottom_scale]}'
+                
+        else:
+            print('Enter valid values for the swatches parameter, ie. a tuple of integer or float.')
+            return
+
+                
+        # Pair the top and bottom Lab values
+        wanted_data = [(x,y) for x,y in zip(Lab_top,Lab_bottom)]
+        
+
+        # Define the labels
+        if labels == 'default':
+            labels = list(self.get_metadata('meas_id').values)
+
+        elif labels == 'none':
+            labels = []
+
+
+        # Define the top label values
+        if top_label in ['He','Hv']:           
+
+            top_labels = {top_label: np.round(wanted_doses,3)}
+
+        if top_label in ['dE76','dE94','dE00']:
+            methods_dE = {'dE76': 'CIE 1976', 'dE94': 'CIE 1994', 'dE00': 'CIE 2000'}
+            top_label_values = [np.round(colour.delta_E(x[0],x[1], method=methods_dE[top_label]),2) for x in wanted_data]
+            top_labels = {top_label:top_label_values}
+
+        
+        # Define the side annotations
+        side_annotations = (top_text, bottom_text)
+
+        # Whether to save the figure
+        if save == True:
+            if path_fig == 'cwd':
+                path_fig = f'{os.getcwd()}/MFT_{"-".join(self.get_meas_ids)}_SW-rect.png'  
+
+
+        # Run the plotting function
+        plotting.swatches_rectangle(data=wanted_data, data_type='Lab', labels=labels, bottom_scale=bottom_scale, top_labels=top_labels, fontsize=fontsize, side_annotations=side_annotations, colorbar=colorbar, title=title, save=save, path_fig=path_fig)
+
+    
+    def plot_delta(self, stds:Optional[bool] = True, coordinates:Optional[list] = ['dE00'], dose_unit:Optional[str] = 'He', legend_labels:Union[str, list] = 'default', initial_values:Optional[bool] = False, colors:Union[str,list] = None, lw:Union[int,list] = 'default', title:Optional[str] = None, fontsize:Optional[int] = 24, legend_fontsize:Optional[int] = 24, legend_title:Optional[str] = None, xlim:Optional[tuple] = None, save:Optional[bool] = False, path_fig:Optional[str] = 'cwd'):
+        """Plot the delta values of choosen colorimetric coordinates related to the microfading analyses.
+
+        Parameters
+        ----------
+        stds : bool, optional
+            Whether to show the standard deviation values if any, by default True.
+
+        coordinates : list, optional
+            List of colorimetric coordinates, by default ['dE00']
+            Any of the following coordinates can be added to the list: 'dE76', 'dE00', 'dR_vis' , 'L*', 'a*', 'b*', 'C*', 'h'.
+
+        dose_unit : str, optional
+            Unit of the light energy dose, by default 'He'
+            Any of the following units can be used: 'He', 'Hv', 't'. Where 'He' corresponds to radiant energy (MJ/m2), 'Hv' to exposure dose (Mlxh), and 't' to times (sec)
+
+        legend_labels : Union[str, list], optional
+            A list of labels respective to each element given in the data parameter that will be shown in the legend. When the list is empty there is no legend displayed, by default 'default'
+            When 'default', each label will composed of the Id number of the number followed by a short description
+
+        colors : Union[str, list], optional
+            Define the colors of the curves, by default None
+            When 'sample', the color of each line will be based on srgb values computed from the reflectance values. Alternatively, a single string value can be used to define the color (see matplotlib colour values) and will be applied to all the lines. Or a list of matplotlib colour values can be used. With a single coordinate, the list should have the same length as measurement files. With multiple coordinates, the list should have the same length as coordinates.
+
+        lw : Union[int,list], optional
+            Width of the lines, by default 'default'
+            When 'default', it attributes a given a width according to each coordinates, otherwise it gives a value of 2.
+            A single value (an integer) can be entered and applied to all the lines.
+            A list of integers can also be entered. With a single coordinate, the list should have the same length as measurement files. With multiple coordinates, the list should have the same length as coordinates.
+
+        title : str, optional
+            Whether to add a title to the plot, by default None
+
+        fontsize : int, optional
+            Fontsize of the plot (title, ticks, and labels), by default 24
+
+        legend_fontsize : int, optional
+            Fontsize of the legend, by default 24
+
+        legend_title : str, optional
+            Add a title above the legend, by default ''
+
+        xlim : tuple, optional
+            A tuple of two integers that define the left and right limits of the x-axis , by default None.
+
+        save : bool, optional
+            Whether to save the figure, by default False
+
+        path_fig : str, optional
+            Absolute path required to save the figure, by default 'cwd'
+            When 'cwd', it will save the figure in the current working directory.
+        """
+
+        # Retrieve the data
+        if xlim == None:
+            dose_values = 'all'
+        elif isinstance(xlim, tuple):
+            dose_values = (xlim[0], xlim[1], 0.05)
+                
+        all_data = self.compute_delta(coordinates=coordinates, dose_unit=dose_unit, dose_values=dose_values)
+        nominal_data = []
+        stdev_data = []
+
+        for data in all_data:
+
+            if sorted(set(data.columns.get_level_values(1))) == ['mean', 'std']:
+                nominal = data.xs(key='mean', axis=1, level=1)
+                if stds:
+                    stdev = data.xs(key='std', axis=1, level=1)   
+                else:
+                    stdev = nominal.copy()   
+                    stdev.iloc[:,:] = 0         
+
+            else:
+                                
+                nominal = data
+                stdev = data.copy()
+                stdev.iloc[:,:] = 0
+                
+
+            nominal_data.append(nominal.reset_index().T.values)
+            stdev_data.append(stdev.T.values)
+
+        
+        
+        # Retrieve the metadata
+        info = self.get_metadata()
+        ids = [x for x in self.get_meas_ids]
+        meas_nbs = [x.split('.')[-1] for x in ids]
+
+        if 'spot_description' in info.index:                
+            group_descriptions = info.loc['spot_description'].values
+
+        else:
+            group_descriptions = [''] * len(self.files)
+               
+
+        # Set the labels values
+        if legend_labels == 'default':                       
+            legend_labels = [f'{x}-{y}' for x,y in zip(ids, group_descriptions)] 
+
+        elif legend_labels == '':
+            legend_labels = []
+        
+        elif isinstance(legend_labels, list):
+            legend_labels = legend_labels
+            '''
+            labels_list = []
+            for i,Id in enumerate(self.get_meas_ids):
+                label = Id.split('.')[-1]
+                for el in labels:
+                    label = label + f'-{self.get_metadata().loc[el].values[i]}'
+                labels_list.append(label)
+
+            labels = labels_list
+            '''
+
+        # Add the initial values of the colorimetric coordinates
+        
+        if initial_values:  
+            initial_values = {}          
+            for coord in coordinates:
+                if coord in ['dL*', 'da*', 'db*', 'dC*', 'dh']:
+                    initial_value = self.get_cielab(coordinates=[coord[1:]])[0][coord[1:]].iloc[0,:].values[0]
+                    initial_values[coord[1:]] = initial_value
+        else:
+            initial_values = {}  
+
+        if len(meas_nbs) > 1:
+            initial_values = {}
+
+        # Set the color of the lines according to the sample
+        if colors == 'sample':
+            colors = list(self.get_sRGB(dose_values=0).values.reshape(len(meas_nbs),-1))
+            colors = colors * len(coordinates)
+        
+        # Whether to add a title or not
+        if title == 'default':
+            title = 'MFT'            
+        elif title == 'none':
+            title = None
+        else:
+            title = title 
+
+        # Define the saving folder in case the figure should be saved
+        filename = ''
+        if save:
+            if path_fig == 'default':
+                path_fig = self.get_dir(folder_type='figures') / filename                
+
+            if path_fig == 'cwd':
+                path_fig = f'{os.getcwd()}/{filename}' 
+        
+        
+        plotting.delta(data=nominal_data, yerr=stdev_data, dose_unit=[dose_unit], coordinates=coordinates, initial_values=initial_values, colors=colors, lw=lw, title=title, fontsize=fontsize, legend_labels=legend_labels, legend_fontsize=legend_fontsize, legend_title=legend_title, save=save, path_fig=path_fig)
+
+
+    def plot_sp(self, stdev:Optional[bool] = False, spectra:Optional[str] = 'i', dose_unit:Optional[str] = 'He', dose_values:Union[int, float, list, tuple] = 'all', spectral_mode:Optional[str] = 'R', legend_labels:Union[str,list] = 'default', title:Optional[str] = None, fontsize:Optional[int] = 24, fontsize_legend:Optional[int] = 24, legend_title='', wl_range:Optional[tuple] = None, colors:Union[str,list] = None, lw:Union[int, list] = 2, ls:Union[str, list] = '-', text_xy:Optional[tuple] = (0.02,0.03), save=False, path_fig='cwd', derivation=False, smoothing=(1,0), report:Optional[bool] = False):
+        """Plot the reflectance spectra corresponding to the associated microfading analyses.
+
+        Parameters
+        ----------
+        stdev : bool, optional
+            Whether to show the standard deviation values, by default False
+
+        spectra : Optional[str], optional
+            Define which spectra to display, by default 'i'
+            'i' for initial spectral, 
+            'f' for final spectra,
+            'i+f' for initial and final spectra, 
+            'all' for all the spectra, 
+            'doses' for spectra at different dose values indicated by the dose_unit and dose_values parameters
+
+        dose_unit : str, optional
+            Unit of the light energy dose, by default 'He'
+            Any of the following units can be used: 'He', 'Hv', 't'. Where 'He' corresponds to radiant energy (MJ/m2), 'Hv' to exposure dose (Mlxh), and 't' to times (sec). It only works if the 'spectra' parameters has been set to 'doses'.
+
+        dose_values : Union[int, float, list, tuple], optional
+            Values of the light dose energy, by default 'all'
+            A single value (integer or float number), a list of multiple numerical values, or range values with a tuple (start, end, step) can be entered.
+            When 'all', it takes the values found in the data. It only works if the 'spectra' parameters has been set to 'doses'.
+
+        spectral_mode : string, optional
+            When 'R', it returns the reflectance spectra            
+            When 'A', it returns the absorption spectra using the following equation: A = -log(R)
+
+        legend_labels : Union[str, list], optional
+            A list of labels respective to each element given in the data parameter that will be shown in the legend. When the list is empty there is no legend displayed, by default 'default'
+            When 'default', each label will composed of the Id number of the number followed by a short description
+
+        title : str, optional
+            Whether to add a title to the plot, by default None
+
+        fontsize : int, optional
+            Fontsize of the plot (title, ticks, and labels), by default 24
+
+        fontsize_legend : int, optional
+            Fontsize of the legend, by default 24
+
+        legend_title : str, optional
+            Add a title above the legend, by default ''
+
+        wl_range : tuple, optional
+            Define the wavelength range with a two-values tuple corresponding to the lowest and highest wavelength values, by default None
+
+        colors : Union[str, list], optional
+            Define the colors of the reflectance curves, by default None
+            When 'sample', the color of each line will be based on srgb values computed from the reflectance values. Alternatively, a single string value can be used to define the color (see matplotlib colour values) or a list of matplotlib colour values can be used. 
+
+        lw : Union[int, list], optional
+            Define the width of the plot lines, by default 2
+            It can be a single integer value that will apply to all the curves. Or a list of integers can be used where the number of integer elements should match the number of reflectance curves.
+
+        ls : Union[str, list], optional
+            Define the line style of the plot lines, by default '-'
+            It can be a string ('-', '--', ':', '-.') that will apply to all the curves. Or a list of string can be used where the number of string elements should match the number of reflectance curves.
+
+        save : bool, optional
+            Whether to save the figure, by default False
+
+        path_fig : str, optional
+            Absolute path required to save the figure, by default 'cwd'
+            When 'cwd', it will save the figure in the current working directory.
+
+        derivation : bool, optional
+            Wether to compute and display the first derivative values of the spectra, by default False
+
+        smooth : bool, optional
+            Whether to smooth the reflectance curves, by default False
+
+        smooth_params : list, optional
+            Parameters related to the Savitzky-Golay filter, by default [10,1]
+            Enter a list of two integers where the first value corresponds to the window_length and the second to the polyorder value. 
+
+        report : Optional[bool], optional
+            Configure some aspects of the figure for use in a report, by default False
+
+        Returns
+        -------
+        _type_
+            It returns a figure that can be save as a png file.
+        """
+
+        # Apply the report characteristics
+
+        if report:
+            save = True
+            colors = 'sample'
+            spectra = 'i+f'
+            fontsize = 30
+
+        # Retrieve the metadata
+        info = self.get_metadata()
+
+        if 'spot_description' in info.index:                
+            spot_descriptions = info.loc['spot_description'].values
+
+        else:
+            spot_descriptions = [''] * len(self.files)
+
+
+        # Define the colour of the curves
+        if colors == 'sample':
+            colors = self.get_sRGB().iloc[0,:].values.clip(0,1).reshape(len(self.files),-1)
+
+        elif isinstance(colors, str):
+            colors = [colors] * len(self.files)
+
+        elif colors == None:
+            colors = [None] * len(self.files)
+            
+        # Define the labels
+        if legend_labels == 'default':
+            legend_labels = [f'{x}-{y}' for x,y in zip(self.get_meas_ids,spot_descriptions)]
+            legend_title = 'Measurement $n^o$'
+
+        # Select the spectral data
+        if spectra == 'i':            
+            data_sp_all = self.get_spectra(wl_range=wl_range, smoothing=smoothing)
+            data_sp = [x[x.columns.get_level_values(0)[0]] for x in data_sp_all]            
+
+            text = 'Initial spectra'
+
+        elif spectra == 'f':
+            data_sp_all = self.get_spectra(wl_range=wl_range, smoothing=smoothing)
+            data_sp =[x[x.columns.get_level_values(0)[-1]] for x in data_sp_all] 
+
+            text = 'Final spectra'
+
+        elif spectra == 'i+f':
+            data_sp_all = self.get_spectra(wl_range=wl_range, smoothing=smoothing)
+            data_sp = [x[x.columns.get_level_values(0)[[0]+[-1]]] for x in data_sp_all]            
+            
+            ls = ['-', '--'] * len(data_sp)
+            lw = [3,2] * len(data_sp)
+            black_lines = ['k'] * len(data_sp)            
+            colors = list(itertools.chain.from_iterable(zip(colors, black_lines)))            
+            
+
+            if legend_labels == 'default':
+                meas_labels = [f'{x}-{y}' for x,y in zip(self.get_meas_ids,spot_descriptions)]
+            else:
+                meas_labels = legend_labels
+            none_labels = [None] * len(meas_labels)
+            legend_labels = [item for pair in zip(meas_labels, none_labels) for item in pair]
+
+            text = 'Initial and final spectra (black dashed lines)'
+
+        elif spectra == 'doses':
+            data_sp = self.get_spectra(wl_range=wl_range, dose_unit=dose_unit,dose_values=dose_values, smoothing=smoothing)
+
+            
+            dose_units = {'He': 'MJ/m2', 'Hv': 'Mlxh', 't': 'sec'}
+            legend_title = f'Light dose values'
+            legend_labels = [f'{str(x)} {dose_units[dose_unit]}' for x in dose_values] * len(data_sp)
+
+            text = ''
+            
+            ls_list = ['-','--','-.',':','-','--','-.',':','-','--','-.',':',]
+            ls = ls_list[:len(dose_values)] * len(data_sp)        
+            srgb_i = self.get_sRGB().iloc[0,:].values.reshape(-1, 3)            
+            colors = np.repeat(srgb_i, data_sp[0].shape[1], axis=0).clip(0,1)          
+
+        else:
+            print(f'"{spectra}" is not an adequate value. Enter a value for the parameter "spectra" among the following list: "i", "f", "i+f", "doses".')
+            return           
+                                
+        # whether to compute the absorption spectra
+        if spectral_mode == 'abs':
+            data_sp = [np.log(x) * (-1) for x in data_sp]
+        
+        # Reset the index
+        data = [x.reset_index() for x in data_sp]
+        
+        # Whether to compute the first derivative
+        if derivation:
+            data = [pd.concat([x.iloc[:,0], pd.DataFrame(np.gradient(x.iloc[:,1:], axis=0))], axis=1) for x in data]
+
+        # Compile the spectra to plot inside a list
+        wanted_data = []  
+        wanted_std = []
+
+        # Set the wavelength column as index
+        data = [x.set_index(x.columns.get_level_values(0)[0]) for x in data]          
+             
+        # Add the std values
+        if stdev:            
+            try:     
+                
+                values_data = [x.T.iloc[::2].values for x in data]
+                values_wl = [x.index for x in data]
+                for el1, wl in zip(values_data, values_wl):
+                    for el2 in el1:
+                        wanted_data.append((wl,el2))
+
+                values_std = [x.T.iloc[1::2].values for x in data]                
+                for el1 in values_std:
+                    for el2 in el1:
+                        wanted_std.append(el2)
+            except IndexError:
+                wanted_std = []
+            
+        else:
+            for el in data:                
+                data_values = [ (el.index,x) for x in el.T.values]
+                wanted_data = wanted_data + data_values 
+            wanted_std = []
+
+        
+        return plotting.spectra(data=wanted_data, stds=wanted_std, spectral_mode=spectral_mode, legend_labels=legend_labels, title=title, fontsize=fontsize, fontsize_legend=fontsize_legend, legend_title=legend_title, x_range=wl_range, colors=colors, lw=lw, ls=ls, text=text, text_xy=text_xy, save=save, path_fig=path_fig, derivation=derivation)
+       
+
+    def plot_sp_delta(self,spectra:Optional[tuple] = ('i','f'), dose_unit:Optional[str] = 'Hv', legend_labels:Union[str,list] = 'default', title:Optional[str] = None, fontsize:Optional[int] = 24, legend_fontsize:Optional[int] = 24, legend_title='', wl_range:Union[int,float,list,tuple] = 'default', colors:Union[str,list] = None, spectral_mode:Optional[str] = 'dR', derivation=False, smoothing=(1,0), report:Optional[bool] = False):
+
+        # Set the wavelength range       
+        if wl_range == 'default':
+
+            device_info = sorted(set(self.get_metadata('device')))
+            
+            if len(device_info) == 1:                
+                device_id = device_info[0].split('_')[0]
+
+            if device_id in list(get_DB_config()['devices'].keys()):
+                wl_range = get_DB_config()['devices'][device_id] ['wl_range']
+
+                if wl_range != None:
+                    wl_range = tuple(wl_range)
+
+            else:
+                wl_ranges = []
+
+                wl_range = tuple(np.min(wl_ranges), np.max(wl_ranges))
+                            
+                
+        # Set the report parameters
+        if report:
+            pass
+        
+        if spectra == ('i','f'):
+
+            sp_data = [x.iloc[:,[0,-1]] for x in self.get_spectra(wl_range=wl_range, spectral_mode=spectral_mode)]
+            sp_delta = [x.iloc[:,1] - x.iloc[:,0] for x in sp_data]
+            wanted_data = [(x.index, x.values) for x in sp_delta]
+
+        elif spectra[0] == 'i':
+            
+            sp1 = [x.iloc[:,0] for x in self.get_spectra(wl_range=wl_range, spectral_mode=spectral_mode)]
+            sp2 = [x.values.flatten() for x in self.get_spectra(dose_unit=dose_unit, dose_values=float(spectra[1]),wl_range=wl_range, spectral_mode=spectral_mode)]
+            
+            wanted_data = [(x.index,np.array(y)-np.array(x)) for x,y in zip(sp1,sp2)]
+
+        elif spectra[1] == 'f':
+
+            sp1 = [x.values.flatten() for x in self.get_spectra(dose_unit=dose_unit, dose_values=float(spectra[0]), wl_range=wl_range, spectral_mode=spectral_mode)]            
+            sp2 = [x.iloc[:,-1] for x in self.get_spectra(wl_range=wl_range, spectral_mode=spectral_mode)]            
+            
+            wanted_data = [(y.index,np.array(y)-np.array(x)) for x,y in zip(sp1,sp2)]
+        
+        else:
+
+            wavelengths = self.get_wavelength.T.values
+            sp1 = [x.values.flatten() for x in self.get_spectra(dose_unit=dose_unit, dose_values=float(spectra[0]),wl_range=wl_range, spectral_mode=spectral_mode)]
+            sp2 = [x.values.flatten() for x in self.get_spectra(dose_unit=dose_unit, dose_values=float(spectra[1]),wl_range=wl_range, spectral_mode=spectral_mode)]
+            
+            wanted_data = [(w,np.array(y)-np.array(x)) for w,x,y in zip(wavelengths,sp1,sp2)]   
+                 
+        # Retrieve the metadata
+        info = self.get_metadata()
+
+        if 'group_description' in info.index:                
+            group_descriptions = info.loc['group_description'].values
+
+        else:
+            group_descriptions = [''] * len(self.files)        
+        
+        
+        # Define the colour of the curves
+        if colors == 'sample':
+            colors = self.get_sRGB().iloc[0,:].values.clip(0,1).reshape(len(self.files),-1)
+
+        elif isinstance(colors, str):
+            colors = [colors] * len(self.files)
+
+        elif colors == None:
+            colors = [None] * len(self.files)
+
+        # Define the labels
+        if legend_labels == 'default':
+            legend_labels = [f'{x}-{y}' for x,y in zip(self.get_meas_ids,group_descriptions)]
+            legend_title = 'Measurement $n^o$'
+             
+        # Whether to compute the first derivative
+        if derivation:
+            pass  # to implement in future versions
+            #wanted_data = [x.reset_index() for x in wanted_data]
+            #wanted_data = [pd.concat([x.iloc[:,0], pd.DataFrame(np.gradient(x.iloc[:,1:], axis=0))], axis=1) for x in wanted_data]
+            #wanted_data = [x.set_index(x.columns.get_level_values(0)[0]) for x in wanted_data] 
+
+        
+        #return wanted_data
+        plotting.spectra(data=wanted_data, spectral_mode=spectral_mode, x_range=wl_range, colors=colors, fontsize_legend=legend_fontsize, legend_labels=legend_labels, legend_title=legend_title, title=title, fontsize=fontsize, derivation=derivation)
+      
+     
+    def make_report(self, folder_figures, folder_report:Optional[str] = 'cwd', type:Optional[str] = 'single', authors:Optional[str] = 'default'):
+
+        
+        all_figure_files = os.listdir(folder_figures)   
+
+        # Define the folder where the report should be saved
+        if folder_report == 'cwd':
+            folder_report = Path(os.getcwd())  
+        else:
+            if not Path(folder_report).exists():
+                print(f'The folder report you entered ({folder_report}) is not valid.')
+                return  
+            else:
+                folder_report = Path(folder_report) 
+
+        # Define some functions
         def generate_latex_table(df):
             table_rows = []
             for _, row in df.iterrows():
@@ -3496,8 +3605,8 @@ class MFT(object):
                     \\textbf{Date} & [objectDate] \\\\
                     \\textbf{Technique} & [technique] \\\\                                    
                     \\textbf{MFT group} & [MFTgroup] \\\\
-                    \\textbf{MFT spot} & [group_description] \\\\
-                    \\textbf{Material} & [group_material] \\\\
+                    \\textbf{MFT spot} & [spot_description] \\\\
+                    \\textbf{Material} & [spot_material] \\\\
                     \\textbf{BWSE} & [BWSE] \\\\
                     & \\\\
                     \\textbf{MFT device} & [device] \\\\
@@ -3521,9 +3630,9 @@ class MFT(object):
                     '[artist]' : metadata['object_creator'],   
                     '[objectDate]': str(metadata['object_date']),
                     '[technique]' : metadata['object_technique'].replace('_','-'),
-                    '[group_material]': metadata['group_material'].replace('_','-'),
+                    '[spot_material]': str(metadata['spot_components']),#.replace('_','-'),
                     '[NbAnalyses]': str(metadata['measurements_N']),  
-                    '[MFTgroup]': metadata['group'], 
+                    '[MFTgroup]': metadata['spot_group'], 
                     '[ill]': f'{metadata["illuminance_Ev_Mlx"]} Mlx',
                     '[irr]': f'{metadata["irradiance_Ee_W/m^2"]} W/m2',
                     '[Hv]': f'{metadata["exposureDose_Hv_Mlxh"]} Mlxh',
@@ -3531,7 +3640,7 @@ class MFT(object):
                     '[duration]': f'{np.int32(metadata["duration_min"])} min', 
                     '[device]' : metadata['device'].replace('_','-'),
                     '[lamp]': str(metadata['lamp_fading']),
-                    '[group_description]': metadata['group_description'],      
+                    '[spot_description]': metadata['spot_description'],      
                     '[spotSize]': f'{metadata["FWHM_micron"]} microns',
                     '[BWSE]': BWSE,
                     }
@@ -3568,12 +3677,83 @@ class MFT(object):
                 subprocess.run(['pdflatex', 'temp_report.tex'])
 
                 # Move generated PDF to output file                
-                subprocess.run(['mv', 'temp_report.pdf', f'{folder_report}/MFT_rapport-analysis_{id}_02.pdf'])
+                subprocess.run(['mv', 'temp_report.pdf', f'{folder_report}/MFT_rapport-analysis_{id}.pdf'])
 
                 # Clean up temporary .tex and auxiliary files
                 subprocess.run(['rm', 'temp_report.tex', 'temp_report.aux', 'temp_report.log'])
 
 
+    def make_table(self, parameters:Optional[list] = ['BWSE'], sort_by:Optional[str] = 'meas_id', title:Optional[str] = None, subtitle:Optional[str] = None):
+
+        wanted_parameters = ['meas_id'] + parameters
+
+        df_info = self.get_metadata(wanted_parameters).T.sort_values(by=[sort_by])
+
+        
+        my_table = (
+        GT(df_info)
+        .tab_header(
+            title=title,
+            subtitle=subtitle,            
+        )
+        .tab_style(
+            style=style.text(weight='bold', size='18px'),
+            locations=loc.column_header(),
+        ) 
+        .cols_align(align='center')      
+        )
+
+        return my_table
+    
+    
+    def read_files(self, sheets:Optional[list] = ['info', 'CIELAB', 'spectra']):
+        """Read the data files given as argument when defining the instance of the MFT class.
+
+        Parameters
+        ----------
+        sheets : Optional[list], optional
+            Name of the excel sheets to be selected, by default ['info', 'CIELAB', 'spectra']
+
+        Returns
+        -------
+        A list of list of pandas dataframes
+            The content of each input data file is returned as a list pandas dataframes (3 dataframes maximum, one dataframe per sheet). Ultimately, the function returns a list of list, so that when there are several input data files, each list - related a single file - corresponds to a single element of a list.            
+        """
+        
+        files = []        
+                
+        for file in self.files:
+            
+            df_info = pd.read_excel(file, sheet_name='info')
+            df_sp = pd.read_excel(file, sheet_name='spectra', header=[0,1], index_col=0)
+            df_cl = pd.read_excel(file, sheet_name='CIELAB', header=[0,1])                      
+
+
+            if sheets == ['info', 'CIELAB', 'spectra']:
+                files.append([df_info, df_cl, df_sp])
+
+            elif sheets == ['info']:
+                files.append([df_info])
+
+            elif sheets == ['CIELAB']:
+                files.append([df_cl])
+
+            elif sheets == ['spectra']:
+                files.append([df_sp])
+
+            elif sheets == ['spectra', 'CIELAB']:
+                files.append([df_sp, df_cl])
+
+            elif sheets == ['CIELAB','spectra']:
+                files.append([df_cl, df_sp])
+
+            elif sheets == ['info','CIELAB']:
+                files.append([df_info, df_cl])
+
+            elif sheets == ['info','spectra']:
+                files.append([df_info, df_sp])
+
+        return files
                 
 
     
