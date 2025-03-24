@@ -37,7 +37,7 @@ spot_info = [
     "spot_group",
     "spot_description",
     "spot_color",
-    "spot_components",
+    "spot_components",    
     "background",
     "spot_image",
     "other_analyses",
@@ -59,7 +59,8 @@ beam_info = [
 
 results_info = [
     "[RESULTS INFO]",
-    "BWSE",        
+    "BWSE",
+    "JND_Mlxh",
 ]
 
 template_default = {
