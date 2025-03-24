@@ -6,6 +6,9 @@ import os
 from ipywidgets import Layout
 import ipywidgets as ipw
 from IPython.display import display, clear_output
+import inspect
+import importlib
+from typing import get_origin, get_args, Union, Optional
 
 style = {"description_width": "initial"}
 
@@ -1288,6 +1291,112 @@ class DB:
         display(ipw.HBox([recording, button_record_output]))
 
     
+    def set_device_info(self):
+
+        existing_devices = list(self.get_devices()['Id'].values)
+
+        wg_id = ipw.Combobox(        
+            placeholder='Enter or select a device',
+            options=existing_devices,
+            description='Device ID',
+            ensure_option=True,
+            disabled=False,
+            style=style
+        )
+
+        wg_if_wavelengths = ipw.Checkbox(
+            value=False,
+            description='Set wavelengths',
+            disabled=False,
+            indent=False,
+            layout=Layout(width="10%", height="30px")
+        )
+        
+        wg_wavelengths = ipw.IntRangeSlider(
+            value=[100, 3000],
+            min=100,
+            max=3000,
+            step=1,
+            description='Wavelength range',
+            disabled=False,
+            continuous_update=False,
+            orientation='horizontal',
+            readout=True,
+            readout_format='d',
+            style=style,
+            layout=Layout(width="500px", height="30px")
+        )
+
+
+        recording = ipw.Button(
+            description='Record info',
+            disabled=False,
+            button_style='', # 'success', 'info', 'warning', 'danger' or ''
+            tooltip='Click me',            
+        )
+
+        button_record_output = ipw.Output()
+        wavelength_range_output = ipw.Output()
+
+
+        def change_if_wl(change):
+            if change.new == True:
+                with wavelength_range_output:
+                    wavelength_range_output.clear_output(wait=True)                    
+                    display(wg_wavelengths)
+
+            else:
+                with wavelength_range_output:
+                    wavelength_range_output.clear_output(wait=True) 
+
+
+
+        def button_record_pressed(b):
+            """
+            Save the device info in the db_config.json file.
+            """
+
+            button_record_output.clear_output(wait=True)
+
+            with open(self.config_file, "r") as f:
+                config = json.load(f)
+
+            
+            existing_info = config["devices"]
+            if wg_if_wavelengths.value == False:
+                wl_range = None
+            else:
+                wl_range = wg_wavelengths.value
+            
+            # Update config with user data
+            if len(existing_info) == 0:
+                existing_info[wg_id.value] = {'wl_range': wl_range}  
+
+            elif wg_id.value in list(existing_info.keys()):
+                
+                device_dic = existing_info[wg_id.value]
+                device_dic['wl_range'] = wl_range
+                
+
+            else:                      
+                existing_info[wg_id.value] = {'wl_range': wl_range}
+            
+            # Save the updated config back to the JSON file
+            with open(self.config_file, "w") as f:
+                json.dump(config, f, indent=4)
+
+            
+            with button_record_output:
+                print('Device info recorded in the db_config.json file.')
+
+        
+        recording.on_click(button_record_pressed)
+        wg_if_wavelengths.observe(change_if_wl, names='value')
+
+        display(ipw.VBox([wg_id, ipw.HBox([wg_if_wavelengths, wavelength_range_output])]))
+        display(ipw.HBox([recording, button_record_output]))
+    
+    
     def set_exposure_conditions(self):
 
         wg_illuminance = ipw.IntText(
@@ -1528,3 +1637,126 @@ class DB:
 
         display(ipw.VBox([wg_name, wg_acronym, wg_department, wg_address]))
         display(ipw.HBox([recording, button_record_output]))
+
+    
+    def set_report_figures(self):
+
+        # Dynamically import the module
+        module_mf = importlib.import_module('microfading')
+
+        # Get the class from the module
+        cls = getattr(module_mf, 'MFT', None)
+        if cls is None or not inspect.isclass(cls):
+            print(f"Class MFT not found in module microfading.")
+            return
+        
+        # Get all methods in the class
+        methods = inspect.getmembers(cls, predicate=inspect.isfunction)        
+        plot_methods = [x[0] for x in methods if 'plot_' in x[0]]
+
+        
+        # Mapping from Python types to ipywidgets
+        type_to_widget = {
+            bool: ipw.Checkbox,
+            int: ipw.IntText,
+            float: ipw.FloatText,
+            str: ipw.Text,
+        }
+        
+        # Create a dictionary to hold the widgets
+        widgets_dict = {}
+        
+        
+        # Iterate over each method and get its parameters
+        methods_dic = {}
+        for method_name, method in methods:            
+
+            if method_name in plot_methods:
+                sig = inspect.signature(method) 
+                #return sig               
+                params = list(sig.parameters.keys())[1:]
+                methods_dic[method_name] = params
+
+                param_type = sig.parameters.items()[1].annotation
+                param_name =  sig.parameters.items()[0]
+
+                # Resolve Optional and Union types
+                if get_origin(param_type) is Union:
+                    args = get_args(param_type)
+                    if type(None) in args:  # Handle Optional
+                        args = tuple(arg for arg in args if arg is not type(None))
+                    if len(args) == 1:
+                        param_type = args[0]
+                    else:
+                        # For Union types with multiple possibilities, choose a default
+                        param_type = args[0]  # You can customize this logic
+
+                if param_type in type_to_widget:
+                    widget_class = type_to_widget[param_type]
+                    widgets_dict[param_name] = widget_class(description=param_name)
+                else:
+                    # Default to Text widget if type is not mapped
+                    widgets_dict[param_name] = ipw.Text(description=param_name)
+        
+        wg_functions = ipw.Dropdown(
+            description= 'Plot functions',
+            value=plot_methods[0],
+            options=plot_methods,
+            style=style,
+            layout=Layout(width="20%", height="30px"),
+        )
+
+        wg_parameter = ipw.Dropdown(
+            description='Parameters',
+            value=methods_dic[wg_functions.value][0],
+            options=methods_dic[wg_functions.value],
+            style=style,
+        )
+
+        output_parameter_value = ipw.Output()
+        
+        wg_parameter_value = ipw.Text(
+            placeholder='Enter a value for the parameter',
+            style=style
+        )
+
+                
+        recording = ipw.Button(
+            description='Save configuration',
+            disabled=False,
+            button_style='', # 'success', 'info', 'warning', 'danger' or ''
+            tooltip='Click me',            
+        )
+
+        button_record_output = ipw.Output()
+
+        def change_function(change):
+            wg_parameter.options = methods_dic[change.new]
+            wg_parameter.value = methods_dic[change.new][0]
+
+        def change_parameter(change):
+
+            with output_parameter_value:
+                output_parameter_value.clear_output()
+                param_name = change['new']            
+                display(widgets_dict[param_name])
+        
+        def button_record_pressed(b):
+            """
+            Save the light dose unit in the db_config.json file.
+            """
+
+            button_record_output.clear_output(wait=True)
+
+        wg_functions.observe(change_function, names="value")
+        recording.on_click(button_record_pressed)
+
+        display(ipw.VBox([wg_functions]))
+        display(ipw.HBox([wg_parameter, output_parameter_value]))
+        display(ipw.HBox([recording, button_record_output]))
+
+
+        
+
+
+
