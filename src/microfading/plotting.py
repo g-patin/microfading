@@ -1,3 +1,4 @@
+import matplotlib.patches
 import pandas as pd
 import numpy as np
 import matplotlib
@@ -14,9 +15,9 @@ import os
 D65 = colour.CCS_ILLUMINANTS["cie_10_1964"]["D65"]
 
 labels_eq = {
-    'dE76': r'$\Delta E^*_{ab}$',
-    'dE94': r'$\Delta E^*_{94}$',
-    'dE00': r'$\Delta E^*_{00}$',         
+    'dE76': r'$\Delta E_{ab}$',
+    'dE94': r'$\Delta E_{94}$',
+    'dE00': r'$\Delta E_{00}$',         
     'dR_vis': r'$\Delta R_{vis}$',
     'dL*' : r'$\Delta L^*$',
     'da*' : r'$\Delta a^*$',
@@ -27,8 +28,12 @@ labels_eq = {
     'a*' : r'$a^*$',
     'b*' : r'$b^*$',
     'C*' : r'$C^*$',
-    'h' : r'$h$',          
+    'h' : r'$h$', 
+    'Hv': 'Exposure dose $H_v$ (Mlxh)',  
+    'He': 'Radiant Exposure $H_e$ (MJ/m²)',  
+    't' : 'Exposure duration (seconds)'     
 }
+
 
 x_labels = {
     'Hv': 'Exposure dose $H_v$ (Mlxh)',
@@ -114,6 +119,51 @@ def bars(data, stds=None, coordinate='dE00', colors=None, fontsize=24, legend_la
 
     plt.tight_layout()
     plt.show()
+
+
+def BWSE(data, frequency=False, bins=[1,2,3,4], figsize=(10,10), fontsize=24, title=None, title_fontsize=24, save=False, path_fig='cwd'):
+    
+    # set the aesthetics of the figure
+    sns.set_theme(font='serif', style='darkgrid', context='paper', palette='colorblind', font_scale=1)
+    
+    # create the figure
+    fig, ax = plt.subplots(1,1, figsize=figsize)
+
+    if frequency:
+
+        ax.hist(data, bins=bins, align='left')
+
+        ax.set_xlabel('BWS', fontsize=fontsize)
+        ax.set_ylabel('Number of MFT analyses', fontsize=fontsize)
+
+        ax.set_xticks([1,2,3,4,5])
+    
+    else:
+
+        x = data[0]
+        y = data[1]
+
+        ax.bar(x,y)
+
+        ax.set_xlabel('Samples', fontsize=fontsize)
+        ax.set_ylabel('BWSE values', fontsize=fontsize)
+    
+    ax.set_title(title, fontsize=title_fontsize)
+    
+    ax.xaxis.set_tick_params(labelsize=fontsize)
+    ax.yaxis.set_tick_params(labelsize=fontsize)
+
+    plt.tight_layout()
+
+    if save == True:
+        if path_fig == 'cwd':
+            path_fig = f'{os.getcwd()}/BWSE.png'                
+                
+        fig.savefig(path_fig,dpi=300, facecolor='white')  
+
+    plt.show()
+
+
 
 
 def CIELAB(data, stds=None, colors=None, fontsize=24, legend_labels=[], title=None, title_fontsize=24, line=False, legend_position='in', legend_fontsize=20, legend_title='', save=False, path_fig='cwd', start_value=False, dE=False, obs_ill=None, return_data=False, *args, **kwargs):
@@ -768,7 +818,7 @@ def swatches_circle(data, data_type:Optional[str] = 'Lab', orientation:Optional[
 
         if orientation == 'horizontal':
 
-            fig, ax = plt.subplots(1,1, figsize=((N-1)*5))   
+            fig, ax = plt.subplots(1,1, figsize=((N)*5,6))   
         
             ax.set_facecolor((background_grey,background_grey,background_grey))
             fig.patch.set_facecolor((background_grey, background_grey, background_grey))
@@ -859,9 +909,6 @@ def swatches_circle(data, data_type:Optional[str] = 'Lab', orientation:Optional[
                 ax_top.yaxis.set_tick_params(labelsize=fontsize) 
                 ax_top.spines['right'].set_visible(False) 
 
-
-
-
         
         ax.spines['top'].set_visible(False)
         ax.spines['right'].set_visible(False)
@@ -881,3 +928,110 @@ def swatches_circle(data, data_type:Optional[str] = 'Lab', orientation:Optional[
             fig.savefig(path_fig,dpi=300, facecolor=(background_grey, background_grey, background_grey)) 
         
         plt.show()
+
+
+def swatches_rectangle(data, data_type:Optional[str] = 'Lab', labels:Optional[list] = [], bottom_scale:Optional[str] = 'JND', top_labels:Optional[dict] = None, fontsize: Optional[int] = 24, side_annotations:Optional[tuple] = ('',''), colorbar:Optional[bool] = False, save:Optional[bool] = False, path_fig:Optional[str] = 'cwd', title:Optional[str] = None, background_grey: Optional [float] = 0.85): 
+
+    
+    if data_type.lower() == 'lab':          
+        data_srgb = [(colour.XYZ_to_sRGB(colour.Lab_to_XYZ(x[0]), D65).clip(0, 1), colour.XYZ_to_sRGB(colour.Lab_to_XYZ(x[1]), D65).clip(0, 1)) for x in data]
+    else:
+        data_srgb = data
+
+    # Number of data
+    N = len(data_srgb)   
+          
+    # Length of each colour swatch
+    L_sw = (1 - ((N+1)*0.05)) / N
+    
+    i = 0
+    j = 0.05 + (L_sw/2)
+
+    # Define empty labels
+    if len(labels) == 0:
+        labels = [''] * len(data)
+
+    # Define the figure
+    fig, ax = plt.subplots(1,1, figsize=((N)*5,6))        
+    ax.set_facecolor((background_grey,background_grey,background_grey))
+    fig.patch.set_facecolor((background_grey, background_grey, background_grey))
+    
+    # Empty dict to record the x-axis tick positions 
+    positions_ticks = []
+
+    # Plot each data
+    for srgb, label in zip(data_srgb, labels):
+
+        cp_1 = matplotlib.patches.Rectangle((0.05+i, 0.5), L_sw, 0.5, color=srgb[0])
+        cp_2 = matplotlib.patches.Rectangle((0.05+i, 0), L_sw, 0.5, color=srgb[1])
+        positions_ticks.append(j)
+        
+        i = i + 0.05 + L_sw
+        j = j + (0.05 + L_sw)
+
+        ax.add_patch(cp_1)
+        ax.add_patch(cp_2)
+        
+    
+    # Set the bottom xticks and label
+    ax.xaxis.set_ticks_position(position='bottom')     
+    ax.set_xticks(positions_ticks)      
+    ax.set_xticklabels(labels)
+    ax.xaxis.set_tick_params(labelsize=fontsize) 
+    ax.set_xlabel('Samples', fontsize=fontsize)
+
+    
+    # Remove the yticks
+    ax.set_yticks([])
+    
+    
+    # Add a dash line on the left side     
+    ax.axhline(0.5, xmin=0, xmax=0.04, ls='--', color='k')
+
+    
+    # Insert text on the left side
+    top_text = side_annotations[0]
+    ax.annotate(text=top_text, xy=(0.01,0.76) , rotation=90, va='center', fontsize=fontsize-2)
+    
+    bottom_text = side_annotations[1]
+    ax.annotate(text=bottom_text, xy=(0.01,0.25) , rotation=90, va='center', fontsize=fontsize-2)
+
+    # Whether to add a title
+    ax.set_title(title, fontsize=fontsize+2, y=1.21)
+    
+    # Remove the grid
+    ax.grid(False)
+
+    
+    # Configure the top labels
+    if top_labels != None:
+        ax_top = ax.secondary_xaxis('top')
+        ax_top.set_xlabel(labels_eq[list(top_labels.keys())[0]], fontsize=fontsize)
+        ax_top.set_xticks(positions_ticks) 
+        ax_top.set_xticklabels(list(top_labels.values())[0])
+        ax_top.xaxis.set_tick_params(labelsize=fontsize) 
+        ax_top.spines['top'].set_visible(False)     
+        
+    
+    # Configure the axes spines
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+    ax.spines['bottom'].set_visible(False)
+    ax.spines['left'].set_visible(False)
+
+    
+    # Optional: Add a custom legend for basic colors
+    if colorbar:
+        basic_colors = ['red', 'green', 'blue', 'cyan', 'magenta', 'yellow', 'black', 'white']
+        for i, color in enumerate(basic_colors):
+            rect = matplotlib.patches.Rectangle((0.975, 0.1+i/10), 0.024, 0.1, facecolor=color, edgecolor='black')
+            ax.add_patch(rect)
+
+    
+    plt.tight_layout()
+            
+    # Whether to save the figure
+    if save == True:        
+        fig.savefig(path_fig,dpi=300, facecolor=(background_grey, background_grey, background_grey)) 
+        
+    plt.show()
