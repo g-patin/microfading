@@ -30,7 +30,7 @@ dependencies = [
     "openpyxl",
     "jupyterlab",
     "xarray",
-    "ipywidgets",
+    "ipywidgets",    
 ]
 
 [project.urls]
@@ -41,5 +41,5 @@ Homepage = "https://github.com/g-patin/microfading"
 where = ["src"]
 
 [tool.setuptools.package-data]
-microfading = ['datasets/*', '*.json', '*.png', '*.tex']
+microfading = ['datasets/*', 'report_templates/*','*.json', '*.png', '*.tex']
 
