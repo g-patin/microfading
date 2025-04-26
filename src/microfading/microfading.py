@@ -25,10 +25,12 @@ from IPython.display import display, clear_output
 import subprocess
 from PIL import Image
 from great_tables import GT, md, style, loc
+import math
+import msdb
 
 # underlying modules of the  microfading package
 from . import plotting
-from . import databases
+from . import config
 from . import process_rawfiles
 
 ####### DEFINE GENERAL PARAMETERS #######
@@ -182,439 +184,88 @@ def get_datasets(MFT:Optional[str] = 'fotonowy', rawfiles:Optional[bool] = False
              file_paths.append(data_file)
 
 
-    return file_paths
-   
-
-def create_DB(folder:str):
-    """Initiate the creation of databases.
-
-    Parameters
-    ----------
-    folder : str
-        Absolute path of the folder where the databases will be stored.
-
-    Returns
-    -------
-        It creates two empty databases as .csv file (DB_projects.csv and DB_objects.csv), as well as six .txt files in the folder given as input.
-    """
-
-    # instantiate a DB class object and then use the create_db function
-    DB = databases.DB()
-    DB.create_db(folder_path=folder)
+    return file_paths   
 
 
-def get_objects(project_id:Union[str,list] = 'all'):
-    """Retrieve object Id numbers according to project Id.
+def get_config(key:Optional[str] = 'all'):
+    """Retrieve the content of the config_info.json file
 
     Parameters
     ----------
-    project_id : Union[str,list], optional
-        The Id number of projects for which the objects should be retrieved, by default 'all'
-        You can enter a string if there is only a single project, or a list of strings if there are several projects.
-        When 'all', it returns all the objects registered in the DB_objects.csv
+    key : Optional[str], optional
+        Give you the possibility to retrieve a specific category of information, by default 'all'
+        One can enter a key value among the following list: ['colorimetry', 'databases', 'devices', 'exposure', 'filters', 'functions', 'lamps', 'light_dose', 'institution', 'report_figures']
 
     Returns
     -------
-    a dictionary
-        It returns a dictionary where the keys are the project Id number and the values are the object Id number given inside a list. If there is only one project id, then it directly returns the list of objects.
+    dict
+        It returns the information inside a dictionary.
     """
-    # instantiate a DB class object
-    DB = databases.DB() 
-
-    db_objects = DB.get_db(db='objects')
-    projects_objects = {}
-
-    if project_id == 'all':
-        pass
-    elif isinstance(project_id, str):
-        project_id = [project_id]
-        db_objects = db_objects[db_objects['project_id'].isin(project_id)]
-    elif isinstance(project_id, list):
-        db_objects = db_objects[db_objects['project_id'].isin(project_id)]
-    
-    project_ids = sorted(set(db_objects['project_id'].values))
-    for Id in project_ids:
-        df_project = db_objects[db_objects['project_id'] == Id]
-        objects = sorted(set(df_project['object_id'].values))
-        projects_objects[Id] = objects   
-
-    if len(project_id) == 1:
-        projects_objects = projects_objects[project_id[0]]
-
-    return projects_objects
+    return config.get_config_info(key=key)
 
 
-def get_creators():
-    """Retrieve the list of object creators that have been registered in the object_creators.txt file
+def get_config_path():
+    """Retrieve the absolute path of the config_info.json file.   
+    """
+    return config.get_config_path()
+
+
+def get_colorimetry_info():
+    """Retrieve the colorimetric information (observer and illuminant) recorded in the config_info.json file of the microfading package.
 
     Returns
     -------
-    pandas dataframe
-        It returns the list of creators inside a pandas dataframe with two columns: 'surname', 'name'
-    """
-    
-    DB = databases.DB()
-    return DB.get_creators()
+    pandas dataframe or string
+        It returns the information inside a dataframe if they have been recorded.
+    """    
+    return config.get_colorimetry_info()
 
 
-def get_DB(db:Optional[str] = 'all'):
-    """Retrieve the databases
-
-    Parameters
-    ----------
-    db : Optional[str], optional
-        Choose which databases to retrieve, by default 'all'
-        When 'projects', it returns the DB_projects.csv file
-        When 'objects', it returns the DB_objects.csv file
-        When 'all', it returns both file as a tuple
-
-    Returns
-    -------
-    pandas dataframe or tuple
-        It returns the databases as a pandas dataframe or a tuple if both dataframes are being asked.
-    """
-
-    # instantiate a DB class object and return the databases if they exist.
-    DB = databases.DB()
-    return DB.get_db(db=db)
-
-
-def get_DB_config():
-    """Retrieve the configuration info related to the databases
-
-    Returns
-    -------
-    It returns a dictionary with the configuration info    
-    """
-
-    DB = databases.DB() 
-    return DB.get_db_config()
-
-
-def get_DB_path():
-    """Retrieve the absolute path of the folder where the databases are located.
-
-    Returns
-    -------
-    string or None
-        If dabases have been created, it will return the absolute path as a string. Otherwise, it will only print a statement indicating no databases were found.    
-    """
-
-    DB = databases.DB()
-    return DB.get_db_path()
-
-
-def get_institutions():
-    """Retrieve the list of institutions that have been registered in the institutions.txt file. These institutions are the owner of the objects on which the microfading analyses were performed.
-
-    Returns
-    -------
-    pandas dataframe
-        It returns the list of institutions inside a pandas dataframe with two columns: 'name', 'acronym'
-    """
-
-    DB = databases.DB()
-    return DB.get_institutions()
-
-
-def get_persons():
-    """Retrieve the list of persons that have been registered in the persons.txt file. These persons are the one related to the creation of the microfading files.
-
-    Returns
-    -------
-    pandas dataframe
-        It returns the list of persons inside a pandas dataframe with three columns: 'name', 'surname', 'initials'
-    """
-
-    DB = databases.DB()
-    return DB.get_persons()
-
-
-def get_devices():
-    """Retrieve the list of microfading devices that have been registered in the MFT_devices.txt file.
+def get_devices_info():
+    """Retrieve the configuration information related to the devices.
 
     Returns
     -------
     pandas dataframe
         It returns the list of devices inside a pandas dataframe with four columns: 'Id', 'name', 'description', 'process_function'
-    """
-
-    DB = databases.DB()    
-    return DB.get_devices()
-
-
-def get_colorimetry_info():
-    """Retrieve the colorimetric information (observer and illuminant) recorded in the db_config.json file of the microfading package.
-
-    Returns
-    -------
-    pandas dataframe or string
-        It returns the information inside a dataframe if they have been recorded.
-    """
-
-    DB = databases.DB()    
-    return DB.get_colorimetry_info()
+    """    
+    return config.get_devices_info()
 
 
 def get_exposure_conditions():
-    """Retrieve the exposure lighting conditions recorded in the db_config.json file of the microfading package.
+    """Retrieve the exposure lighting conditions recorded in the config_info.json file of the microfading package.
 
     Returns
     -------
     pandas dataframe or string
         It returns the information inside a dataframe if they have been recorded.
-    """
-
-    DB = databases.DB()    
-    return DB.get_exposure_conditions()
+    """   
+    return config.get_exposure_conditions()
 
 
-def get_light_dose_info():
-    """Retrieve the light dose info recorded in the db_config.json file of the microfading package.
-
-    Returns
-    -------
-    pandas dataframe or string
-        It returns the information inside a dataframe if they have been recorded.
-    """
-
-    DB = databases.DB()    
-    return DB.get_light_dose_info()
-
-
-def get_white_standards():
-    """Retrieve the list of white standard references that have been registered in the white_standards.txt file.
+def get_institution_info():
+    """Retrieve the information related to the institution that performed the microfading analysis.
 
     Returns
     -------
     pandas dataframe
-        It returns the list of references inside a pandas dataframe with two columns: 'Id', 'description'
-    """
-
-    DB = databases.DB()    
-    return DB.get_white_standards()
-
-
-def add_new_creator():
-    """Record a new object creator inside the object_creators.txt file.
-    """
-
-    DB = databases.DB()    
-    return DB.add_new_creator()
-
-
-def add_new_institution():
-    """Record a new institution inside the institutions.txt file.
-    """
-
-    DB = databases.DB()    
-    return DB.add_new_institution()
-
-
-def add_new_project():
-    """Record the information about a new project inside the DB_projects.csv file.
-    """
-
-    DB = databases.DB()    
-    return DB.add_new_project()
-
-
-def add_new_object():
-    """Record the information about a new object inside the DB_objects.csv file.
-    """
-
-    DB = databases.DB()    
-    return DB.add_new_object()
-
-
-def add_new_person():
-    """Record the information of a new person inside the pesons.txt file.
-    """
-
-    DB = databases.DB()    
-    return DB.add_new_person()
-
-
-def update_DB_objects(new: str, old:Optional[str] = None):
-    """Add a new column or modify an existing one in the DB_objects.csv file.
-
-    Parameters
-    ----------
-    new : str
-        value of the new column
-
-    old : Optional[str], optional
-        value of the old column to be replaced, by default None        
+        It returns the institution info inside a pandas dataframe.
     """    
-
-    DB = databases.DB()
-    DB.update_db_objects(new=new, old=old) 
+    return config.get_institution_info()
 
 
-def update_DB_projects(new: str, old:Optional[str] = None):
-    """Add a new column or modify an existing one in the DB_projects.csv file.
+def get_light_dose_info():
+    """Retrieve the light dose info recorded in the config_info.json file of the microfading package.
 
-    Parameters
-    ----------
-    new : str
-        value of the new column
-        
-    old : Optional[str], optional
-        value of the old column to be replaced, by default None        
-    """
-
-    DB = databases.DB()
-    DB.update_db_projects(new=new, old=old) 
+    Returns
+    -------
+    pandas dataframe or string
+        It returns the information inside a dataframe if they have been recorded.
+    """       
+    return config.get_light_dose_info()
 
 
-def add_devices():
-    """
-    Register microfading devices.
-    """
-
-    DB = databases.DB()
-
-    style = {"description_width": "initial"}
-    MFT_process_functions = ['MFT_fotonowy']
-    
-    # Define ipython widgets
-    nb_widget = ipw.Text(        
-        value='',
-        placeholder='Id number of the device or just a number',
-        description='Id',
-        style=style,               
-    )
-
-    name_widget = ipw.Text(        
-        value='',
-        placeholder='One word description',
-        description='Name',
-        style=style,               
-    )
-
-    description_widget = ipw.Text(        
-        value='',
-        placeholder='One line device description',
-        description='Description',
-        style=style,               
-    )
-
-    MFT_function_widget = ipw.Dropdown(        
-        value=MFT_process_functions[0],
-        options=MFT_process_functions,
-        description='Process function name',
-        style=style,               
-    )
-
-    registering = ipw.Button(
-        description='Register the device',
-        disabled=False,
-        button_style='', # 'success', 'info', 'warning', 'danger' or ''
-        tooltip='Click me', 
-        style=style,           
-    )      
-
-    button_record_output = ipw.Output()
-
-    def button_record_pressed(b):
-        """
-        Save the device info in the MFT_devices.txt file.
-        """
-
-        button_record_output.clear_output(wait=True)
-
-        device_id = nb_widget.value.strip()
-        device_name = name_widget.value.strip()
-        device_description = description_widget.value.strip()
-        MFT_function = MFT_function_widget.value.strip()
-
-        df_devices = pd.read_csv(f'{DB.folder_db}/MFT_devices.txt')
-        device_Ids = df_devices['Id'].values
-
-        if device_id not in device_Ids:
-
-            df_devices = pd.concat([df_devices, pd.DataFrame(data=[device_id,device_name,device_description,MFT_function], index=['Id','name','description','process_function']).T])
-            df_devices.to_csv(f'{DB.folder_db}/MFT_devices.txt', index=False)
-
-            with button_record_output:
-                print(f'Device registered in the following file: {DB.folder_db}/MFT_devices.txt')
-
-        else:
-            with button_record_output:
-                print('The Id number you entered is already assigned to another device. Please choose another Id number.')
-            
-
-    registering.on_click(button_record_pressed)
-
-    display(ipw.VBox([nb_widget,name_widget,description_widget,MFT_function_widget]))
-    display(ipw.HBox([registering,button_record_output]))
-
-
-def add_references():
-    """
-    Register white standard references.
-    """
-
-    DB = databases.DB()
-    style = {"description_width": "initial"}
-
-    # Define ipython widgets
-    nb_widget = ipw.Text(        
-        value='',
-        placeholder='Id number of the item or just a number',
-        description='Id',               
-    )
-
-    description_widget = ipw.Text(        
-        value='',
-        placeholder='One line device description',
-        description='Description',               
-    )   
-
-    registering = ipw.Button(
-        description='Register the item',
-        disabled=False,
-        button_style='', # 'success', 'info', 'warning', 'danger' or ''
-        tooltip='Click me', 
-        style=style,           
-    )      
-
-    button_record_output = ipw.Output()
-
-    def button_record_pressed(b):
-        """
-        Save the reference info in the white_standards.txt file.
-        """
-
-        button_record_output.clear_output(wait=True)
-
-        reference_id = nb_widget.value.strip()        
-        reference_description = description_widget.value.strip()
-        
-
-        df_references = pd.read_csv(f'{DB.folder_db}/white_standards.txt')
-        reference_Ids = df_references['Id'].values
-
-        if reference_id not in reference_Ids:
-
-            df_references = pd.concat([df_references, pd.DataFrame(data=[reference_id,reference_description], index=['Id','description']).T])
-            df_references.to_csv(f'{DB.folder_db}/white_standards.txt', index=False)
-
-            with button_record_output:
-                print(f'Item registered in the following file: {DB.folder_db}/white_standards.txt')
-
-        else:
-            with button_record_output:
-                print('The Id number you entered is already assigned to another white reference. Please choose another Id number.')
-            
-
-    registering.on_click(button_record_pressed) 
-
-    display(ipw.VBox([nb_widget,description_widget]))
-    display(ipw.HBox([registering,button_record_output]))
-
-
-def process_rawdata(files: list, device: str, filenaming:Optional[str] = 'none', folder:Optional[str] = '.', db:Optional[bool] = 'default', comment:Optional[str] = '', authors:Optional[str] = 'XX', white_standard:Optional[str] = 'default', interpolation:Optional[str] = 'default', step:Optional[float | int] = 0.1, observer:Optional[str] = 'default', illuminant:Optional[str] = 'default', delete_files:Optional[bool] = True, return_filename:Optional[bool] = True):
+def process_rawdata(files: list, device: str, filenaming:Optional[str] = 'none', folder:Optional[str] = '.', db:Optional[bool] = 'default', comment:Optional[str] = '', authors:Optional[str] = 'XX', white_standard:Optional[str] = 'default', interpolation:Optional[str] = 'default', step:Optional[float | int] = 0.1, observer:Optional[str] = 'default', illuminant:Optional[str] = 'default', background:Optional[str] = 'black', delete_files:Optional[bool] = True, return_filename:Optional[bool] = True):
     """Process the microfading raw files created by the software that performed the microfading analysis. 
 
     Parameters
@@ -673,118 +324,112 @@ def process_rawdata(files: list, device: str, filenaming:Optional[str] = 'none',
         It returns an excel file composed of three tabs (info, CIELAB, spectra).
     """
     
-    # Load the databases function and config file
-    DB = databases.DB()
-    db_config = DB.get_db_config()
+    # Load the config_info file    
+    config_info = config.get_config_info()
     
     
     # Set the db value
     if db == 'default':
-        if len(db_config['databases']) == 0:
+        if len(config_info['databases']) == 0:
             db = False            
         else:
-            db = DB.get_db_config()['databases']['usage']
+            db = config_info['databases']['usage']
             
 
     # Set the observer value
     if observer == 'default':        
-        if len(db_config['colorimetry']) == 0:
+        if len(config_info['colorimetry']) == 0:
             observer = '10deg'
         else:
-            observer = DB.get_colorimetry_info().loc['observer'].values[0]
+            observer = config.get_colorimetry_info().loc['observer'].values[0]
 
     
     # Set the illuminant value
     if illuminant == 'default':
-        if len(db_config['colorimetry']) == 0:
+        if len(config_info['colorimetry']) == 0:
             illuminant = 'D65'
         else:
-            illuminant = DB.get_colorimetry_info().loc['illuminant'].values[0]
+            illuminant = config.get_colorimetry_info().loc['illuminant'].values[0]
 
 
     # Set the interpolation value
     if interpolation == 'default':
-        if len(db_config['light_dose']) == 0:
+        if len(config_info['light_dose']) == 0:
             interpolation = 'He'
         else:
-            interpolation = DB.get_light_dose_info().loc['unit'].values[0].split('_')[0]
+            interpolation = config.get_light_dose_info().loc['unit'].values[0].split('_')[0]
       
     
     # Set the white reference value
     if white_standard == 'default':
-        if len(db_config['colorimetry']) == 0:
+        if len(config_info['colorimetry']) == 0:
             white_standard = 'default'
         else:
-            white_standard = DB.get_colorimetry_info().loc['white_standard'].values[0]  
+            white_standard = config.get_colorimetry_info().loc['white_standard'].values[0]  
     
-    # Run the process_rawfiles function according to the microfading device
-    if "_" in device:
-        device_type = device.split('_')[0]
-        device_nb = device.split('_')[1]
 
-        if device_type.lower() == 'fotonowy':
-            return process_rawfiles.MFT_fotonowy(files=files, filenaming=filenaming, folder=folder, db=db, comment=comment, device_nb=device_nb, authors=authors, white_standard=white_standard, interpolation=interpolation, step=step, observer=observer, illuminant=illuminant, delete_files=delete_files, return_filename=return_filename)
-        
-        elif device_type == 'sMFT':
-            print('in construction !!')
-            return
-        
+    # Retrieve the process function
+    if device.lower() in ['fotonowy', 'smft', 'stereo']:
+        process_function = device.lower()
+
     else:
-        device_nb = 'default'
-        if device.lower() == 'fotonowy':            
-            return process_rawfiles.MFT_fotonowy(files=files, filenaming=filenaming, folder=folder, db=db, comment=comment, device_nb=device_nb, authors=authors, white_standard=white_standard, interpolation=interpolation, step=step, observer=observer, illuminant=illuminant, delete_files=delete_files, return_filename=return_filename) 
+        process_function = config_info['devices'][device]['process_function']
+    
+    
+    # Run the process_rawfiles function
+    if 'fotonowy' in process_function:
+
+        return process_rawfiles.MFT_fotonowy(files=files, filenaming=filenaming, folder=folder, db=db, comment=comment, device_nb=device, authors=authors, white_standard=white_standard, interpolation=interpolation, step=step, observer=observer, illuminant=illuminant, background=background, delete_files=delete_files, return_filename=return_filename)
+
+    
+def reset_config():
+    """Reset the content of config_info.json to its initial state, i.e. all empty dictionaries.  
+    """
+    return config.reset_config()
 
 
 def set_colorimetry_info():
-    """Record the colorimetric information (observer and illuminant) in the db_config.json file of the microfading package.
+    """Record the colorimetric information (observer, illuminant, white standard) in the config_info.json file of the microfading package.
     """
-
-    DB = databases.DB()
-    return DB.set_colorimetry_info()
+    return config.set_colorimetry_info()
 
 
-def set_device_info():
-    """Record the device info in the db_config.json file of the microfading package.
+def set_devices_info():
+    """Record the device info in the config_info.json file of the microfading package.
     """
-
-    DB = databases.DB()
-    return DB.set_device_info()
+    return config.set_devices_info()
 
 
 def set_exposure_conditions():
-    """Record the exposure lighting conditions in the db_config.json file of the microfading package.
+    """Record the exposure lighting conditions in the config_info.json file of the microfading package.
     """
-
-    DB = databases.DB()
-    return DB.set_exposure_conditions()
+    return config.set_exposure_conditions()
     
 
 def set_DB(folder_path:Optional[str] = '', use:Optional[bool] = True):
-    """Record the databases info in the db_config.json file of the microfading package.
+    """Record the databases info in the config_info.json file of the microfading package.
     """
-
-    DB = databases.DB()
-    return DB.set_db(folder_path=folder_path, use=use)
-
+    return config.set_db(folder_path=folder_path, use=use)
+    
 
 def set_light_dose():
-    """Record the unit of the light dose in the db_config.json file of the microfading package.
-    """
-
-    DB = databases.DB()
-    return DB.set_light_dose()
+    """Record the unit of the light dose in the config_info.json file of the microfading package.
+    """    
+    return config.set_light_dose()
 
 
 def set_institution_info():
+    """Set the information regarding your institution. As a user of the microfading package, you can enter information regarding your professional environment. These information will be automatically added in the microfading data file and inside the reports.
 
-    DB = databases.DB()
-    return DB.set_institution_info()
+    Returns
+    -------
+    It returns several ipywdigets where you can enter the information regarding your professional environment.
+    """
+    return config.set_institution_info()
 
 
 def set_report_figures():
-    
-    DB = databases.DB()
-    return DB.set_report_figures()
+    return config.set_report_figures()
 
 
 
@@ -966,7 +611,7 @@ class MFT(object):
         selected_data = [x.set_index(x.columns[0]) for x in selected_data]
         
         # Define the fitting equation and bounds
-        config_functions = get_DB_config()['functions']
+        config_functions = get_config()['functions']
         existing_equations = list(config_functions.keys())
         
         if equation in existing_equations:
@@ -2281,26 +1926,24 @@ class MFT(object):
         pandas dataframe
             It returns the sRGB values inside a dataframe where each column corresponds to a single file.
         """
-
-        DB = databases.DB()
-
+        
         
         # Set the observer value
         if observer == 'default':
-            if len(DB.get_colorimetry_info()) == 0:
+            if len(config.get_colorimetry_info()) == 0:
                 observer = '10deg'
             else:
-                observer = DB.get_colorimetry_info().loc['observer']['value']
+                observer = config.get_colorimetry_info().loc['observer']['value']
 
         else:
             observer = f'{str(observer)}deg'
 
         # Set the illuminant value
         if illuminant == 'default':
-            if len(DB.get_colorimetry_info()) == 0:
+            if len(config.get_colorimetry_info()) == 0:
                 illuminant = 'D65'
             else:
-                illuminant = DB.get_colorimetry_info().loc['illuminant']['value']
+                illuminant = config.get_colorimetry_info().loc['illuminant']['value']
         
         
         # Get colorimetric data related to the standard observer
@@ -2395,14 +2038,12 @@ class MFT(object):
             It returns the XYZ values inside a dataframe where each column corresponds to a single file.
         """
 
-        DB = databases.DB()
-
         # Set the observer value
         if observer == 'default':
-            if len(DB.get_colorimetry_info()) == 0:
+            if len(config.get_colorimetry_info()) == 0:
                 observer = '10deg'
             else:
-                observer = DB.get_colorimetry_info().loc['observer']['value']
+                observer = config.get_colorimetry_info().loc['observer']['value']
 
         else:
             observer = f'{str(observer)}deg'
@@ -2410,10 +2051,10 @@ class MFT(object):
 
         # Set the illuminant value
         if illuminant == 'default':
-            if len(DB.get_colorimetry_info()) == 0:
+            if len(config.get_colorimetry_info()) == 0:
                 illuminant = 'D65'
             else:
-                illuminant = DB.get_colorimetry_info().loc['illuminant']['value']               
+                illuminant = config.get_colorimetry_info().loc['illuminant']['value']               
         
         
         # Get colorimetric data related to the standard observer
@@ -2482,14 +2123,14 @@ class MFT(object):
         pandas dataframe
             It returns the xy values inside a dataframe where each column corresponds to a single file.
         """
-        DB = databases.DB()
+        
 
         # Set the observer value
         if observer == 'default':
-            if len(DB.get_colorimetry_info()) == 0:
+            if len(config.get_colorimetry_info()) == 0:
                 observer = '10deg'
             else:
-                observer = DB.get_colorimetry_info().loc['observer']['value']
+                observer = config.get_colorimetry_info().loc['observer']['value']
 
         else:
             observer = f'{str(observer)}deg'
@@ -2497,10 +2138,10 @@ class MFT(object):
 
         # Set the illuminant value
         if illuminant == 'default':
-            if len(DB.get_colorimetry_info()) == 0:
+            if len(config.get_colorimetry_info()) == 0:
                 illuminant = 'D65'
             else:
-                illuminant = DB.get_colorimetry_info().loc['illuminant']['value']               
+                illuminant = config.get_colorimetry_info().loc['illuminant']['value']               
         
         
         # Get colorimetric data related to the standard observer
@@ -2564,7 +2205,7 @@ class MFT(object):
                 self.plot_delta()
 
   
-    def plot_bars(self, BWS_lines:Optional[bool] = True, coordinate:Optional[str] = 'dE00', dose_unit:Optional[str] = 'Hv', dose_value:Union[int, float] = 0.5, xlabels:Union[str, list] = 'default', fontsize:Optional[int] = 24, rotate_xlabels:Optional[int] = 0, position_xlabels:Optional[str] = 'center', position_text:Optional[tuple] = (0.03,0.92), colors:Union[str,float,list]=None, save:Optional[bool] = False, path_fig:Optional[str] = 'cwd'):
+    def plot_bars(self, BWS_lines:Optional[bool] = True, coordinate:Optional[str] = 'dE00', dose_unit:Optional[str] = 'Hv', dose_value:Union[int, float] = 0.5, xlabels:Union[str, list] = 'default', group_objects:Optional[bool] = False, fontsize:Optional[int] = 24, rotate_xlabels:Optional[int] = 0, position_xlabels:Optional[str] = 'center', position_text:Optional[tuple] = (0.03,0.92), colors:Union[str,float,list]=None, save:Optional[bool] = False, path_fig:Optional[str] = 'cwd'):
         """Plot a bar graph of a given colorimetric coordinate for a given light dose value.
 
         Parameters
@@ -2646,7 +2287,12 @@ class MFT(object):
         elif isinstance(colors, float):
             colors = [str(colors)] * len(self.files)
               
+        # Define the objects ID
+        object_ids = self.get_metadata(labels='object_id').values
 
+        # Define the object name
+        object_names = self.get_metadata(labels='object_name').values
+        
         # Gather the data and relevant info inside a dataframe
         all_data = self.get_cielab(coordinates=[coordinate], dose_unit=dose_unit, dose_values=dose_value)
         cl_data = [x.iloc[0].values[0] for x in all_data]
@@ -2657,11 +2303,12 @@ class MFT(object):
             'y_std': cl_data_std, 
             'xlabels': xlabels,
             'type': self.get_metadata(labels='object_type').values,
-            'name': self.get_metadata(labels='object_name').values,
+            'name': object_ids,
+            'objectID':self.get_metadata(['object_id']).values[0],
             'colors': colors
         }
         
-        df_data = pd.DataFrame.from_dict(plot_data)
+        df_data = pd.DataFrame.from_dict(plot_data)        
         
         
         # Create the plot
@@ -2672,11 +2319,13 @@ class MFT(object):
             
             df_BWS = df_data[df_data['type'] == 'BWS']
             df_data = df_data[df_data['type'] != 'BWS']
-
-            ls_dic = {'BW1':'-','BW2':'--','BW3':'-.','BW4':':'}
+            object_ids = df_data['objectID'].values
+            
+            ls_dic = {'BW1':'-','BW2':'--','BW3':'-.','BW4':':', 'BWS0028':'-','BWS0029':'--','BWS0030':'-.','BWS0031':':'}
             
             for col in df_BWS.T.columns:
                 data_BWS = df_BWS.T[col]
+                
                 ax.axhline(data_BWS['y'], color='blue', ls =ls_dic[data_BWS['name']], label=data_BWS['name'])
                 ax.axhspan(ymin=data_BWS['y']-data_BWS['y_std'], ymax=data_BWS['y']+data_BWS['y_std'], alpha=0.5, color='0.75', ec='none')        
         
@@ -2689,7 +2338,61 @@ class MFT(object):
         else:
             colors = df_data['colors']
 
-        ax.bar(x=x, height=df_data['y'], yerr=df_data['y_std'], capsize=5, color=colors, edgecolor='none')
+        if not group_objects: 
+            ax.bar(x=x, height=df_data['y'], yerr=df_data['y_std'], capsize=5, color=colors, edgecolor='none')
+
+        else:
+
+            i = 1
+            x_ticks = []
+            labels = []
+
+            
+            for obj in sorted(set(object_ids)):
+
+                df_obj = df_data.query(f'objectID == "{obj}"')
+                
+
+                y_values = df_obj['y'].values
+                meas_ids = df_obj['xlabels'].values
+                srgb_values = df_obj['colors'].values
+                
+                labels_obj = []
+                N = len(meas_ids)    
+                obj_tick = str(int(np.cumsum(np.arange(1,1+N))[-1] / N)).zfill(2)
+                
+                for ID, value, srgb in zip(meas_ids, y_values, srgb_values):
+                
+                    ax.bar(i, value, width=1, color=srgb, ec="none")
+                    
+                    labels_obj.append(str(ID.split('.')[2]))
+                    x_ticks.append(i)
+                    i = i + 1
+
+                
+                labels_obj = list(map(lambda x: x.replace((obj_tick), f'{obj_tick}\n{obj}'), labels_obj))
+                
+                labels.append(labels_obj)
+            
+                ax.bar(i, 0)
+                labels.append([''])
+                i = i + 1    
+                x_ticks.append(i)
+
+            # Define the labels for x-axis ticks
+            labels = [x for xs in labels for x in xs]
+            
+            # Set the x-ticks and xlabels
+            ax.set_xticks(x_ticks)
+            ax.set_xticklabels(labels)
+
+            # Display the legend
+            handles, labels = ax.get_legend_handles_labels()
+            unique = [(h, l) for i, (h, l) in enumerate(zip(handles, labels)) if l not in labels[:i]]
+            ax.legend(*zip(*unique),fontsize=fontsize-4)
+
+
+
 
         ax.xaxis.set_tick_params(labelsize=fontsize)
         ax.yaxis.set_tick_params(labelsize=fontsize)
@@ -2700,8 +2403,8 @@ class MFT(object):
         ax.set_ylabel(labels_eq[coordinate], fontsize=fontsize)
 
         
-        ax.set_xticks(x)
-        ax.set_xticklabels(df_data['xlabels'], rotation=rotate_xlabels, ha=position_xlabels)
+        #ax.set_xticks(x)
+        #ax.set_xticklabels(df_data['xlabels'], rotation=rotate_xlabels, ha=position_xlabels)
 
         ax.text(x=position_text[0], y=position_text[1], s=f'Light dose = {dose_value} {doses_dic[dose_unit].split("_")[1]}', fontsize=fontsize-6, transform=ax.transAxes, ha='left', va='top')
 
@@ -2719,6 +2422,21 @@ class MFT(object):
         plt.show()     
 
 
+    def plot_bwse(self, frequency:Optional[bool] = False, bins:Optional[list] = [1,2,3,4,5], colors:Union[str,float,list]=None, figsize:Optional[tuple] = (10,10), rotate_xlabels:Optional[int] = 0, position_xlabels:Optional[str] = 'center', fontsize:Optional[int] = 24, title_fontsize:Optional[int] = 24, title:Optional[str] = None, save:Optional[bool] = False, path_fig:Optional[str] = 'cwd'):
+
+        bwse_df = self.get_metadata(labels=['BWSE']).loc['BWSE']
+        bwse_values = bwse_df.values
+        labels = bwse_df.index
+
+        wanted_data = [labels,bwse_values]
+
+        if colors == 'sample':
+            colors = self.get_sRGB(dose_values=0).values.reshape(len(self.files),-1)
+
+        
+        plotting.BWSE(data=wanted_data, frequency=frequency, bins=bins, figsize=figsize, colors=colors, fontsize=fontsize, title=title, title_fontsize=title_fontsize, rotate_xlabels=rotate_xlabels, position_xlabels=position_xlabels,  save=save, path_fig=path_fig)
+    
+    
     def plot_CIELAB(self, stds=[], dose_unit:Optional[str] = 'He', dose_values:Union[int, float, list, tuple] = 'all', colors:Union[str,list] = None, title:Optional[str] = None, fontsize:Optional[int] = 20, legend_labels:Union[str,list] = 'default', legend_position:Optional[str] = 'in', legend_fontsize:Optional[int] = 20, legend_title:Optional[str] = None, dE:Optional[bool] = False, obs_ill:Optional[bool] = True, save:Optional[bool] = False, path_fig:Optional[str] = 'cwd', report:Optional[bool] = False):
         """Plot the Lab values related to input the microfading files.
 
@@ -2813,13 +2531,13 @@ class MFT(object):
 
         # Whether to plot the observer and illuminant info
         if obs_ill:
-            DB = databases.DB()
-            if len(DB.get_colorimetry_info()) == 0:
+            
+            if len(config.get_colorimetry_info()) == 0:
                 observer = '10deg'
                 illuminant = 'D65'
             else:
-                observer = DB.get_colorimetry_info().loc['observer']['value']
-                illuminant = DB.get_colorimetry_info().loc['illuminant']['value']
+                observer = config.get_colorimetry_info().loc['observer']['value']
+                illuminant = config.get_colorimetry_info().loc['illuminant']['value']
 
             dic_obs = {'10deg':'$\mathrm{10^o}$', '2deg':'$\mathrm{2^o}$'}            
             obs_ill = f'{dic_obs[observer]}-{illuminant}'
@@ -3038,7 +2756,7 @@ class MFT(object):
         plotting.swatches_rectangle(data=wanted_data, data_type='Lab', labels=labels, bottom_scale=bottom_scale, top_labels=top_labels, fontsize=fontsize, side_annotations=side_annotations, colorbar=colorbar, title=title, save=save, path_fig=path_fig)
 
     
-    def plot_delta(self, stds:Optional[bool] = True, coordinates:Optional[list] = ['dE00'], dose_unit:Optional[str] = 'He', legend_labels:Union[str, list] = 'default', initial_values:Optional[bool] = False, colors:Union[str,list] = None, lw:Union[int,list] = 'default', title:Optional[str] = None, fontsize:Optional[int] = 24, legend_fontsize:Optional[int] = 24, legend_title:Optional[str] = None, xlim:Optional[tuple] = None, save:Optional[bool] = False, path_fig:Optional[str] = 'cwd'):
+    def plot_delta(self, stds:Optional[bool] = True, coordinates:Optional[list] = ['dE00'], dose_unit:Optional[str] = 'He', legend_labels:Union[str, list] = 'default', initial_values:Optional[bool] = False, figsize:Optional[tuple] = (15,9), colors:Union[str,list] = None, lw:Union[int,list] = 'default', title:Optional[str] = None, fontsize:Optional[int] = 24, legend_fontsize:Optional[int] = 24, legend_title:Optional[str] = None, xlim:Optional[tuple] = None, save:Optional[bool] = False, path_fig:Optional[str] = 'cwd'):
         """Plot the delta values of choosen colorimetric coordinates related to the microfading analyses.
 
         Parameters
@@ -3192,7 +2910,7 @@ class MFT(object):
                 path_fig = f'{os.getcwd()}/{filename}' 
         
         
-        plotting.delta(data=nominal_data, yerr=stdev_data, dose_unit=[dose_unit], coordinates=coordinates, initial_values=initial_values, colors=colors, lw=lw, title=title, fontsize=fontsize, legend_labels=legend_labels, legend_fontsize=legend_fontsize, legend_title=legend_title, save=save, path_fig=path_fig)
+        plotting.delta(data=nominal_data, yerr=stdev_data, dose_unit=[dose_unit], coordinates=coordinates, initial_values=initial_values, figsize=figsize, colors=colors, lw=lw, title=title, fontsize=fontsize, legend_labels=legend_labels, legend_fontsize=legend_fontsize, legend_title=legend_title, save=save, path_fig=path_fig)
 
 
     def plot_sp(self, stdev:Optional[bool] = False, spectra:Optional[str] = 'i', dose_unit:Optional[str] = 'He', dose_values:Union[int, float, list, tuple] = 'all', spectral_mode:Optional[str] = 'R', legend_labels:Union[str,list] = 'default', title:Optional[str] = None, fontsize:Optional[int] = 24, fontsize_legend:Optional[int] = 24, legend_title='', wl_range:Optional[tuple] = None, colors:Union[str,list] = None, lw:Union[int, list] = 2, ls:Union[str, list] = '-', text_xy:Optional[tuple] = (0.02,0.03), save=False, path_fig='cwd', derivation=False, smoothing=(1,0), report:Optional[bool] = False):
@@ -3420,8 +3138,8 @@ class MFT(object):
             if len(device_info) == 1:                
                 device_id = device_info[0].split('_')[0]
 
-            if device_id in list(get_DB_config()['devices'].keys()):
-                wl_range = get_DB_config()['devices'][device_id] ['wl_range']
+            if device_id in list(get_config()['devices'].keys()):
+                wl_range = get_config()['devices'][device_id] ['wl_range']
 
                 if wl_range != None:
                     wl_range = tuple(wl_range)
@@ -3532,8 +3250,8 @@ class MFT(object):
             dlch_report = Image.open(dlch_report_path)
 
             # Define the desired width for the images in the left column
-            desired_width_left = 800  # Adjust as needed
-            desired_width_right = 360  # Adjust as needed
+            desired_width_left = 1100  # Adjust as needed
+            desired_width_right = 400  # Adjust as needed
 
             # Calculate the scaling factors
             sp_scaling_factor = desired_width_left / sp_report.width
@@ -3587,7 +3305,15 @@ class MFT(object):
                 if authors == 'default':
                     authors = metadata['authors'].replace('_','-')
 
-                host_institution = metadata['host_institution'].replace('_','-')
+                host_institution = metadata['host_institution']
+                if '_' in host_institution:
+                    host_institution_name = host_institution.split('_')[0]
+                    host_institution_department = host_institution.split('_')[1]
+
+                else:
+                    host_institution_name = host_institution
+                    host_institution_department = ''
+                
 
                 BWSE = metadata['BWSE']
                 if np.isnan(BWSE):
@@ -3595,18 +3321,31 @@ class MFT(object):
                 else:
                     BWSE = str(BWSE)
 
+                spot_materials = metadata['spot_components']
+                
+                print(id, spot_materials)
+
+                try:
+                    if '_' in spot_materials:
+                        spot_materials = spot_materials.replace('_','-')
+
+                except TypeError:            
+                    if np.isnan(spot_materials):
+                        spot_materials = 'undefined' 
+                    
+
                 info_object = """
-                    \\textbf{Analysis id} & [analysisId] \\\\
+                    \\textbf{Analysis ID} & [analysisId] \\\\
                     \\textbf{Analysis date} & [analysisDate] \\\\
-                    \\textbf{Object id} & [objectId] \\\\                
+                    \\textbf{Object ID} & [objectId] \\\\                
                     \\textbf{Institution} & [institution] \\\\
                     \\textbf{Name object} & [objectName] \\\\
                     \\textbf{Artist} & [artist] \\\\
                     \\textbf{Date} & [objectDate] \\\\
-                    \\textbf{Technique} & [technique] \\\\                                    
+                    \\textbf{Techniques} & [techniques] \\\\                                    
                     \\textbf{MFT group} & [MFTgroup] \\\\
                     \\textbf{MFT spot} & [spot_description] \\\\
-                    \\textbf{Material} & [spot_material] \\\\
+                    \\textbf{Materials} & [spot_materials] \\\\
                     \\textbf{BWSE} & [BWSE] \\\\
                     & \\\\
                     \\textbf{MFT device} & [device] \\\\
@@ -3629,8 +3368,8 @@ class MFT(object):
                     '[objectName]': metadata['object_name'], 
                     '[artist]' : metadata['object_creator'],   
                     '[objectDate]': str(metadata['object_date']),
-                    '[technique]' : metadata['object_technique'].replace('_','-'),
-                    '[spot_material]': str(metadata['spot_components']),#.replace('_','-'),
+                    '[techniques]' : metadata['object_technique'].replace('_','-'),
+                    '[spot_materials]': spot_materials,
                     '[NbAnalyses]': str(metadata['measurements_N']),  
                     '[MFTgroup]': metadata['spot_group'], 
                     '[ill]': f'{metadata["illuminance_Ev_Mlx"]} Mlx',
@@ -3656,13 +3395,14 @@ class MFT(object):
                     'figure2': im_combined_path,                                 
                 }
 
-                with open(Path(__file__).parent / 'MFT_report_single.tex', 'r') as template_file:
+                with open(Path(__file__).parent / 'report_templates' / 'MFT_report_single.tex', 'r') as template_file:
                     template = template_file.read()
 
                 # Fill in placeholders with actual values
                 filled_template = template.replace('[PROJECTID]',metadata['project_id'])
                 filled_template = filled_template.replace('[ANALYSISID]', id)
-                filled_template = filled_template.replace('[LABORATORY]', host_institution)
+                filled_template = filled_template.replace('[INSTITUTION]', host_institution_name)
+                #filled_template = filled_template.replace('[DEPARTMENT]', host_institution_department)
                 filled_template = filled_template.replace('[YOURNAME]', authors)
                 filled_template = filled_template.replace('[TABLE1DATA]', table_data['info_object'])            
                 filled_template = filled_template.replace('[FIGURE1PATH]', str(figure_paths['figure1']))
@@ -3677,10 +3417,348 @@ class MFT(object):
                 subprocess.run(['pdflatex', 'temp_report.tex'])
 
                 # Move generated PDF to output file                
-                subprocess.run(['mv', 'temp_report.pdf', f'{folder_report}/MFT_rapport-analysis_{id}.pdf'])
+                subprocess.run(['mv', 'temp_report.pdf', f'{folder_report}/{metadata["project_id"]}_MFT_rapport-analysis_{id}.pdf'])
 
                 # Clean up temporary .tex and auxiliary files
                 subprocess.run(['rm', 'temp_report.tex', 'temp_report.aux', 'temp_report.log'])
+
+        
+        if type == 'object':
+
+            object_ids = sorted(set(list(self.get_metadata('object_id').values)))
+            metadata = self.get_metadata()
+            
+            print(object_ids)
+            for object_id in object_ids:
+
+                                
+                figure_spots = [f'{folder_figures}/{file}' for file in all_figure_files if object_id in file and 'MFT-spots' in file][0]                
+                figure_dE = [f'{folder_figures}/{file}' for file in all_figure_files if f'{object_id}' in file and 'dE-curves-report' in file][0]
+                figure_SW = [f'{folder_figures}/{file}' for file in all_figure_files if f'{object_id}' in file and 'SW-rect-report' in file][0]
+
+                
+                metadata_object = metadata.loc[:, metadata.loc['object_id'] == object_id]
+
+                if authors == 'default':
+                    authors = metadata['authors'].replace('_','-')
+
+                host_institution = metadata.loc['host_institution'][0].replace('_','-')
+
+                info_object = """
+                    \\textbf{Object ID} & [objectId] \\\\                
+                    \\textbf{Institution} & [institution] \\\\
+                    \\textbf{Object name} & [objectName] \\\\
+                    \\textbf{Artist} & [artist] \\\\
+                    \\textbf{Date} & [objectDate] \\\\
+                    \\textbf{Techniques} & [technique] \\\\
+                    \\textbf{Materials} & [objectMaterial] \\\\
+                    & \\\\
+                    \\textbf{N\\textsuperscript{o} MFT analyses} & [NbAnalyses] \\\\
+                    \\textbf{N\\textsuperscript{o} MFT groups} & [NbGroups] \\\\
+                    \\textbf{Illuminance} & [ill] \\\\
+                    \\textbf{Exposure dose} & [Hv] \\\\
+                    \\textbf{Duration} & [duration] \\\\                 
+                """
+
+                
+                BWSE = """                
+                    [nb01] & [BWSE01] \\\\
+                    [nb02]  & [BWSE02] \\\\  
+                    [nb03] & [BWSE03] \\\\                                   
+                """
+
+                
+            
+
+                #table_data2 = generate_latex_table(df)
+
+                nb_analyses = str(metadata_object.shape[1])
+                nb_groups = str(len(set(metadata_object.loc['spot_group'].values)))
+                ill = np.round(np.mean(metadata_object.loc['illuminance_Ev_Mlx'].values),2)
+                Hv = np.round(np.mean(metadata_object.loc['exposureDose_Hv_Mlxh'].values),2)
+
+                object_materials = list(set(metadata.loc['object_material'].values))[0]
+                if "_" in object_materials:
+                    object_materials = object_materials.replace("_",', ')
+
+                # define the mapping table
+                mapping_table_object = {
+                    '[objectId]': object_id,                
+                    '[institution]': list(set(metadata.loc['institution'].values))[0],
+                    '[objectName]': list(set(metadata.loc['object_name'].values))[0], 
+                    '[artist]' : list(set(metadata.loc['object_creator'].values))[0],   
+                    '[objectDate]': list(set(metadata.loc['object_date'].values))[0],
+                    '[technique]' : list(set(metadata.loc['object_technique'].values))[0],
+                    '[objectMaterial]': object_materials,
+                    '[NbAnalyses]': nb_analyses,  
+                    '[NbGroups]': nb_groups, 
+                    '[ill]': f'{ill} Mlx (Avg)',
+                    '[Hv]': f'{Hv} Mlxh (Avg)',
+                    '[duration]': '15 min' # f'{(metadata.loc["duration_min"].values)} min',            
+                    }           
+                #print(mapping_table_object) 
+            
+                for x in mapping_table_object.keys():
+                    info_object = info_object.replace(x, mapping_table_object[x])    
+
+            
+                table_data = {'info_object': info_object, 'BWSE': BWSE}
+
+
+                figure_paths = {
+                    'figure1': folder_figures / figure_spots,
+                    'figure2': folder_figures / figure_dE,
+                    'figure3': folder_figures / figure_SW,                                 
+                }
+
+                BWSE = metadata_object.loc['BWSE'].values
+                print(BWSE)
+                simplified_BWSE = []
+
+                for i in BWSE:
+                    i = float(i)
+                    
+                    if i >0.8 and i<=1.2:
+                        new_i = '1'
+                    if i >1.2 and i<=1.8:
+                        new_i = '1-2'
+                    if i >1.8 and i<=2.2:
+                        new_i = '2'
+                    if i >2.2 and i<=2.8:
+                        new_i = '2-3'
+                    if i >2.8 and i<=3.2:
+                        new_i = '3'
+                    if i >3.2 and i<=3.8:
+                        new_i = '3'
+                    if i >3.8 and i<=4.2:
+                        new_i = '4'
+                    if i >4.2 and i<=4.8:
+                        new_i = '4-5'
+                    if i >0.8 and i<=1.2:
+                        new_i = '1'
+                    if i >5.2 and i<=5.8:
+                        new_i = '5-6'
+                    if i >5.8 and i<=6.2:
+                        new_i = '6'
+                    if i >6.2 and i<=6.8:
+                        new_i = '6-7'
+                    if i >6.8 and i<=7.2:
+                        new_i = '7'
+                    
+                    if math.isnan(i):
+                        pass
+                    else:
+                        simplified_BWSE.append(new_i)
+
+                
+                nb_MFT = [x.split('.')[2] for x in metadata_object.loc['meas_id'].values]
+                
+                df = pd.DataFrame(data={
+                    #'Description':group_description,
+                    #'Groups': group,
+                    'MFT': nb_MFT,
+                    'BWSE': simplified_BWSE,
+                })
+
+                table_data2 = generate_latex_table(df)
+
+                print(df)
+                print(nb_MFT)
+                print(simplified_BWSE)
+                
+
+
+                with open(Path(__file__).parent / 'report_templates' / 'MFT_report_object.tex', 'r') as template_file:
+                    template = template_file.read()
+
+                # Fill in placeholders with actual values
+                filled_template = template.replace('[PROJECTID]',list(set(metadata.loc['project_id'].values))[0])
+                filled_template = filled_template.replace('[OBJECTID]', object_id)
+                filled_template = filled_template.replace('[LABORATORY]', host_institution)
+                filled_template = filled_template.replace('[YOURNAME]', authors)
+                filled_template = filled_template.replace('[TABLE1DATA]', table_data['info_object'])  
+                #filled_template = filled_template.replace('[TABLE_DATA2]', table_data['BWSE'])            
+                filled_template = filled_template.replace('[FIGURE1PATH]', str(figure_paths['figure1']))
+                filled_template = filled_template.replace('[FIGURE2PATH]', str(figure_paths['figure2'])) 
+                filled_template = filled_template.replace('[FIGURE3PATH]', str(figure_paths['figure3'])) 
+                filled_template = filled_template.replace('% TABLE_DATA2', table_data2)
+
+
+                # Write filled template to .tex file
+                with open('temp_report.tex', 'w') as temp_file:
+                    temp_file.write(filled_template)
+
+                # Compile .tex file into PDF
+                subprocess.run(['pdflatex', 'temp_report.tex'])
+
+                # Move generated PDF to output file                
+                subprocess.run(['mv', 'temp_report.pdf', f'{folder_report}/MFT_rapport-object_{object_id}.pdf'])
+
+                # Clean up temporary .tex and auxiliary files
+                subprocess.run(['rm', 'temp_report.tex', 'temp_report.aux', 'temp_report.log'])
+                
+        
+        
+        if type == 'project':
+
+            all_metadata = self.get_metadata()
+            project_ids = all_metadata.loc['project_id'].values
+            db_projects = get_DB('projects').set_index('project_id')
+            db_users = get_persons().set_index('initials')
+
+
+
+            for project_id in sorted(set(project_ids)):
+
+                metadata = all_metadata.loc[:,all_metadata.loc['project_id'] == project_id]
+                project_info = db_projects.loc[project_id]
+
+                project_leader_initials = project_info['project_leader']
+                project_leader_info = db_users.loc[project_leader_initials]
+                project_leader_name = ' '.join(project_leader_info[['name','surname']].values)
+
+                start_date = project_info['start_date']
+
+                institution = project_info['institution']
+                
+                host_institution = metadata.loc['host_institution'].values[0]
+                
+                
+                keywords = project_info['keywords']
+
+                methods = project_info['methods']
+                if "_" in methods:
+                    methods = methods.replace('_','-')
+
+                device = sorted(set(metadata.loc['device'].values))[0]
+                if "_" in device:
+                    device = device.replace('_', '-')
+
+                lamp = sorted(set(metadata.loc['lamp_fading'].values))[0]
+                nb_analyses = str(metadata.shape[1])
+                nb_objects = str(len(sorted(set(metadata.loc['object_id'].values))))
+
+                
+
+                figure_BWSE_hist = [f'{folder_figures}/{file}' for file in all_figure_files if project_id in file and 'BWSE-hist-report' in file][0]                
+                figure_BWSE_bars = [f'{folder_figures}/{file}' for file in all_figure_files if project_id in file and 'BWSE-bars-report' in file]
+
+                if len(figure_BWSE_hist) == 0:
+                    print(f'The BWSE histogram figure cannot be found in the folder {folder_figures}.')
+                    print(f'Make sure that the filename of the BWSE histogram figure contains the project ID ({project_id}) and the expression "BWSE-hist-report".')
+                    return
+
+                
+                if len(figure_BWSE_bars) == 0:
+                    print(f'The BWSE bars figure cannot be found in the folder {folder_figures}.')
+                    print(f'Make sure that the filename of the BWSE bars figures contain the project ID ({project_id}) and the expression "BWSE-bars-report".')
+                    return
+                
+                elif len(figure_BWSE_bars) == 1:
+                    figure_BWSE_bars_01 = figure_BWSE_bars[0]
+                
+                elif len(figure_BWSE_bars) == 2:
+                    figure_BWSE_bars_01 = figure_BWSE_bars[0]
+                    figure_BWSE_bars_02 = figure_BWSE_bars[1]
+
+
+
+                info_project = """
+                    \\textbf{Project id} & [projectId] \\\\
+                    \\textbf{Project leader} & [projectLeader] \\\\
+                    \\textbf{Institution} & [institution] \\\\   
+                    \\textbf{Start date} & [startDate] \\\\             
+                    \\textbf{Keywords} & [keywords] \\\\
+                    & \\\\
+                    \\textbf{MFT device} & [MFTdevice] \\\\
+                    \\textbf{MFT lamp} & [MFTlamp] \\\\
+                    \\textbf{N\\textsuperscript{o} of analyses} & [NbAnalyses] \\\\
+                    \\textbf{N\\textsuperscript{o} of objects} & [NbObjects] \\\\ 
+                """
+                info_analysis = """
+                    \\textbf{MFT device} & [MFTdevice] \\\\
+                    \\textbf{N\\textsuperscript{o} of analyses} & [NbAnalyses] \\\\
+                    \\textbf{N\\textsuperscript{o} of objects} & [NbObjects] \\\\                
+                """
+
+                # define the mapping table
+                mapping_table_project = {
+                    '[projectId]': project_id,
+                    '[projectLeader]': project_leader_name,
+                    '[institution]': institution,                
+                    '[keywords]' : keywords,  
+                    '[methods]' : methods, 
+                    '[startDate]' : start_date,
+                    '[MFTdevice]': device,
+                    '[MFTlamp]' : lamp,
+                    '[NbAnalyses]': nb_analyses,
+                    '[NbObjects]': nb_objects,             
+                    }
+                print(mapping_table_project)
+                
+                mapping_table_analyses = {
+                    '[MFTdevice]': device,
+                    '[NbAnalyses]': nb_analyses,
+                    '[NbObjects]': nb_objects,                                
+                    }
+
+                
+                
+                for x in mapping_table_project.keys():
+                    info_project = info_project.replace(x, mapping_table_project[x])    
+
+                for x in mapping_table_analyses.keys():
+                    info_analysis = info_analysis.replace(x, mapping_table_analyses[x])         
+                
+
+                table_data = {'info_project': info_project, 'info_analysis': info_analysis}
+
+                if len(figure_BWSE_bars) == 1:                
+                    figure_paths = {
+                        'figure1': figure_BWSE_hist,
+                        'figure2': figure_BWSE_bars_01,
+                        'figure3': ''                    
+                    }
+
+                else: 
+                    figure_paths = {
+                        'figure1': figure_BWSE_hist,
+                        'figure2': figure_BWSE_bars_01,  
+                        'figure3': figure_BWSE_bars_02,                  
+                    }
+                
+
+                with open(Path(__file__).parent / 'report_templates' / 'MFT_report_project.tex', 'r') as template_file:
+                    template = template_file.read()
+
+                # Fill in placeholders with actual values
+                filled_template = template.replace('[PROJECTID]', project_id)
+                filled_template = filled_template.replace('[INSTITUTION]', host_institution)
+                filled_template = filled_template.replace('[YOURNAME]', authors)
+                filled_template = filled_template.replace('[TABLE1DATA]', table_data['info_project'])
+                #filled_template = filled_template.replace('[TABLE2DATA]', table_data['info_analysis'])
+                filled_template = filled_template.replace('[FIGURE1PATH]', str(figure_paths['figure1']))
+                filled_template = filled_template.replace('[FIGURE2PATH]', str(figure_paths['figure2']))
+
+                if len(figure_BWSE_bars) == 2:                
+                    filled_template = filled_template.replace('[FIGURE3PATH]', str(figure_paths['figure3']))
+
+                # Write filled template to .tex file
+                with open('temp_report.tex', 'w') as temp_file:
+                    temp_file.write(filled_template)
+
+                # Compile .tex file into PDF
+                subprocess.run(['pdflatex', 'temp_report.tex'])
+
+                # Move generated PDF to output file                
+                subprocess.run(['mv', 'temp_report.pdf', f'{folder_report}/MFT_rapport-project_{project_id}.pdf'])                
+
+                # Clean up temporary .tex and auxiliary files
+                subprocess.run(['rm', 'temp_report.tex', 'temp_report.aux', 'temp_report.log'])
+                
+
+                
+                
 
 
     def make_table(self, parameters:Optional[list] = ['BWSE'], sort_by:Optional[str] = 'meas_id', title:Optional[str] = None, subtitle:Optional[str] = None):
@@ -3688,8 +3766,7 @@ class MFT(object):
         wanted_parameters = ['meas_id'] + parameters
 
         df_info = self.get_metadata(wanted_parameters).T.sort_values(by=[sort_by])
-
-        
+                
         my_table = (
         GT(df_info)
         .tab_header(
