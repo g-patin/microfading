@@ -121,7 +121,7 @@ def bars(data, stds=None, coordinate='dE00', colors=None, fontsize=24, legend_la
     plt.show()
 
 
-def BWSE(data, frequency=False, bins=[1,2,3,4], figsize=(10,10), fontsize=24, title=None, title_fontsize=24, save=False, path_fig='cwd'):
+def BWSE(data, frequency=False, bins=[1,2,3,4,5], figsize=(10,10), colors:Union[str, list] = None, fontsize=24, title=None, title_fontsize=24, rotate_xlabels:Optional[int] = 0, position_xlabels:Optional[str] = 'center', save=False, path_fig='cwd'):
     
     # set the aesthetics of the figure
     sns.set_theme(font='serif', style='darkgrid', context='paper', palette='colorblind', font_scale=1)
@@ -130,40 +130,97 @@ def BWSE(data, frequency=False, bins=[1,2,3,4], figsize=(10,10), fontsize=24, ti
     fig, ax = plt.subplots(1,1, figsize=figsize)
 
     if frequency:
-
-        ax.hist(data, bins=bins, align='left')
+        
+        ax.hist(data[1], bins=bins, align='left')
 
         ax.set_xlabel('BWS', fontsize=fontsize)
         ax.set_ylabel('Number of MFT analyses', fontsize=fontsize)
 
-        ax.set_xticks([1,2,3,4,5])
+        
+        ax.set_xticks(bins)
     
     else:
 
-        x = data[0]
-        y = data[1]
+        measurement_ids = data[0]
+        measurement_values = data[1]
+        objects = sorted(set([x.split('.')[1] for x in measurement_ids]))
 
-        ax.bar(x,y)
+        colors = [[x] for x in colors]       
+        df_data = pd.DataFrame({'MeasurementID': measurement_ids, 'Value': measurement_values, 'Color': colors})
 
-        ax.set_xlabel('Samples', fontsize=fontsize)
+        # Extract object IDs and measurement IDs
+        df_data['ObjectID'] = df_data['MeasurementID'].apply(lambda x: x.split('.')[1])
+        df_data['MeasID'] = df_data['MeasurementID'].apply(lambda x: x.split('.')[2])
+
+        
+        i = 1
+        x_ticks = []
+        labels = []
+
+        for obj in objects:
+            obj_meas = df_data.query(f'ObjectID == "{obj}"')
+            bwse_values = obj_meas['Value'].values
+            meas_ids = obj_meas['MeasID'].values
+            srgb_values = obj_meas['Color'].values
+            
+            labels_obj = []
+            N = len(meas_ids)    
+            obj_tick = str(int(np.cumsum(np.arange(1,1+N))[-1] / N)).zfill(2)
+            
+            for ID, value, srgb in zip(meas_ids, bwse_values, srgb_values):
+                
+                ax.bar(i, value, width=1, color=srgb[0], ec="none")
+                
+                labels_obj.append(str(ID))
+                x_ticks.append(i)
+                i = i + 1
+                
+            labels_obj = list(map(lambda x: x.replace((obj_tick), f'{obj_tick}\n{obj}'), labels_obj))
+            labels.append(labels_obj)
+            
+            ax.bar(i, 0)
+            labels.append([''])
+            i = i + 1    
+            x_ticks.append(i)
+
+        # Define the labels for x-axis ticks
+        labels = [x for xs in labels for x in xs]
+        print(labels)
+        # Add labels, title, and legend
+        ax.set_xlabel('Analyses numbers per object', fontsize=fontsize)
         ax.set_ylabel('BWSE values', fontsize=fontsize)
-    
+        
+        # Set the x-ticks and xlabels
+        ax.set_xticks(x_ticks)
+        ax.set_xticklabels(labels)
+               
+        # Display the legend
+        handles, labels = ax.get_legend_handles_labels()
+        unique = [(h, l) for i, (h, l) in enumerate(zip(handles, labels)) if l not in labels[:i]]
+        ax.legend(*zip(*unique),fontsize=fontsize-4)
+      
+
+    # Set the title
     ax.set_title(title, fontsize=title_fontsize)
     
+    # Set the size of the axis-ticklabels
     ax.xaxis.set_tick_params(labelsize=fontsize)
     ax.yaxis.set_tick_params(labelsize=fontsize)
+    
+
+    ax.xaxis.grid() # horizontal lines only
 
     plt.tight_layout()
 
+    # Save the figure
     if save == True:
         if path_fig == 'cwd':
             path_fig = f'{os.getcwd()}/BWSE.png'                
                 
         fig.savefig(path_fig,dpi=300, facecolor='white')  
 
+    # Display the figure
     plt.show()
-
-
 
 
 def CIELAB(data, stds=None, colors=None, fontsize=24, legend_labels=[], title=None, title_fontsize=24, line=False, legend_position='in', legend_fontsize=20, legend_title='', save=False, path_fig='cwd', start_value=False, dE=False, obs_ill=None, return_data=False, *args, **kwargs):
@@ -654,7 +711,7 @@ def spectra(data, stds=[], spectral_mode:Optional[str] = 'R', legend_labels=[], 
     
     # Create the figure
     sns.set_theme(context='paper', font='serif', palette='colorblind')
-    fig, ax = plt.subplots(1,1, figsize=(15, 9))
+    fig, ax = plt.subplots(1,1, figsize=(16, 8))
     
     # Set the list of labels
     if len(legend_labels) == 0:
