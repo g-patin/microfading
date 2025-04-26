@@ -7,8 +7,9 @@ from pathlib import Path
 from typing import Optional, Union
 import scipy.interpolate as sip
 from scipy.interpolate import RegularGridInterpolator
+import msdb
 
-from . import databases
+from . import config
 from . import MFT_info_dictionaries
 from . import MFT_info_templates
 
@@ -17,14 +18,17 @@ def MFT_fotonowy(files: list, filenaming:Optional[str] = 'none', folder:Optional
 
             
     # check whether the objects and projects databases have been created
-    DB = databases.DB()
+    
     if db:        
-
-        if DB.folder_db is None or DB.folder_db == 'folder_path':
-            return 'Databases have not been created. Please, create databases by running the function "create_DB" from the microfading package.'
+        db_name = config.get_config_info()['databases']['db_name']
         
-        else:     
-            db_projects, db_objects = DB.get_db()
+        if db_name not in msdb.get_db_names():
+            return 'The databases have not been created or registered.'
+        
+        else:   
+            databases = msdb.DB(db_name)  
+            db_projects = databases.get_projects()
+            db_objects = databases.get_objects()
     
     else:
         filenaming = 'none'
@@ -41,16 +45,16 @@ def MFT_fotonowy(files: list, filenaming:Optional[str] = 'none', folder:Optional
     }
 
     if illuminant == 'default':
-        if isinstance(DB.get_colorimetry_info(), str):
+        if isinstance(databases.get_colorimetry_info(), str):
             illuminant = 'D65'
         else:
-            illuminant = DB.get_colorimetry_info().loc['illuminant']['value']
+            illuminant = databases.get_colorimetry_info().loc['illuminant']['value']
 
     if observer == 'default':
-        if isinstance(DB.get_colorimetry_info(), str):
+        if isinstance(databases.get_colorimetry_info(), str):
             observer = '10deg'
         else:
-            observer = DB.get_colorimetry_info().loc['observer']['value']
+            observer = databases.get_colorimetry_info().loc['observer']['value']
 
     illuminant_SDS = colour.SDS_ILLUMINANTS[illuminant]
     illuminant_CCS = colour.CCS_ILLUMINANTS[observers[observer]][illuminant]
@@ -107,7 +111,7 @@ def MFT_fotonowy(files: list, filenaming:Optional[str] = 'none', folder:Optional
         times = raw_df_cl['#Time']
         interval_sec = int(np.round(times.values[3] - times.values[2],0))
         numDataPoints = len(times)        
-        duration_min = np.round(times.values[-1] /60, 2)
+        duration_min = int(np.round(times.values[-1] /60, 2))
         He = raw_df_cl['Watts']       # in MJ/m²
         Hv = raw_df_cl['Lux']         # in Mlxh
         total_He = He.values[-1]
@@ -291,7 +295,7 @@ def MFT_fotonowy(files: list, filenaming:Optional[str] = 'none', folder:Optional
             "comment",
             "[PROJECT INFO]"] + list(db_projects.columns) + ["[OBJECT INFO]"] + list(db_objects.columns) + MFT_info_templates.device_info + MFT_info_templates.analysis_info + MFT_info_templates.spot_info + MFT_info_templates.beam_info + MFT_info_templates.results_info
 
-            df_authors = DB.get_persons()
+            df_authors = databases.get_users()
 
             if authors == 'XX':
                 authors_names = 'unknown'
@@ -309,8 +313,10 @@ def MFT_fotonowy(files: list, filenaming:Optional[str] = 'none', folder:Optional
                 authors_names = f"{df_author['surname'].values[0]}, {df_author['name'].values[0]}"
 
             
-            institution_info = DB.get_db_config()['institution']
-            if len(institution_info) > 0:
+            
+            config_info = config.get_config_info()
+            if len(config_info['institution']) > 0:
+                institution_info = config.get_institution_info()['value']
                 host_institution_name = institution_info['name']
                 host_institution_department = institution_info['department']
 
@@ -320,7 +326,7 @@ def MFT_fotonowy(files: list, filenaming:Optional[str] = 'none', folder:Optional
                     host_institution = host_institution_name
             else:
                 host_institution = 'undefined'
-                print('You might want to register the infor of your institution in the db_config.json file -> mf.set_institution_info().')
+                print('You might want to register the info of your institution in the config_info.json file -> mf.set_institution_info().')
 
             date_time = pd.to_datetime(df_info.loc['Date'].values[0])
             date = date_time.date()
@@ -332,10 +338,10 @@ def MFT_fotonowy(files: list, filenaming:Optional[str] = 'none', folder:Optional
             object_info = list(db_objects.query(f'object_id == "{object_id}"').values[0])
 
 
-            # device info values
+            # Retrieve the device info values
             LED_nb = df_info.loc['LED'].values[0]
 
-            df_devices = DB.get_devices()                
+            df_devices = databases.get_devices()                
             if device_nb in df_devices['Id'].values:
                 df_devices = df_devices.set_index('Id')                    
                 device_name = df_devices.loc[device_nb]['name']
@@ -350,7 +356,8 @@ def MFT_fotonowy(files: list, filenaming:Optional[str] = 'none', folder:Optional
                 print(f'The device you entered ({device_nb}) has not been registered. Please first register the device, by using the function mf.register_devices().')
                 return
 
-            df_WR = DB.get_white_standards()
+            # Retrieve the white standard information
+            df_WR = databases.get_white_standards()
             if white_standard in df_WR['Id'].values:
                 df_WR = df_WR.set_index('Id')
                 WR_nb = white_standard
@@ -365,6 +372,7 @@ def MFT_fotonowy(files: list, filenaming:Optional[str] = 'none', folder:Optional
                 print(f'The white reference you entered ({white_standard}) has not been registered. Please first register the white reference, by using the function mf.add_references().')
                 return
                 
+            # Gather all the device info inside a list
             device_info = [
                 " ",
                 f'{device_nb}_{device_name}_{device_description}', 
@@ -385,14 +393,14 @@ def MFT_fotonowy(files: list, filenaming:Optional[str] = 'none', folder:Optional
             ]
 
 
-            # analysis info values
+            # Retrieve the analysis info values
                 
             meas_nb = raw_file_cl.stem.split('_')[1]
             meas_id = f'MF.{object_id}.{meas_nb}'
             spec_comp = 'SCE_excluded'
 
-            int_time_sample = np.int32(df_info.loc['Sample integration time [ms]'].values[0])
-            int_time_whitestandard = np.int32(df_info.loc['White standard integration time [ms]'].values[0])
+            int_time_sample = int(df_info.loc['Sample integration time [ms]'].values[0])
+            int_time_whitestandard = int(df_info.loc['White standard integration time [ms]'].values[0])
             fwhm = MFT_info_dictionaries.beam_FWHM[LED_nb]
 
             area = pi * (((fwhm/1e6)/2)**2)
@@ -442,7 +450,7 @@ def MFT_fotonowy(files: list, filenaming:Optional[str] = 'none', folder:Optional
                 current,
                 power,
                 lum,
-                np.int32(irr),
+                int(irr),
                 np.round(ill, 3),
                 np.round(df_cl['He_MJ/m2'].values[-1], 4),
                 np.round(df_cl['Hv_Mlxh'].values[-1], 4),                   
@@ -514,7 +522,3 @@ def MFT_fotonowy(files: list, filenaming:Optional[str] = 'none', folder:Optional
             return Path(folder) / f'{filename}.xlsx'
             
             
-        
-
-
-
