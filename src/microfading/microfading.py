@@ -86,6 +86,11 @@ def is_DB():
         return False
 
 
+def get_databases_info():
+    """Retrieve the info related to the databases."""
+    return config.get_databases_info()
+
+
 def get_datasets(MFT:Optional[str] = 'fotonowy', rawfiles:Optional[bool] = False, BWS:Optional[bool] = True, stdev:Optional[bool] = False):
     """Retrieve exemples of dataset files. These files are meant to give the users the possibility to test the MFT class and its functions.  
 
@@ -111,7 +116,7 @@ def get_datasets(MFT:Optional[str] = 'fotonowy', rawfiles:Optional[bool] = False
     Returns
     -------
     list
-        It returns a list of strings, where each string corresponds the absolute path of a microfading measurement excel file. Subsequently, one can use the list as input for the MFT class. 
+        It returns a list of strings, where each string corresponds to the absolute path of a microfading measurement excel file. Subsequently, one can use the list as input for the MFT class. 
     """
 
     # Whether to select files with standard deviation values
@@ -211,7 +216,7 @@ def get_config_path():
 
 
 def get_colorimetry_info():
-    """Retrieve the colorimetric information (observer and illuminant) recorded in the config_info.json file of the microfading package.
+    """Retrieve the colorimetric information (observer, illuminant, and white standard) recorded in the config_info.json file of the microfading package.
 
     Returns
     -------
@@ -265,8 +270,9 @@ def get_light_dose_info():
     return config.get_light_dose_info()
 
 
-def process_rawdata(files: list, device: str, filenaming:Optional[str] = 'none', folder:Optional[str] = '.', db:Optional[bool] = 'default', comment:Optional[str] = '', authors:Optional[str] = 'XX', white_standard:Optional[str] = 'default', interpolation:Optional[str] = 'default', step:Optional[float | int] = 0.1, observer:Optional[str] = 'default', illuminant:Optional[str] = 'default', background:Optional[str] = 'black', delete_files:Optional[bool] = True, return_filename:Optional[bool] = True):
+def process_rawdata(files: list, device: str, filenaming:Optional[str] = 'none', folder:Optional[str] = '.', db:Optional[bool] = 'default', comment:Optional[str] = '', authors:Optional[str] = 'XX', white_standard:Optional[str] = 'default', interpolation:Optional[str] = 'default', step:Optional[float | int] = 0.1, average:Optional[int] = 20, observer:Optional[str] = 'default', illuminant:Optional[str] = 'default', background:Optional[str] = 'black', delete_files:Optional[bool] = True, return_filename:Optional[bool] = True):
     """Process the microfading raw files created by the software that performed the microfading analysis. 
+
 
     Parameters
     ----------
@@ -304,6 +310,9 @@ def process_rawdata(files: list, device: str, filenaming:Optional[str] = 'none',
         'Hv' performs interpolation based on the exposure dose (Mlxh)
         't' performs interpolation based on the exposure duration (sec)
     
+    average : [int], optional
+        Average of the measurements, by default 20
+        
     step : [float  |  int], optional
         Interpolation step related to the scale previously mentioned ('He', 'Hv', 'time'), by default 0.1
 
@@ -379,7 +388,7 @@ def process_rawdata(files: list, device: str, filenaming:Optional[str] = 'none',
     # Run the process_rawfiles function
     if 'fotonowy' in process_function:
 
-        return process_rawfiles.MFT_fotonowy(files=files, filenaming=filenaming, folder=folder, db=db, comment=comment, device_nb=device, authors=authors, white_standard=white_standard, interpolation=interpolation, step=step, observer=observer, illuminant=illuminant, background=background, delete_files=delete_files, return_filename=return_filename)
+        return process_rawfiles.MFT_fotonowy(files=files, filenaming=filenaming, folder=folder, db=db, comment=comment, device_nb=device, authors=authors, white_standard=white_standard, interpolation=interpolation, step=step, average=average, observer=observer, illuminant=illuminant, background=background, delete_files=delete_files, return_filename=return_filename)
 
     
 def reset_config():
@@ -2913,7 +2922,7 @@ class MFT(object):
         plotting.delta(data=nominal_data, yerr=stdev_data, dose_unit=[dose_unit], coordinates=coordinates, initial_values=initial_values, figsize=figsize, colors=colors, lw=lw, title=title, fontsize=fontsize, legend_labels=legend_labels, legend_fontsize=legend_fontsize, legend_title=legend_title, save=save, path_fig=path_fig)
 
 
-    def plot_sp(self, stdev:Optional[bool] = False, spectra:Optional[str] = 'i', dose_unit:Optional[str] = 'He', dose_values:Union[int, float, list, tuple] = 'all', spectral_mode:Optional[str] = 'R', legend_labels:Union[str,list] = 'default', title:Optional[str] = None, fontsize:Optional[int] = 24, fontsize_legend:Optional[int] = 24, legend_title='', wl_range:Optional[tuple] = None, colors:Union[str,list] = None, lw:Union[int, list] = 2, ls:Union[str, list] = '-', text_xy:Optional[tuple] = (0.02,0.03), save=False, path_fig='cwd', derivation=False, smoothing=(1,0), report:Optional[bool] = False):
+    def plot_sp(self, stdev:Optional[bool] = False, spectra:Optional[str] = 'i', dose_unit:Optional[str] = 'He', dose_values:Union[int, float, list, tuple] = 'all', spectral_mode:Optional[str] = 'R', legend_labels:Union[str,list] = 'default', title:Optional[str] = None, fontsize:Optional[int] = 24, fontsize_legend:Optional[int] = 24, legend_title='', wl_range:Optional[tuple] = None, colors:Union[str,list] = None, lw:Union[int, list] = 2, ls:Union[str, list] = '-', text_xy:Optional[tuple] = (0.02,0.03), save:Optional[bool] = False, path_fig:Optional[str] = 'cwd', derivation:Optional[bool] = False, smoothing:Optional[tuple] = (1,0), report:Optional[bool] = False):
         """Plot the reflectance spectra corresponding to the associated microfading analyses.
 
         Parameters
@@ -3128,15 +3137,20 @@ class MFT(object):
         return plotting.spectra(data=wanted_data, stds=wanted_std, spectral_mode=spectral_mode, legend_labels=legend_labels, title=title, fontsize=fontsize, fontsize_legend=fontsize_legend, legend_title=legend_title, x_range=wl_range, colors=colors, lw=lw, ls=ls, text=text, text_xy=text_xy, save=save, path_fig=path_fig, derivation=derivation)
        
 
-    def plot_sp_delta(self,spectra:Optional[tuple] = ('i','f'), dose_unit:Optional[str] = 'Hv', legend_labels:Union[str,list] = 'default', title:Optional[str] = None, fontsize:Optional[int] = 24, legend_fontsize:Optional[int] = 24, legend_title='', wl_range:Union[int,float,list,tuple] = 'default', colors:Union[str,list] = None, spectral_mode:Optional[str] = 'dR', derivation=False, smoothing=(1,0), report:Optional[bool] = False):
+    def plot_sp_delta(self,spectra:Optional[tuple] = ('i','f'), dose_unit:Optional[str] = 'Hv', legend_labels:Union[str,list] = 'default', title:Optional[str] = None, fontsize:Optional[int] = 24, legend_fontsize:Optional[int] = 24, legend_title='', wl_range:Union[int,float,list,tuple] = 'default', colors:Union[str,list] = None, spectral_mode:Optional[str] = 'dR', derivation:Optional[bool] = False, smoothing:Optional[tuple] = (1,0), save:Optional[bool] = False, path_fig:Optional[str] = 'cwd', report:Optional[bool] = False):
 
         # Set the wavelength range       
         if wl_range == 'default':
 
             device_info = sorted(set(self.get_metadata('device')))
             
+            
             if len(device_info) == 1:                
                 device_id = device_info[0].split('_')[0]
+
+            else:
+                device_id = device_info[0].split('_')[0]
+
 
             if device_id in list(get_config()['devices'].keys()):
                 wl_range = get_config()['devices'][device_id] ['wl_range']
@@ -3156,13 +3170,13 @@ class MFT(object):
         
         if spectra == ('i','f'):
 
-            sp_data = [x.iloc[:,[0,-1]] for x in self.get_spectra(wl_range=wl_range, spectral_mode=spectral_mode)]
+            sp_data = [x.iloc[:,[0,-1]] for x in self.get_spectra(wl_range=wl_range, spectral_mode=spectral_mode, smoothing=smoothing)]
             sp_delta = [x.iloc[:,1] - x.iloc[:,0] for x in sp_data]
             wanted_data = [(x.index, x.values) for x in sp_delta]
 
         elif spectra[0] == 'i':
             
-            sp1 = [x.iloc[:,0] for x in self.get_spectra(wl_range=wl_range, spectral_mode=spectral_mode)]
+            sp1 = [x.iloc[:,0] for x in self.get_spectra(wl_range=wl_range, spectral_mode=spectral_mode, smoothing=smoothing)]
             sp2 = [x.values.flatten() for x in self.get_spectra(dose_unit=dose_unit, dose_values=float(spectra[1]),wl_range=wl_range, spectral_mode=spectral_mode)]
             
             wanted_data = [(x.index,np.array(y)-np.array(x)) for x,y in zip(sp1,sp2)]
@@ -3216,7 +3230,7 @@ class MFT(object):
 
         
         #return wanted_data
-        plotting.spectra(data=wanted_data, spectral_mode=spectral_mode, x_range=wl_range, colors=colors, fontsize_legend=legend_fontsize, legend_labels=legend_labels, legend_title=legend_title, title=title, fontsize=fontsize, derivation=derivation)
+        plotting.spectra(data=wanted_data, spectral_mode=spectral_mode, x_range=wl_range, colors=colors, fontsize_legend=legend_fontsize, legend_labels=legend_labels, legend_title=legend_title, title=title, fontsize=fontsize, save=save, path_fig=path_fig, derivation=derivation)
       
      
     def make_report(self, folder_figures, folder_report:Optional[str] = 'cwd', type:Optional[str] = 'single', authors:Optional[str] = 'default'):
