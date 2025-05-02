@@ -50,7 +50,7 @@ The package provies computational tools to ease the manipulation of microfading 
 
 If you are using this package for a publication, please cite the package as follows: 
 
-- Patin, G., 2025, *Microfading*, Python Package, v.1.2.6, [https://github.com/g-patin/microfading](https://github.com/g-patin/microfading)
+- Patin, G., 2025, *Microfading*, Python Package, v.1.4.0, [https://github.com/g-patin/microfading](https://github.com/g-patin/microfading)
 
  
 
