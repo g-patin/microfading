@@ -919,7 +919,7 @@ All the databases were created and can be found in the following directory: /hom
 <td style="text-align: left;">A list of persons (name, surname, and initials) performing the analyses</td>
 </tr>
 <tr>
-<td style="text-align: left;">white_references.txt</td>
+<td style="text-align: left;">white_standards.txt</td>
 <td style="text-align: left;">Contain information related to white reference standards</td>
 </tr>
 </tbody>
@@ -976,7 +976,7 @@ All the databases were created and can be found in the following directory: /hom
 <td style="text-align: left;">returns a list of the registered microfading devices</td>
 </tr>
 <tr>
-<td style="text-align: left;"><code>get_white_references()</code></td>
+<td style="text-align: left;"><code>get_white_standards()</code></td>
 <td style="text-align: left;">returns a list of the registered white standard references</td>
 </tr>
 </tbody>
@@ -1016,7 +1016,7 @@ All the databases were created and can be found in the following directory: /hom
 <td style="text-align: left;">add a new microfading device</td>
 </tr>
 <tr>
-<td style="text-align: left;"><code>add_references()</code></td>
+<td style="text-align: left;"><code>add_reference()</code></td>
 <td style="text-align: left;">add a new white standard reference</td>
 </tr>
 </tbody>
@@ -1053,7 +1053,7 @@ All the databases were created and can be found in the following directory: /hom
 </tr>
 </tbody>
 </table>
-<p>The values defined in the <em>set</em> functions are stored inside the <em>db_config.json</em> file which you can find on your local computer inside the <em>site-packages</em> folder of the microfading package. The folder <em>site-packages</em> is where the python libraries are installed on your computer (see below).</p>
+<p>The values defined in the <em>set</em> functions are stored inside the <em>db_config.json</em> file which you can find on your local computer inside the <em>site-packages</em> folder of Anaconda. The folder <em>site-packages</em> is where the python libraries are installed on your computer (see below).</p>
 <div class="highlight"><pre><span></span><code><span class="kn">import</span> <span class="nn">microfading</span> <span class="k">as</span> <span class="nn">mf</span>
 
 <span class="c1"># This command will indicate you where is the microfading package installed on your computer</span>
