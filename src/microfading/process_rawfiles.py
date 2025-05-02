@@ -340,10 +340,22 @@ def MFT_fotonowy(files: list, filenaming:Optional[str] = 'none', folder:Optional
 
             # Retrieve the device info values
             LED_nb = df_info.loc['LED'].values[0]
+            LED_ID = f'LED{LED_nb}'
+            df_LEDs = databases.get_lamps().set_index('ID')
+            existing_LEDs = list(df_LEDs.index)
 
-            df_devices = databases.get_devices()                
-            if device_nb in df_devices['Id'].values:
-                df_devices = df_devices.set_index('Id')                    
+            if LED_ID in existing_LEDs:
+                LED_description = df_LEDs.loc[LED_ID]['description']
+                LED_info = f'{LED_ID}_{LED_description}'
+
+            else:
+                LED_info = LED_ID
+                print(f'The LED_ID ({LED_ID}) related to your analysis is not present in the registered lamps ({existing_LEDs}). Please make sure to register it.')
+                          
+
+            df_devices = databases.get_devices()
+            if device_nb in df_devices['ID'].values:
+                df_devices = df_devices.set_index('ID')                    
                 device_name = df_devices.loc[device_nb]['name']
                 device_description = df_devices.loc[device_nb]['description']
 
@@ -358,8 +370,8 @@ def MFT_fotonowy(files: list, filenaming:Optional[str] = 'none', folder:Optional
 
             # Retrieve the white standard information
             df_WR = databases.get_white_standards()
-            if white_standard in df_WR['Id'].values:
-                df_WR = df_WR.set_index('Id')
+            if white_standard in df_WR['ID'].values:
+                df_WR = df_WR.set_index('ID')
                 WR_nb = white_standard
                 WR_description = df_WR.loc[white_standard]['description']
             elif white_standard == 'default':
@@ -385,7 +397,7 @@ def MFT_fotonowy(files: list, filenaming:Optional[str] = 'none', folder:Optional
                 'none',
                 'none',
                 'Thorlabs, FT030',
-                f'LED{LED_nb}',
+                f'{LED_info}',
                 'none',
                 'none',
                 'none',
