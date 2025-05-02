@@ -61,6 +61,30 @@ def get_config_path():
     return config_file
 
 
+def get_databases_info():
+
+    # Retrieve the config info 
+    config_info = get_config_info()
+
+    # Check if the 'databases' key exists in the config
+    if "databases" in config_info:
+        databases_info = config_info["databases"]
+
+        # Return nothing if no devices info registered
+        if len(databases_info) == 0:
+            print("The databases information have not been registered. Please register using the 'set_databases_info' function.")
+            return None
+        
+        # Convert the devices info to a DataFrame and return it
+        df = pd.DataFrame.from_dict(databases_info, orient="columns")
+        return df
+
+    else:
+        print("The dictionary named 'databases' has been removed from the config_info.json file. Re-insert it as an empty dictionary or re-install the package.")
+        return None
+
+
+
 def get_devices_info():
     
     # Retrieve the config info 
@@ -427,7 +451,7 @@ def set_devices_info():
     # define the ipywidgets
     wg_id = ipw.Combobox(        
         placeholder='Enter or select a device',
-        options=tuple(db.get_devices()['Id'].values),
+        options=tuple(db.get_devices()['ID'].values),
         description='Device ID',
         ensure_option=True,
         disabled=False,
