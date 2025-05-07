@@ -287,16 +287,18 @@ def CIELAB(data, stds=None, colors=None, fontsize=24, legend_labels=[], title=No
     # plot the data
     for i, (el_data, label, std) in enumerate(zip(data, legend_labels, stds)):
 
+        
         # compute dE values
-        if dE:            
-            dE00 = np.round(np.array([colour.delta_E(el_data[0][:3], d[:3]) for d in el_data]),3)
+        if dE:                   
+            dE00 = np.round([colour.delta_E(el_data[1:].T[0],x) for x in el_data[1:].T],3)            
+            L, a, b = el_data[1], el_data[2], el_data[3]
 
-        # retrieve the Lab values 
-        #el_data = el_data.transpose()       
-        L, a, b = el_data[0], el_data[1], el_data[2]
-                
+        else:
+            L, a, b = el_data[0], el_data[1], el_data[2]
+
         # retrieve the light dose values
-        H = el_data[3] if dE else None
+        H = el_data[0] if dE else None                       
+        
                
         # define the colors and color_line of the markers        
         if colors == 'sample':
@@ -562,12 +564,13 @@ def delta(data: list, yerr=None, dose_unit:Optional[list] = ['He'], coordinates:
         if ls == 'random':
             plt.rcParams['axes.prop_cycle'] = ("cycler('ls', ['-', '--', ':', '-.'])")
             ax1.set_prop_cycle(ls = ["-","--","-.",":"])
-
+        elif isinstance(ls, list):
+            list_ls = [[x] for x in ls]
         
         for d,s,label,ls,lw,color in zip(data,yerr,legend_labels,list_ls,list_lw,colors):
 
             x = d[0]            
-
+            
             for y,s_val,l,ls_val,lw_val,c in zip(d[1:],s,label,ls,lw,color):
                
                 if ls == 'random':
