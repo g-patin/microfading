@@ -61,28 +61,32 @@ labels_eq = {
 #### DATABASES RELATED FUNCTIONS ####
 
 
+def create_DB():
+    "Create the databases files"
+    return msdb.DB(new_db=True)
+
+
 def is_DB():
-    "Check whether the databases files were created."
+    "Check whether the databases files were created and registered."
 
-    # instantiate a DB class object
-    DB = databases.DB()
-    DB_config = DB.get_db_config()['databases']
+    # retrieve the config info about the databases
+    config_db = config.get_config_info()['databases']
 
-    if len(DB_config) == 0:
-        print('The databases have not been configured. Please enter databases configuration info by using the function set_DB().')
+    # check whether the databases have been registered
+    if len(config_db) == 0:
+        print('The databases have not been registered. Please enter databases configuration info by using the function set_DB().')
         return False
 
-    db_files = ['DB_projects.csv', 'DB_objects.csv','institutions.txt', 'persons.txt','object_types.txt', 'object_techniques.txt', 'object_supports.txt', 'object_creators.txt']
+    db_files = ['projects_info.csv', 'objects_info.csv','devices.txt','institutions.txt', 'users_info.txt','object_types.txt', 'object_techniques.txt', 'object_materials.txt', 'object_creators.txt', 'white_standards.txt', 'lamps.txt']
         
-    if all(list(map(os.path.isfile, [str(Path(DB.folder_db)/x) for x in db_files]))):
-        print(f'All the databases were created and can be found in the following directory: {DB.folder_db}')
-            
+    db_path = config.get_config_info()['databases']['path_folder']
+    if all(list(map(os.path.isfile, [str(Path(db_path)/x) for x in db_files]))):
+        print(f'All the databases were created and can be found in the following directory: {db_path}')            
         return True
 
     else:
-        print('The databases files were created, but one or several files are currently missing.')
-        print(f'The files should be located in the following directory: {DB.folder_db}')
-
+        print(f'The databases files were created, but one or several files are currently missing.')
+        print(f'The following files ({db_files}) should be present in the following directory: {db_path}')
         return False
 
 
@@ -270,6 +274,18 @@ def get_light_dose_info():
     return config.get_light_dose_info()
 
 
+
+def get_parameters_info():
+
+    datasets_folder = Path(__file__).parent / 'datasets'
+    datasets_files = [x for x in os.listdir(datasets_folder) if '.xlsx' in x]
+
+    df_dataset_file = pd.read_excel(Path(__file__).parent / 'datasets' / datasets_files[0], sheet_name='info', index_col='parameter')
+    parameters = list(df_dataset_file.index)
+
+    return parameters
+
+
 def process_rawdata(files: list, device: str, filenaming:Optional[str] = 'none', folder:Optional[str] = '.', db:Optional[bool] = 'default', comment:Optional[str] = '', authors:Optional[str] = 'XX', white_standard:Optional[str] = 'default', interpolation:Optional[str] = 'default', step:Optional[float | int] = 0.1, average:Optional[int] = 20, observer:Optional[str] = 'default', illuminant:Optional[str] = 'default', background:Optional[str] = 'black', delete_files:Optional[bool] = True, return_filename:Optional[bool] = True):
     """Process the microfading raw files created by the software that performed the microfading analysis. 
 
@@ -438,6 +454,10 @@ def set_institution_info():
 
 
 def set_report_figures():
+    """Configure some of the parameters when creating figures for reports.    
+    """
+    print('Work in progress. Function not implemented yet.')
+    return 
     return config.set_report_figures()
 
 
@@ -469,13 +489,30 @@ class MFT(object):
         return f'Microfading data class - Number of files = {len(self.files)}'
        
     
-    def add_info(self, parameters:Union[list,str], values:Union[list,str]):
+    def add_info(self, parameters:Union[list,str], values:Union[list,str,int]):
+        """Add information inside the info tab of microfading interim files.
+
+        Parameters
+        ----------
+        parameters : Union[list,str]
+            Parameters defined in the info tab of microfading interim files. A single parameter as a string or a list of parameters can be given.
+            When a list of parameters is given, make sure that the length of parameters is equal to the length of values. 
+            For a list of valid parameters, use the function get_parameters_info().
+
+        values : Union[list,str,int]
+            The new values that will be added in the info tab. 
+
+        Raises
+        ------
+        ValueError
+            If the parameter is invalid, it will return an error message.
+        """
 
         if isinstance(parameters, str):
             parameters = [parameters]
 
-        if isinstance(values, str):
-            values = [values]
+        if isinstance(values, (str,int,float)):
+            values = [values]        
 
         if len(parameters) == 1 and isinstance(values, list):
             values = [values]
@@ -1770,16 +1807,16 @@ class MFT(object):
         -------
         pandas dataframe
             It returns the L*a*b* values inside a dataframe where each column corresponds to a single file.
-        """    
-        DB = databases.DB()
+        """     
 
-        
         # Set the observer value
         if observer == 'default':
-            if len(DB.get_colorimetry_info()) == 0:
+            if isinstance(config.get_colorimetry_info(message=False), pd.DataFrame):
+                observer = config.get_colorimetry_info().loc['observer']['value']
+            elif config.get_colorimetry_info(message=False) == None:
                 observer = '10deg'
             else:
-                observer = DB.get_colorimetry_info().loc['observer']['value']
+                observer = '10deg'
 
         else:
             observer = f'{str(observer)}deg'
@@ -1787,10 +1824,12 @@ class MFT(object):
         
         # Set the illuminant value
         if illuminant == 'default':
-            if len(DB.get_colorimetry_info()) == 0:
+            if isinstance(config.get_colorimetry_info(message=False), pd.DataFrame):
+                illuminant = config.get_colorimetry_info().loc['illuminant']['value']
+            elif config.get_colorimetry_info() == None:
                 illuminant = 'D65'
             else:
-                illuminant = DB.get_colorimetry_info().loc['illuminant']['value']
+                illuminant = 'D65'
         
         
         # Get colorimetric data related to the standard observer
@@ -1934,26 +1973,28 @@ class MFT(object):
         -------
         pandas dataframe
             It returns the sRGB values inside a dataframe where each column corresponds to a single file.
-        """
-        
+        """        
         
         # Set the observer value
         if observer == 'default':
-            if len(config.get_colorimetry_info()) == 0:
+            if isinstance(config.get_colorimetry_info(message=False), pd.DataFrame):
+                observer = config.get_colorimetry_info().loc['observer']['value']
+            elif config.get_colorimetry_info(message=False) == None:
                 observer = '10deg'
             else:
-                observer = config.get_colorimetry_info().loc['observer']['value']
+                observer = '10deg'
 
         else:
             observer = f'{str(observer)}deg'
 
         # Set the illuminant value
         if illuminant == 'default':
-            if len(config.get_colorimetry_info()) == 0:
+            if isinstance(config.get_colorimetry_info(message=False), pd.DataFrame):
+                illuminant = config.get_colorimetry_info().loc['illuminant']['value']
+            elif config.get_colorimetry_info() == None:
                 illuminant = 'D65'
             else:
-                illuminant = config.get_colorimetry_info().loc['illuminant']['value']
-        
+                illuminant = 'D65'
         
         # Get colorimetric data related to the standard observer
         observers = {
@@ -2049,21 +2090,24 @@ class MFT(object):
 
         # Set the observer value
         if observer == 'default':
-            if len(config.get_colorimetry_info()) == 0:
+            if isinstance(config.get_colorimetry_info(message=False), pd.DataFrame):
+                observer = config.get_colorimetry_info().loc['observer']['value']
+            elif config.get_colorimetry_info(message=False) == None:
                 observer = '10deg'
             else:
-                observer = config.get_colorimetry_info().loc['observer']['value']
+                observer = '10deg'
 
         else:
             observer = f'{str(observer)}deg'
 
-
         # Set the illuminant value
         if illuminant == 'default':
-            if len(config.get_colorimetry_info()) == 0:
+            if isinstance(config.get_colorimetry_info(message=False), pd.DataFrame):
+                illuminant = config.get_colorimetry_info().loc['illuminant']['value']
+            elif config.get_colorimetry_info() == None:
                 illuminant = 'D65'
             else:
-                illuminant = config.get_colorimetry_info().loc['illuminant']['value']               
+                illuminant = 'D65'             
         
         
         # Get colorimetric data related to the standard observer
@@ -2136,21 +2180,24 @@ class MFT(object):
 
         # Set the observer value
         if observer == 'default':
-            if len(config.get_colorimetry_info()) == 0:
+            if isinstance(config.get_colorimetry_info(message=False), pd.DataFrame):
+                observer = config.get_colorimetry_info().loc['observer']['value']
+            elif config.get_colorimetry_info(message=False) == None:
                 observer = '10deg'
             else:
-                observer = config.get_colorimetry_info().loc['observer']['value']
+                observer = '10deg'
 
         else:
             observer = f'{str(observer)}deg'
 
-
         # Set the illuminant value
         if illuminant == 'default':
-            if len(config.get_colorimetry_info()) == 0:
+            if isinstance(config.get_colorimetry_info(message=False), pd.DataFrame):
+                illuminant = config.get_colorimetry_info().loc['illuminant']['value']
+            elif config.get_colorimetry_info() == None:
                 illuminant = 'D65'
             else:
-                illuminant = config.get_colorimetry_info().loc['illuminant']['value']               
+                illuminant = 'D65'             
         
         
         # Get colorimetric data related to the standard observer
@@ -2264,8 +2311,7 @@ class MFT(object):
             When 'cwd', it will save the figure in the current working directory.
         """
 
-        # ['L*','a*','b*','C*','h','dL*','da*','db*','dC*','dh','dE76','dE00','dR_vis']
-      
+              
         # Define the light dose value      
         doses_dic = {'He':'He_MJ/m2', 'Hv':'Hv_Mlxh', 't':'t_sec'}
         max_doses = [x.values[0] for x in self.get_doses(dose_unit=dose_unit, max_doses=True)]
@@ -2408,12 +2454,12 @@ class MFT(object):
 
         ax.xaxis.grid() # horizontal lines only
 
-        ax.set_xlabel('Microfading analyses numbers', fontsize=fontsize)
+        
         ax.set_ylabel(labels_eq[coordinate], fontsize=fontsize)
 
-        
-        #ax.set_xticks(x)
-        #ax.set_xticklabels(df_data['xlabels'], rotation=rotate_xlabels, ha=position_xlabels)
+        if not group_objects: 
+            ax.set_xticks(x)
+            ax.set_xticklabels(df_data['xlabels'], rotation=rotate_xlabels, ha=position_xlabels)
 
         ax.text(x=position_text[0], y=position_text[1], s=f'Light dose = {dose_value} {doses_dic[dose_unit].split("_")[1]}', fontsize=fontsize-6, transform=ax.transAxes, ha='left', va='top')
 
@@ -2446,7 +2492,7 @@ class MFT(object):
         plotting.BWSE(data=wanted_data, frequency=frequency, bins=bins, figsize=figsize, colors=colors, fontsize=fontsize, title=title, title_fontsize=title_fontsize, rotate_xlabels=rotate_xlabels, position_xlabels=position_xlabels,  save=save, path_fig=path_fig)
     
     
-    def plot_CIELAB(self, stds=[], dose_unit:Optional[str] = 'He', dose_values:Union[int, float, list, tuple] = 'all', colors:Union[str,list] = None, title:Optional[str] = None, fontsize:Optional[int] = 20, legend_labels:Union[str,list] = 'default', legend_position:Optional[str] = 'in', legend_fontsize:Optional[int] = 20, legend_title:Optional[str] = None, dE:Optional[bool] = False, obs_ill:Optional[bool] = True, save:Optional[bool] = False, path_fig:Optional[str] = 'cwd', report:Optional[bool] = False):
+    def plot_CIELAB(self, stds:Optional[list] = [], dose_unit:Optional[str] = 'He', dose_values:Union[int, float, list, tuple] = 'all', colors:Union[str,list] = None, title:Optional[str] = None, fontsize:Optional[int] = 20, legend_labels:Union[str,list] = 'default', legend_position:Optional[str] = 'in', legend_fontsize:Optional[int] = 20, legend_title:Optional[str] = None, dE:Optional[bool] = False, obs_ill:Optional[bool] = True, save:Optional[bool] = False, path_fig:Optional[str] = 'cwd', report:Optional[bool] = False):
         """Plot the Lab values related to input the microfading files.
 
         Parameters
@@ -2508,7 +2554,13 @@ class MFT(object):
         """
 
         data_Lab = self.get_cielab(coordinates=['L*', 'a*', 'b*'], dose_unit=dose_unit, dose_values=dose_values)
-        data_Lab = [x.T.values for x in data_Lab]
+
+        if dE:
+            data_Lab = [x.reset_index().T.values for x in data_Lab]
+        else:
+            data_Lab = [x.T.values for x in data_Lab]
+
+        
        
 
         # Retrieve the metadata
@@ -2541,7 +2593,7 @@ class MFT(object):
         # Whether to plot the observer and illuminant info
         if obs_ill:
             
-            if len(config.get_colorimetry_info()) == 0:
+            if len(config.get_config_info()['colorimetry']) == 0:
                 observer = '10deg'
                 illuminant = 'D65'
             else:
@@ -2765,7 +2817,7 @@ class MFT(object):
         plotting.swatches_rectangle(data=wanted_data, data_type='Lab', labels=labels, bottom_scale=bottom_scale, top_labels=top_labels, fontsize=fontsize, side_annotations=side_annotations, colorbar=colorbar, title=title, save=save, path_fig=path_fig)
 
     
-    def plot_delta(self, stds:Optional[bool] = True, coordinates:Optional[list] = ['dE00'], dose_unit:Optional[str] = 'He', legend_labels:Union[str, list] = 'default', initial_values:Optional[bool] = False, figsize:Optional[tuple] = (15,9), colors:Union[str,list] = None, lw:Union[int,list] = 'default', title:Optional[str] = None, fontsize:Optional[int] = 24, legend_fontsize:Optional[int] = 24, legend_title:Optional[str] = None, xlim:Optional[tuple] = None, save:Optional[bool] = False, path_fig:Optional[str] = 'cwd'):
+    def plot_delta(self, stds:Optional[bool] = True, coordinates:Optional[list] = ['dE00'], dose_unit:Optional[str] = 'He', legend_labels:Union[str, list] = 'default', initial_values:Optional[bool] = False, figsize:Optional[tuple] = (15,9), colors:Union[str,list] = None, ls:Union[str,list] = 'random', lw:Union[int,list] = 'default', title:Optional[str] = None, fontsize:Optional[int] = 24, legend_fontsize:Optional[int] = 24, legend_title:Optional[str] = None, xlim:Optional[tuple] = None, save:Optional[bool] = False, path_fig:Optional[str] = 'cwd'):
         """Plot the delta values of choosen colorimetric coordinates related to the microfading analyses.
 
         Parameters
@@ -2893,6 +2945,7 @@ class MFT(object):
         else:
             initial_values = {}  
 
+        
         if len(meas_nbs) > 1:
             initial_values = {}
 
@@ -2919,7 +2972,7 @@ class MFT(object):
                 path_fig = f'{os.getcwd()}/{filename}' 
         
         
-        plotting.delta(data=nominal_data, yerr=stdev_data, dose_unit=[dose_unit], coordinates=coordinates, initial_values=initial_values, figsize=figsize, colors=colors, lw=lw, title=title, fontsize=fontsize, legend_labels=legend_labels, legend_fontsize=legend_fontsize, legend_title=legend_title, save=save, path_fig=path_fig)
+        plotting.delta(data=nominal_data, yerr=stdev_data, dose_unit=[dose_unit], coordinates=coordinates, initial_values=initial_values, figsize=figsize, colors=colors, ls=ls, lw=lw, title=title, fontsize=fontsize, legend_labels=legend_labels, legend_fontsize=legend_fontsize, legend_title=legend_title, save=save, path_fig=path_fig)
 
 
     def plot_sp(self, stdev:Optional[bool] = False, spectra:Optional[str] = 'i', dose_unit:Optional[str] = 'He', dose_values:Union[int, float, list, tuple] = 'all', spectral_mode:Optional[str] = 'R', legend_labels:Union[str,list] = 'default', title:Optional[str] = None, fontsize:Optional[int] = 24, fontsize_legend:Optional[int] = 24, legend_title='', wl_range:Optional[tuple] = None, colors:Union[str,list] = None, lw:Union[int, list] = 2, ls:Union[str, list] = '-', text_xy:Optional[tuple] = (0.02,0.03), save:Optional[bool] = False, path_fig:Optional[str] = 'cwd', derivation:Optional[bool] = False, smoothing:Optional[tuple] = (1,0), report:Optional[bool] = False):
