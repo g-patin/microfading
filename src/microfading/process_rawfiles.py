@@ -19,13 +19,14 @@ def MFT_fotonowy(files: list, filenaming:Optional[str] = 'none', folder:Optional
             
     # check whether the objects and projects databases have been created
     
-    if db:        
-        db_name = config.get_config_info()['databases']['db_name']
-        
-        if db_name not in msdb.get_db_names():
-            return 'The databases have not been created or registered.'
+    if db:  
+        databases_info = config.get_config_info()['databases']
+
+        if len(databases_info) == 0:
+            return 'The databases have not been created or registered. To register the databases, use the function set_DB(). To create the databases files use the function create_DB()'
         
         else:   
+            db_name = config.get_config_info()['databases']['db_name']
             databases = msdb.DB(db_name)  
             db_projects = databases.get_projects()
             db_objects = databases.get_objects()
@@ -264,6 +265,8 @@ def MFT_fotonowy(files: list, filenaming:Optional[str] = 'none', folder:Optional
             
         if db == False:          
 
+            df_info.loc['authors'] = authors
+            df_info.loc['comment'] = comment
             df_info.loc['illuminant'] = illuminant
             df_info.loc['observer'] = observer
             df_info.loc['duration_min'] = duration_min
@@ -272,7 +275,10 @@ def MFT_fotonowy(files: list, filenaming:Optional[str] = 'none', folder:Optional
             df_info.loc['radiantExposure_He_MJ/m^2'] = np.round(total_He, 3)
             df_info.loc['exposureDose_Hv_Mlxh'] = np.round(total_Hv, 3)
             df_info.loc['illuminance_Ev_Mlx'] = np.round(ill, 4)
-            df_info.loc['irradiance_Ee_W/m^2'] = int(irr)            
+            df_info.loc['irradiance_Ee_W/m^2'] = int(irr)    
+
+            for param in MFT_info_templates.results_info:
+                df_info.loc[param] = ''        
 
             current = int(df_info.loc['Curr'].values[0].split(' ')[0])
             df_info.loc['Curr'] = current
