@@ -16,7 +16,7 @@ config_file = Path(__file__).parent / 'config_info.json'
 
 
 
-def get_colorimetry_info():
+def get_colorimetry_info(message:Optional[bool] = True):
 
     # Retrieve the config info
     config_info = get_config_info()    
@@ -27,7 +27,8 @@ def get_colorimetry_info():
 
         # Return nothing if no colorimetric info registered
         if len(colorimetry_info) == 0:
-            print("The colorimetric information have not been registered. Please register using the 'set_colorimetry_info' function.")
+            if message:
+                print("The colorimetric information have not been registered. Please register using the 'set_colorimetry_info' function.")
             return None
         
         # Convert the colorimetric info to a DataFrame and return it
@@ -239,7 +240,7 @@ def set_colorimetry_info():
 
     wg_white_standard = ipw.Dropdown(
         description = 'White standard',            
-        options = db.get_white_standards()['Id'].values,
+        options = db.get_white_standards()['ID'].values,
         style = style
     )
 
@@ -839,7 +840,7 @@ def set_report_figures():
     # Get all methods in the class
     methods = inspect.getmembers(cls, predicate=inspect.isfunction)        
     plot_methods = [x[0] for x in methods if 'plot_' in x[0]]
-
+    
         
     # Mapping from Python types to ipywidgets
     type_to_widget = {
@@ -856,17 +857,21 @@ def set_report_figures():
     # Iterate over each method and get its parameters
     methods_dic = {}
     for method_name, method in methods:            
-
+        
         if method_name in plot_methods:
             sig = inspect.signature(method) 
-                         
+                      
             params = list(sig.parameters.keys())[1:]
             methods_dic[method_name] = params
-
-            param_type = sig.parameters.items()[1].annotation
-            param_name =  sig.parameters.items()[0]
+            
+            
+            param_type = [x[1].annotation for x in sig.parameters.items()]
+            #param_type = sig.parameters.items()[1].annotation
+            #param_name =  sig.parameters.items()[0]
+            param_name = [x[0] for x in sig.parameters.items()]
 
             # Resolve Optional and Union types
+            """
             if get_origin(param_type) is Union:
                 args = get_args(param_type)
                 if type(None) in args:  # Handle Optional
@@ -883,7 +888,8 @@ def set_report_figures():
             else:
                 # Default to Text widget if type is not mapped
                 widgets_dict[param_name] = ipw.Text(description=param_name)
-        
+            """
+
     wg_functions = ipw.Dropdown(
         description= 'Plot functions',
         value=plot_methods[0],
