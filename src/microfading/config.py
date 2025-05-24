@@ -217,11 +217,7 @@ def reset_config():
         print(f'The {config_file.name} file has been successfully reset.')
     
 
-def set_colorimetry_info():   
-
-    # get the databases name and create an instance of the DB class
-    db_name = get_config_info()['databases']['db_name']
-    db = msdb.DB(db_name)
+def set_colorimetry_info():           
 
     # define some widgets
     wg_observer = ipw.Dropdown(
@@ -237,13 +233,7 @@ def set_colorimetry_info():
         options = ['A', 'B', 'C', 'D50', 'D55', 'D60', 'D65', 'D75', 'E', 'FL1', 'FL2', 'FL3', 'FL4', 'FL5', 'FL6', 'FL7', 'FL8', 'FL9', 'FL10', 'FL11', 'FL12', 'FL3.1', 'FL3.2', 'FL3.3', 'FL3.4', 'FL3.5', 'FL3.6', 'FL3.7', 'FL3.8', 'FL3.9', 'FL3.10', 'FL3.11', 'FL3.12', 'FL3.13', 'FL3.14', 'FL3.15', 'HP1', 'HP2', 'HP3', 'HP4', 'HP5', 'LED-B1', 'LED-B2', 'LED-B3', 'LED-B4', 'LED-B5', 'LED-BH1', 'LED-RGB1', 'LED-V1', 'LED-V2', 'ID65', 'ID50'],
         style = style
     )
-
-    wg_white_standard = ipw.Dropdown(
-        description = 'White standard',            
-        options = db.get_white_standards()['ID'].values,
-        style = style
-    )
-
+    
     recording = ipw.Button(
         description='Save',
         disabled=False,
@@ -266,8 +256,7 @@ def set_colorimetry_info():
         # Update config with the colorimetric info
         config_info["colorimetry"] = {
             "observer": f'{wg_observer.value}deg',
-            "illuminant": wg_illuminant.value, 
-            "white_standard": wg_white_standard.value,                               
+            "illuminant": wg_illuminant.value,                             
         }
         # Save the updated config back to the JSON file
         with open(config_file, "w") as f:
@@ -280,7 +269,7 @@ def set_colorimetry_info():
     recording.on_click(button_record_pressed)
 
     # display the widgets
-    display(ipw.VBox([wg_observer, wg_illuminant, wg_white_standard]))
+    display(ipw.VBox([wg_observer, wg_illuminant]))
     display(ipw.HBox([recording, button_record_output]))
 
 
@@ -446,13 +435,20 @@ def set_devices_info():
         
 
     # get the databases name and create an instance of the DB class
-    db_name = get_config_info()['databases']['db_name']
-    db = msdb.DB(db_name)
+    db_config = get_config_info()['databases']
+    if len(db_config) == 0:
+        device_ids = ()
+        white_standard_ids = ()
+    else:
+        db_name = db_config['db_name']
+        db = msdb.DB(db_name)
+        device_ids = tuple(db.get_devices()['ID'].values)
+        white_standard_ids = tuple(db.get_white_standards()['ID'].values)
     
     # define the ipywidgets
     wg_id = ipw.Combobox(        
         placeholder='Enter or select a device',
-        options=tuple(db.get_devices()['ID'].values),
+        options=device_ids,
         description='Device ID',
         ensure_option=True,
         disabled=False,
@@ -468,6 +464,26 @@ def set_devices_info():
         style = style
     )
 
+    wg_white_standard = ipw.Combobox(        
+        placeholder='Enter or select a white standard ID',
+        options=white_standard_ids,
+        description='White standard',
+        ensure_option=True,
+        disabled=False,
+        layout=Layout(width="30%", height="30px"),
+        style=style
+    )
+    wg_average = ipw.BoundedIntText(
+        value=10,
+        min=0,
+        max=100,
+        step=1,
+        description='Average',        
+        disabled=False,
+        layout=Layout(width="30%", height="30px"),
+        style=style
+    )
+
     wg_if_wavelengths = ipw.Checkbox(
         value=False,
         description='Set wavelengths',
@@ -481,7 +497,7 @@ def set_devices_info():
         min=100,
         max=3000,
         step=1,
-        description='Wavelength range',
+        description='Wavelength range (nm)',
         disabled=False,
         continuous_update=False,
         orientation='horizontal',
@@ -535,19 +551,25 @@ def set_devices_info():
         # Update config with the device info
         if len(existing_info) == 0:
             existing_info[wg_id.value] = {
+                'average': wg_average.value,
                 'process_function': wg_process_functions.value,
+                'white_standard': wg_white_standard.value,                
                 'wl_range': wl_range
                 }  
 
         elif wg_id.value in list(existing_info.keys()):
                 
             device_dic = existing_info[wg_id.value]
+            device_dic['average'] = wg_average.value
             device_dic['process_function'] = wg_process_functions.value
+            device_dic['white_standard'] = wg_white_standard.value
             device_dic['wl_range'] = wl_range
           
         else:                      
             existing_info[wg_id.value] = {
+                'average': wg_average.value,
                 'process_function': wg_process_functions.value,
+                'white_standard': wg_white_standard.value,
                 'wl_range': wl_range
                 }
             
@@ -566,7 +588,7 @@ def set_devices_info():
 
 
     # display the widgets
-    display(ipw.VBox([wg_id, wg_process_functions, ipw.HBox([wg_if_wavelengths, wavelength_range_output])]))
+    display(ipw.VBox([wg_id, wg_process_functions, wg_average, wg_white_standard, ipw.HBox([wg_if_wavelengths, wavelength_range_output])]))
     display(ipw.HBox([recording, button_record_output]))
 
 
