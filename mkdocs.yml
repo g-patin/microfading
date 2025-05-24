@@ -19,6 +19,7 @@ nav:
   - microfading.md
   - Tutorials:
       - get-started.md
+      - configuration-info.md
       - databases-management.md
       - assess-light-sensitivity.md
       - generate-report.md
@@ -31,6 +32,7 @@ nav:
   - Explanation:
       - package-usage.md
       - datafiles.md
+      - config-vs-database.md
   - References: references.md 
   
 plugins:

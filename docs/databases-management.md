@@ -7,7 +7,7 @@ This section implies that you have created the database files. If that is not th
 import microfading as mf
 
 # Check whether databases were created.
-mf.DB()
+mf.is_DB()
 ```
 
 <div class="output-area">
@@ -95,7 +95,7 @@ Table 3. Description of the *add* functions.
 
 ## **Set functions**
 
-Table 4. Description of the *set* functions.
++Table 4. Description of the *set* functions.
 
 | <div style="width:205px">Function name</div> | <div style="width:250px">Description</div>
 | :--------| :---------
