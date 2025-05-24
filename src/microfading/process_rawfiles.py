@@ -14,16 +14,79 @@ from . import MFT_info_dictionaries
 from . import MFT_info_templates
 
 
-def MFT_fotonowy(files: list, filenaming:Optional[str] = 'none', folder:Optional[str] = '.', db:Optional[bool] = False, comment:Optional[str] = '', device_nb:Optional[str] = 'default', authors:Optional[str] = 'XX', white_standard:Optional[bool] = 'default', interpolation:Optional[str] = 'He', step:Optional[float | int] = 0.1, average:Optional[int] = 20, observer:Optional[str] = 'default', illuminant:Optional[str] = 'default', background:Optional[str] = 'black', delete_files:Optional[bool] = True, return_filename:Optional[bool] = True):
+def MFT_fotonowy(files: list, filenaming:Optional[str] = 'none', folder:Optional[str] = '.', db:Optional[bool] = False, comment:Optional[str] = '', device_nb:Optional[str] = 'default', authors:Optional[str] = 'XX', white_standard:Optional[bool] = 'default', interpolation:Optional[str] = 'He', step:Optional[float | int] = 0.1, average:Optional[int] = 'undefined', observer:Optional[str] = 'default', illuminant:Optional[str] = 'default', background:Optional[str] = 'black', delete_files:Optional[bool] = True, return_filename:Optional[bool] = True):
+    """Process the microfading rawdata obtained from the Fotonowy device.
+
+    Parameters
+    ----------
+    files : list of strings
+        Path of the microfading rawdata files
+    
+    filenaming : Optional[str], optional
+        _description_, by default 'none'
+    
+    folder : Optional[str], optional
+        _description_, by default '.'
+    
+    db : Optional[bool], optional
+        Whether to make use of the info registered in the database files, by default False
+    
+    comment : Optional[str], optional
+        Whether to insert a comment about the microfading analyses, by default ''
+    
+    device_nb : Optional[str], optional
+        ID number of the microfading, by default 'default'
+    
+    authors : Optional[str], optional
+        Person(s) that performed the analyses, by default 'XX'
+    
+    white_standard : Optional[bool], optional
+        ID number of the white standard reference sued to perform the analyses, by default 'default'
+    
+    interpolation : Optional[str], optional
+        Whether to perform the interpolation according to the light energy values  ('He', 'Hv', 't') and wavelengths (every 1 nm) or not ('none'), by default 'He'
+        When 'none', it will not interpolate the data at all
+        When 'He' performs interpolation based on the radiant exposure (MJ/m²) and for which you can define a step (see next parameter)
+        When 'Hv' performs interpolation based on the exposure dose (Mlxh) and for which you can define a step (see next parameter)
+        When 't' performs interpolation based on the exposure duration (sec) and for which you can define a step (see next parameter) 
+    
+    step : Optional[float  |  int], optional
+        Interpolation step related to the scale previously mentioned ('He', 'Hv', 't'), by default 0.1
+    
+    average : Optional[int], optional
+        Average of the measurements, by default 'undefined'
+        If you use always the same average value, you can save it up in the config_info.json file (use the set_devices_info() function). Then enter 'default' as  value for the average parameter in order to retrieve the average value savied in the config file.
+    
+    observer : str, optional
+        Reference CIE *observer* in degree ('10deg' or '2deg'). by default 'default'.
+        When 'default', it fetches the observer value recorded in the db_config.json file of the package. If no value has been recorded, then it sets the observer value to '10deg'. 
+
+    illuminant : (str, optional)  
+        Reference CIE *illuminant*. It can be any value of the following list: ['A', 'B', 'C', 'D50', 'D55', 'D60', 'D65', 'D75', 'E', 'FL1', 'FL2', 'FL3', 'FL4', 'FL5', 'FL6', 'FL7', 'FL8', 'FL9', 'FL10', 'FL11', 'FL12', 'FL3.1', 'FL3.2', 'FL3.3', 'FL3.4', 'FL3.5', 'FL3.6', 'FL3.7', 'FL3.8', 'FL3.9', 'FL3.10', 'FL3.11', 'FL3.12', 'FL3.13', 'FL3.14', 'FL3.15', 'HP1', 'HP2', 'HP3', 'HP4', 'HP5', 'LED-B1', 'LED-B2', 'LED-B3', 'LED-B4', 'LED-B5', 'LED-BH1', 'LED-RGB1', 'LED-V1', 'LED-V2', 'ID65', 'ID50']. by default 'default'.
+        When 'default', it fetches the illuminant value recorded in the db_config.json file of the package. If no value has been recorded, then it sets the illuminant value to 'D65'.
+    
+    background : Optional[str], optional
+        _description_, by default 'black'
+    
+    delete_files : Optional[bool], optional
+        Whether to delete the raw files, by default True
+    
+    return_filename : Optional[bool], optional
+        Whether to return the filename of the created excel file that contains the microfading data and metadata, by default True
+
+    Returns
+    -------
+    str
+        _description_
+    """
 
             
-    # check whether the objects and projects databases have been created
-    
+    # check whether the objects and projects databases have been created    
     if db:  
         databases_info = config.get_config_info()['databases']
 
         if len(databases_info) == 0:
-            return 'The databases have not been created or registered. To register the databases, use the function set_DB(). To create the databases files use the function create_DB()'
+            return 'The databases have not been created or registered. To register the databases, use the function set_DB(). To create the databases files use the function create_DB(). For more information about databases, consult the online documentation: https://g-patin.github.io/microfading/'
         
         else:   
             db_name = config.get_config_info()['databases']['db_name']
@@ -34,7 +97,8 @@ def MFT_fotonowy(files: list, filenaming:Optional[str] = 'none', folder:Optional
     else:
         filenaming = 'none'
    
-    # define parameters for colorimetric calculations
+    
+    # define observer and illuminant values used for the colorimetric calculations
     observers = {        
         '10deg': 'cie_10_1964',
         '2deg' : 'cie_2_1931',
@@ -60,7 +124,7 @@ def MFT_fotonowy(files: list, filenaming:Optional[str] = 'none', folder:Optional
     illuminant_SDS = colour.SDS_ILLUMINANTS[illuminant]
     illuminant_CCS = colour.CCS_ILLUMINANTS[observers[observer]][illuminant]
     cmfs = cmfs_observers[observer]
-
+    
     # wanted wavelength range
     wanted_wl = pd.Index(np.arange(380,781), name='wavelength_nm')
     
@@ -112,14 +176,14 @@ def MFT_fotonowy(files: list, filenaming:Optional[str] = 'none', folder:Optional
         times = raw_df_cl['#Time']
         interval_sec = int(np.round(times.values[3] - times.values[2],0))
         numDataPoints = len(times)        
-        duration_min = int(np.round(times.values[-1] /60, 2))
-        He = raw_df_cl['Watts']       # in MJ/m²
-        Hv = raw_df_cl['Lux']         # in Mlxh
+        duration_min = np.round(times.values[-1] / 60, 2)
+        He = raw_df_cl['Watts']       # radiant exposure values in MJ/m²
+        Hv = raw_df_cl['Lux']         # exposure dose values in Mlxh
         total_He = He.values[-1]
         total_Hv = Hv.values[-1]
-        ill = (60 * total_Hv) / duration_min
-        irr = (total_He*1e6) / (duration_min * 60)
-         
+        ill = (60 * total_Hv) / (times.values[-1]/60)
+        irr = (total_He*1e6) / times.values[-1]
+        
         
         # interpolate the data
         if interpolation == 'none':   
@@ -269,7 +333,7 @@ def MFT_fotonowy(files: list, filenaming:Optional[str] = 'none', folder:Optional
             df_info.loc['comment'] = comment
             df_info.loc['illuminant'] = illuminant
             df_info.loc['observer'] = observer
-            df_info.loc['duration_min'] = duration_min
+            df_info.loc['duration_min'] = int(duration_min)
             df_info.loc['interval_sec'] = interval_sec
             df_info.loc['numDataPoints'] = numDataPoints 
             df_info.loc['radiantExposure_He_MJ/m^2'] = np.round(total_He, 3)
