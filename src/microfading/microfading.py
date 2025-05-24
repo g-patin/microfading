@@ -3525,6 +3525,7 @@ class MFT(object):
 
                 
                 metadata_object = metadata.loc[:, metadata.loc['object_id'] == object_id]
+                project_id = list(set(metadata.loc['project_id'].values))[0]
 
                 if authors == 'default':
                     authors = metadata['authors'].replace('_','-')
@@ -3555,12 +3556,7 @@ class MFT(object):
                     [nb02]  & [BWSE02] \\\\  
                     [nb03] & [BWSE03] \\\\                                   
                 """
-
                 
-            
-
-                #table_data2 = generate_latex_table(df)
-
                 nb_analyses = str(metadata_object.shape[1])
                 nb_groups = str(len(set(metadata_object.loc['spot_group'].values)))
                 ill = np.round(np.mean(metadata_object.loc['illuminance_Ev_Mlx'].values),2)
@@ -3568,7 +3564,7 @@ class MFT(object):
 
                 object_materials = list(set(metadata.loc['object_material'].values))[0]
                 if "_" in object_materials:
-                    object_materials = object_materials.replace("_",', ')
+                    object_materials = object_materials.replace("_",', ')list(set(metadata.loc['project_id'].values))[0]
 
                 object_technique = list(set(metadata.loc['object_technique'].values))[0]
                 if "_" in object_technique:
@@ -3659,16 +3655,16 @@ class MFT(object):
                     template = template_file.read()
 
                 # Fill in placeholders with actual values
-                filled_template = template.replace('[PROJECTID]',list(set(metadata.loc['project_id'].values))[0])
+                filled_template = template.replace('[PROJECTID]',project_id)
                 filled_template = filled_template.replace('[OBJECTID]', object_id)
                 filled_template = filled_template.replace('[HOST_INSTITUTION]', host_institution)
                 filled_template = filled_template.replace('[YOURNAME]', authors)
                 filled_template = filled_template.replace('[TABLE1DATA]', table_data['info_object'])  
-                #filled_template = filled_template.replace('[TABLE_DATA2]', table_data['BWSE'])            
+                filled_template = filled_template.replace('% TABLE_DATA2', table_data2)      
                 filled_template = filled_template.replace('[FIGURE1PATH]', str(figure_paths['figure1']))
                 filled_template = filled_template.replace('[FIGURE2PATH]', str(figure_paths['figure2'])) 
                 filled_template = filled_template.replace('[FIGURE3PATH]', str(figure_paths['figure3'])) 
-                filled_template = filled_template.replace('% TABLE_DATA2', table_data2)
+                
 
 
                 # Write filled template to .tex file
@@ -3679,7 +3675,7 @@ class MFT(object):
                 subprocess.run(['pdflatex', 'temp_report.tex'])
 
                 # Move generated PDF to output file                
-                subprocess.run(['mv', 'temp_report.pdf', f'{folder_report}/MFT_rapport-object_{object_id}.pdf'])
+                subprocess.run(['mv', 'temp_report.pdf', f'{folder_report}/{project_id}_MFT_rapport-object_{object_id}.pdf'])
 
                 # Clean up temporary .tex and auxiliary files
                 subprocess.run(['rm', 'temp_report.tex', 'temp_report.aux', 'temp_report.log'])
@@ -3806,11 +3802,12 @@ class MFT(object):
 
                 table_data = {'info_project': info_project, 'info_analysis': info_analysis}
 
-                if len(figure_BWSE_bars) == 1:                
+                if len(figure_BWSE_bars) == 1: 
+                    figure_blank_square = Path(__file__).parent / 'blank_rectangle.png'             
                     figure_paths = {
                         'figure1': figure_BWSE_hist,
                         'figure2': figure_BWSE_bars_01,
-                        'figure3': ''                    
+                        'figure3': figure_blank_square                    
                     }
 
                 else: 
@@ -3828,12 +3825,12 @@ class MFT(object):
                 filled_template = template.replace('[PROJECTID]', project_id)
                 filled_template = filled_template.replace('[INSTITUTION]', host_institution)
                 filled_template = filled_template.replace('[YOURNAME]', authors)
-                filled_template = filled_template.replace('[TABLE1DATA]', table_data['info_project'])
-                #filled_template = filled_template.replace('[TABLE2DATA]', table_data['info_analysis'])
+                filled_template = filled_template.replace('[TABLE1DATA]', table_data['info_project'])                
                 filled_template = filled_template.replace('[FIGURE1PATH]', str(figure_paths['figure1']))
                 filled_template = filled_template.replace('[FIGURE2PATH]', str(figure_paths['figure2']))
+                filled_template = filled_template.replace('[FIGURE3PATH]', str(figure_paths['figure3']))
 
-                print(len(figure_BWSE_bars))
+                
 
                 if len(figure_BWSE_bars) == 2:                
                     filled_template = filled_template.replace('[FIGURE3PATH]', str(figure_paths['figure3']))
@@ -3846,7 +3843,7 @@ class MFT(object):
                 subprocess.run(['pdflatex', 'temp_report.tex'])
 
                 # Move generated PDF to output file                
-                subprocess.run(['mv', 'temp_report.pdf', f'{folder_report}/MFT_rapport-project_{project_id}.pdf'])                
+                subprocess.run(['mv', 'temp_report.pdf', f'{folder_report}/{project_id}_MFT_rapport-project.pdf'])                
 
                 # Clean up temporary .tex and auxiliary files
                 subprocess.run(['rm', 'temp_report.tex', 'temp_report.aux', 'temp_report.log'])
