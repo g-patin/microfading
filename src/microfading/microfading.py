@@ -286,7 +286,7 @@ def get_parameters_info():
     return parameters
 
 
-def process_rawdata(files: list, device: str, filenaming:Optional[str] = 'none', folder:Optional[str] = '.', db:Optional[bool] = 'default', comment:Optional[str] = '', authors:Optional[str] = 'XX', white_standard:Optional[str] = 'default', interpolation:Optional[str] = 'default', step:Optional[float | int] = 0.1, average:Optional[int] = 20, observer:Optional[str] = 'default', illuminant:Optional[str] = 'default', background:Optional[str] = 'black', delete_files:Optional[bool] = True, return_filename:Optional[bool] = True):
+def process_rawdata(files: list, device: str, filenaming:Optional[str] = 'none', folder:Optional[str] = '.', db:Optional[bool] = 'default', comment:Optional[str] = '', authors:Optional[str] = 'XX', white_standard:Optional[str] = 'default', interpolation:Optional[str] = 'default', step:Optional[float | int] = 0.1, average:Optional[int] = 'undefined', observer:Optional[str] = 'default', illuminant:Optional[str] = 'default', background:Optional[str] = 'undefined', delete_files:Optional[bool] = True, return_filename:Optional[bool] = True):
     """Process the microfading raw files created by the software that performed the microfading analysis. 
 
 
@@ -321,16 +321,18 @@ def process_rawdata(files: list, device: str, filenaming:Optional[str] = 'none',
         If there are several persons, use a dash to connect the initials (e.g: 'JD-MG-OL').
     
     interpolation : str, optional
-        Whether to perform the interpolation ('He', 'Hv', 't') or not ('none'), by default 'He'
-        'He' performs interpolation based on the radiant exposure (MJ/m2)
-        'Hv' performs interpolation based on the exposure dose (Mlxh)
-        't' performs interpolation based on the exposure duration (sec)
-    
-    average : [int], optional
-        Average of the measurements, by default 20
+        Whether to perform the interpolation according to the light energy values  ('He', 'Hv', 't') and wavelengths (every 1 nm) or not ('none'), by default 'He'
+        When 'none', it will not interpolate the data at all
+        When 'He' performs interpolation based on the radiant exposure (MJ/m²) and for which you can define a step (see next parameter)
+        When 'Hv' performs interpolation based on the exposure dose (Mlxh) and for which you can define a step (see next parameter)
+        When 't' performs interpolation based on the exposure duration (sec) and for which you can define a step (see next parameter)   
         
     step : [float  |  int], optional
-        Interpolation step related to the scale previously mentioned ('He', 'Hv', 'time'), by default 0.1
+        Interpolation step related to the scale previously mentioned ('He', 'Hv', 't'), by default 0.1
+
+    average : [int], optional
+        Average of the measurements, by default 'undefined'
+        If you use always the same average value, you can save it up in the config_info.json file (use the set_devices_info() function). Then enter 'default' as  value for the average parameter in order to retrieve the average value savied in the config file.
 
     observer : str, optional
         Reference CIE *observer* in degree ('10deg' or '2deg'). by default 'default'.
@@ -341,7 +343,7 @@ def process_rawdata(files: list, device: str, filenaming:Optional[str] = 'none',
         When 'default', it fetches the illuminant value recorded in the db_config.json file of the package. If no value has been recorded, then it sets the illuminant value to 'D65'.      
 
     delete_files : bool, optional
-        Whether to delete the raw files
+        Whether to delete the raw files, by default True
 
     Returns
     -------
@@ -359,7 +361,15 @@ def process_rawdata(files: list, device: str, filenaming:Optional[str] = 'none',
             db = False            
         else:
             db = config_info['databases']['usage']
-            
+
+
+    # Set the average value
+    if average == 'default':
+        if len(config_info['device']) == 0:
+            average = 'undefined'
+        else:
+            average = config_info['device'][device]['average']   
+         
 
     # Set the observer value
     if observer == 'default':        
@@ -387,10 +397,17 @@ def process_rawdata(files: list, device: str, filenaming:Optional[str] = 'none',
     
     # Set the white reference value
     if white_standard == 'default':
-        if len(config_info['colorimetry']) == 0:
+        if len(config_info['devices']) == 0:
             white_standard = 'default'
+
+        elif device.lower() == 'fotonowy':
+            white_standard = 'default'
+
+        elif device not in config.get_devices_info().columns:
+            return f'The device value you entered ({device}) cannot be found in the registered list of devices ({config.get_devices_info().columns}). Please register the device or enter a valid device ID.'
+        
         else:
-            white_standard = config.get_colorimetry_info().loc['white_standard'].values[0]  
+            white_standard = config.get_devices_info()[device]['white_standard']
     
 
     # Retrieve the process function
@@ -3288,8 +3305,11 @@ class MFT(object):
      
     def make_report(self, folder_figures, folder_report:Optional[str] = 'cwd', type:Optional[str] = 'single', authors:Optional[str] = 'default'):
 
+        # Set the folder to a Path object
+        folder_figures = Path(folder_figures)
         
-        all_figure_files = os.listdir(folder_figures)   
+        # Retrieve all the filgures in the folder
+        all_figure_files = os.listdir(folder_figures)          
 
         # Define the folder where the report should be saved
         if folder_report == 'cwd':
@@ -3390,7 +3410,7 @@ class MFT(object):
 
                 spot_materials = metadata['spot_components']
                 
-                print(id, spot_materials)
+                
 
                 try:
                     if '_' in spot_materials:
@@ -3445,7 +3465,7 @@ class MFT(object):
                     '[He]': f'{metadata["radiantExposure_He_MJ/m^2"]} MJ/m2',
                     '[duration]': f'{np.int32(metadata["duration_min"])} min', 
                     '[device]' : metadata['device'].replace('_','-'),
-                    '[lamp]': str(metadata['lamp_fading']),
+                    '[lamp]': metadata['lamp_fading'].replace('_','-'),
                     '[spot_description]': metadata['spot_description'],      
                     '[spotSize]': f'{metadata["FWHM_micron"]} microns',
                     '[BWSE]': BWSE,
@@ -3495,7 +3515,7 @@ class MFT(object):
             object_ids = sorted(set(list(self.get_metadata('object_id').values)))
             metadata = self.get_metadata()
             
-            print(object_ids)
+            
             for object_id in object_ids:
 
                                 
@@ -3509,7 +3529,9 @@ class MFT(object):
                 if authors == 'default':
                     authors = metadata['authors'].replace('_','-')
 
-                host_institution = metadata.loc['host_institution'][0].replace('_','-')
+                host_institution = metadata.loc['host_institution'][0]
+                if "_" in host_institution:
+                    host_institution = host_institution.split('_')[0]
 
                 info_object = """
                     \\textbf{Object ID} & [objectId] \\\\                
@@ -3548,6 +3570,10 @@ class MFT(object):
                 if "_" in object_materials:
                     object_materials = object_materials.replace("_",', ')
 
+                object_technique = list(set(metadata.loc['object_technique'].values))[0]
+                if "_" in object_technique:
+                    object_technique = object_technique.replace("_",', ')
+
                 # define the mapping table
                 mapping_table_object = {
                     '[objectId]': object_id,                
@@ -3555,7 +3581,7 @@ class MFT(object):
                     '[objectName]': list(set(metadata.loc['object_name'].values))[0], 
                     '[artist]' : list(set(metadata.loc['object_creator'].values))[0],   
                     '[objectDate]': list(set(metadata.loc['object_date'].values))[0],
-                    '[technique]' : list(set(metadata.loc['object_technique'].values))[0],
+                    '[technique]' : object_technique,
                     '[objectMaterial]': object_materials,
                     '[NbAnalyses]': nb_analyses,  
                     '[NbGroups]': nb_groups, 
@@ -3563,7 +3589,7 @@ class MFT(object):
                     '[Hv]': f'{Hv} Mlxh (Avg)',
                     '[duration]': '15 min' # f'{(metadata.loc["duration_min"].values)} min',            
                     }           
-                #print(mapping_table_object) 
+                
             
                 for x in mapping_table_object.keys():
                     info_object = info_object.replace(x, mapping_table_object[x])    
@@ -3578,8 +3604,7 @@ class MFT(object):
                     'figure3': folder_figures / figure_SW,                                 
                 }
 
-                BWSE = metadata_object.loc['BWSE'].values
-                print(BWSE)
+                BWSE = metadata_object.loc['BWSE'].values                
                 simplified_BWSE = []
 
                 for i in BWSE:
@@ -3627,13 +3652,8 @@ class MFT(object):
                     'BWSE': simplified_BWSE,
                 })
 
-                table_data2 = generate_latex_table(df)
-
-                print(df)
-                print(nb_MFT)
-                print(simplified_BWSE)
+                table_data2 = generate_latex_table(df)              
                 
-
 
                 with open(Path(__file__).parent / 'report_templates' / 'MFT_report_object.tex', 'r') as template_file:
                     template = template_file.read()
@@ -3641,7 +3661,7 @@ class MFT(object):
                 # Fill in placeholders with actual values
                 filled_template = template.replace('[PROJECTID]',list(set(metadata.loc['project_id'].values))[0])
                 filled_template = filled_template.replace('[OBJECTID]', object_id)
-                filled_template = filled_template.replace('[LABORATORY]', host_institution)
+                filled_template = filled_template.replace('[HOST_INSTITUTION]', host_institution)
                 filled_template = filled_template.replace('[YOURNAME]', authors)
                 filled_template = filled_template.replace('[TABLE1DATA]', table_data['info_object'])  
                 #filled_template = filled_template.replace('[TABLE_DATA2]', table_data['BWSE'])            
@@ -3670,8 +3690,10 @@ class MFT(object):
 
             all_metadata = self.get_metadata()
             project_ids = all_metadata.loc['project_id'].values
-            db_projects = get_DB('projects').set_index('project_id')
-            db_users = get_persons().set_index('initials')
+            db_name = config.get_config_info()['databases']['db_name']
+            db =  msdb.DB(db_name)
+            db_projects = db.get_projects().set_index('project_id')
+            db_users = db.get_users().set_index('initials')
 
 
 
@@ -3689,6 +3711,8 @@ class MFT(object):
                 institution = project_info['institution']
                 
                 host_institution = metadata.loc['host_institution'].values[0]
+                if "_" in host_institution:
+                    host_institution = host_institution.split('_')[0]
                 
                 
                 keywords = project_info['keywords']
@@ -3702,6 +3726,8 @@ class MFT(object):
                     device = device.replace('_', '-')
 
                 lamp = sorted(set(metadata.loc['lamp_fading'].values))[0]
+                if "_" in lamp:
+                    lamp = lamp.replace('_', '-')
                 nb_analyses = str(metadata.shape[1])
                 nb_objects = str(len(sorted(set(metadata.loc['object_id'].values))))
 
@@ -3761,7 +3787,7 @@ class MFT(object):
                     '[NbAnalyses]': nb_analyses,
                     '[NbObjects]': nb_objects,             
                     }
-                print(mapping_table_project)
+                
                 
                 mapping_table_analyses = {
                     '[MFTdevice]': device,
@@ -3806,6 +3832,8 @@ class MFT(object):
                 #filled_template = filled_template.replace('[TABLE2DATA]', table_data['info_analysis'])
                 filled_template = filled_template.replace('[FIGURE1PATH]', str(figure_paths['figure1']))
                 filled_template = filled_template.replace('[FIGURE2PATH]', str(figure_paths['figure2']))
+
+                print(len(figure_BWSE_bars))
 
                 if len(figure_BWSE_bars) == 2:                
                     filled_template = filled_template.replace('[FIGURE3PATH]', str(figure_paths['figure3']))
