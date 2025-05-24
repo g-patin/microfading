@@ -60,7 +60,7 @@ Table 2. Description of the 'set' methods.
 
 ### set_DB
 
-The `set_DB` function enables you to connect the `microfading` package with databases files created by the `msdb` package. As a pre-requesite, you will need to have created databases files on your local computer ([create_DB](https://g-patin.github.io/microfading/create-databases/)). You can check the databases that you created by looking at the [config file](https://g-patin.github.io/msdb/db_get_config/) of the msdb package. 
+The `set_DB` function enables you to connect the `microfading` package with databases files created by the `msdb` package. As a pre-requesite, you will need to have created databases files on your local computer ([create_DB](https://g-patin.github.io/microfading/create-databases/)). You can check the databases that you created by looking at the [config file](https://g-patin.github.io/msdb/get_config/) of the msdb package. 
 
 
 ![Alt text](images/mf_set_DB.png){: .img-medium align=left }

@@ -16,13 +16,13 @@ mf.create_DB(folder=folder)
 
 ## **Databases created ?**
 
-If you want to know whether databases were created, use the `DB()` function.
+If you want to know whether databases were created, use the `is_DB()` function.
 
 ```python
 import microfading as mf
 
 # Return True if databases files were created otherwise False
-mf.DB()
+mf.is_DB()
 
 ```
 <div class="output-area">
@@ -36,19 +36,21 @@ All the databases were created and can be found in the following directory: /hom
 
 ## **Databases location ?**
 
-If you want to know where are the databases files located, use the  `get_DB_path()` function. It will return the path of the folder where the databases are located.
+If you want to know where are the databases files located, use the  `get_config()` function. It will return the information related to databases.
 
 ```python
 import microfading as mf
 
-# Return the path were the databases files are located if any.
-mf.get_DB_path()
+# Return the all the information related to databases included the path_folder
+mf.get_config(key='databases')
 ```
 
 
 <div class="output-area">
 <pre>
-The databases are located in the folder: /home/john/Documents/MFT/databases
+{'db_name': 'MFT',
+ 'path_folder': '/home/john/Documents/RCE/databases',
+ 'usage': True}
 </pre>
 </div>
 
