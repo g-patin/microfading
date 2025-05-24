@@ -3564,7 +3564,7 @@ class MFT(object):
 
                 object_materials = list(set(metadata.loc['object_material'].values))[0]
                 if "_" in object_materials:
-                    object_materials = object_materials.replace("_",', ')list(set(metadata.loc['project_id'].values))[0]
+                    object_materials = object_materials.replace("_",', ')
 
                 object_technique = list(set(metadata.loc['object_technique'].values))[0]
                 if "_" in object_technique:
