@@ -32,7 +32,7 @@ The package provies computational tools to ease the manipulation of microfading 
 - **Visualizations**
 	- Creation of figures to visualize the spectral data and colorimetric coordinates ($L^*$, $a^*$, $b^*$, $C^*$, $h$, $\Delta E$, etc.)
 	- Transform microfading numerical data into colored swatches
-	- Interactive plotting
+	- Interactive plotting (not implemented yet !)
 - **Data manipulation**
 	- Perform specific query on spectral and colorimetric data
 	- Compute mean and standard deviation values

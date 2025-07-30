@@ -1,3 +1,6 @@
+
+In this section, you will learn how to create the databases files. 
+
 Creating databases is an operation that only needs to be performed one time using the `create_DB()` function (see below). Inside a desired folder on your local computer, it will create a few empty files (csv and txt) in which information about microfading projects and objects can be recorded. 
 
 ```python
