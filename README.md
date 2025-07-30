@@ -23,5 +23,4 @@ To upgrade from an older version, use::
 
      pip install --upgrade microfading
 
-Further details are in the `on-line documentation
-<https://g-patin.github.io/microfading/>`_.
+Further details are in the on-line documentation <https://g-patin.github.io/microfading/>.
