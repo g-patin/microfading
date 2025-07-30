@@ -33,6 +33,7 @@ nav:
       - package-usage.md
       - datafiles.md
       - config-vs-database.md
+      - language-setting.md
   - References: references.md 
   
 plugins:
