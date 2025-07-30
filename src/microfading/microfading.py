@@ -74,7 +74,7 @@ def is_DB():
 
     # check whether the databases have been registered
     if len(config_db) == 0:
-        print('The databases have not been registered. Please enter databases configuration info by using the function set_DB().')
+        print('The databases have not been registered. Please enter databases configuration info by using the function set_DB() or create the databases files (create_DB()). For more information on the databases, please consult the documentation: https://g-patin.github.io/microfading/databases-management/')
         return False
 
     db_files = ['projects_info.csv', 'objects_info.csv','devices.txt','institutions.txt', 'users_info.txt','object_types.txt', 'object_techniques.txt', 'object_materials.txt', 'object_creators.txt', 'white_standards.txt', 'lamps.txt']
@@ -196,6 +196,12 @@ def get_datasets(MFT:Optional[str] = 'fotonowy', rawfiles:Optional[bool] = False
     return file_paths   
 
 
+def get_comments_info():
+    """Retrieve the information regarding the comments recorded inside raw microfading files. 
+    """
+    return config.get_comments_info()
+
+
 def get_config(key:Optional[str] = 'all'):
     """Retrieve the content of the config_info.json file
 
@@ -274,7 +280,6 @@ def get_light_dose_info():
     return config.get_light_dose_info()
 
 
-
 def get_parameters_info():
 
     datasets_folder = Path(__file__).parent / 'datasets'
@@ -286,7 +291,7 @@ def get_parameters_info():
     return parameters
 
 
-def process_rawdata(files: list, device: str, filenaming:Optional[str] = 'none', folder:Optional[str] = '.', db:Optional[bool] = 'default', comment:Optional[str] = '', authors:Optional[str] = 'XX', white_standard:Optional[str] = 'default', interpolation:Optional[str] = 'default', step:Optional[float | int] = 0.1, average:Optional[int] = 'undefined', observer:Optional[str] = 'default', illuminant:Optional[str] = 'default', background:Optional[str] = 'undefined', delete_files:Optional[bool] = True, return_filename:Optional[bool] = True):
+def process_rawdata(files: list, device: str, filenaming:Optional[str] = 'none', folder:Optional[str] = '.', db:Optional[bool] = 'default', comment:Optional[str] = '', fading_mode:Optional[str] = 'default', waiting_time:Optional[int] = 1, authors:Optional[str] = 'XX', white_standard:Optional[str] = 'default', rounding:Union[int,tuple,list] = (4,3), interpolation:Optional[bool] = 'default', dose_unit:Optional[str] = 'default', step:Optional[float | int] = 0.1, average:Optional[int] = 'undefined', observer:Optional[str] = 'default', illuminant:Optional[str] = 'default', background:Optional[str] = 'undefined', language:Optional[str] = None, delete_files:Optional[bool] = True, return_filename:Optional[bool] = True):
     """Process the microfading raw files created by the software that performed the microfading analysis. 
 
 
@@ -317,16 +322,31 @@ def process_rawdata(files: list, device: str, filenaming:Optional[str] = 'none',
     
     authors : str, optional
         Initials of the persons that performed and processed the microfading measurements, by default 'XX' (unknown).
-        Make sure that you registered the persons in the persons.txt file (see function 'add_new_person').
+        Make sure that you registered the persons in the users.txt file (see function 'add_users' of the msdb package).
         If there are several persons, use a dash to connect the initials (e.g: 'JD-MG-OL').
     
-    interpolation : str, optional
-        Whether to perform the interpolation according to the light energy values  ('He', 'Hv', 't') and wavelengths (every 1 nm) or not ('none'), by default 'He'
-        When 'none', it will not interpolate the data at all
-        When 'He' performs interpolation based on the radiant exposure (MJ/m²) and for which you can define a step (see next parameter)
-        When 'Hv' performs interpolation based on the exposure dose (Mlxh) and for which you can define a step (see next parameter)
-        When 't' performs interpolation based on the exposure duration (sec) and for which you can define a step (see next parameter)   
+    white_standard : str, optional
+        ID number of the white standard used when performing the microfading analyses, by default 'default'
+        When 'default', it will search for the registered values in the config_info.json file. If you have not registered any values, it assumes that you used the Fotolon provided by Fotonowy.
+    
+    rounding : [int, tuple], optional
+        Rounding the spectral and colorimetric coordinates, by default (4,3)
+        It represents the number of digits after the comma.
+        When an integer is provided, it is applied to both the spectral and colorimetric value.
+        When a tuple is provided, the first value relates to the spectral values while the second relates to the colorimetric values.
+
+    interpolation : bool, optional
+        Whether to interpolate the spectral and colorimetric data, by default True
+        When True, it will interpolate the data according to the "dose_unit" and "step" values provided in the following parameters.
+        When True, it will also interpolate the spectral values along the wavelengths (1 value every 1 nm).                 
         
+    dose_unit : str, optional
+        The unit of the light dose energy for which the spectral values are being interpolated, by default 'default'
+        When 'default', it will search for the registered values in the config_info.json file. If you have not registered any values, it will select 'He' by default.
+        When 'He', it performs interpolation based on the radiant exposure (MJ/m²) and for which you can define a step (see next parameter)
+        When 'Hv', it performs interpolation based on the exposure dose (Mlxh) and for which you can define a step (see next parameter)
+        When 't', it performs interpolation based on the exposure duration (sec) and for which you can define a step (see next parameter) 
+
     step : [float  |  int], optional
         Interpolation step related to the scale previously mentioned ('He', 'Hv', 't'), by default 0.1
 
@@ -342,8 +362,18 @@ def process_rawdata(files: list, device: str, filenaming:Optional[str] = 'none',
         Reference CIE *illuminant*. It can be any value of the following list: ['A', 'B', 'C', 'D50', 'D55', 'D60', 'D65', 'D75', 'E', 'FL1', 'FL2', 'FL3', 'FL4', 'FL5', 'FL6', 'FL7', 'FL8', 'FL9', 'FL10', 'FL11', 'FL12', 'FL3.1', 'FL3.2', 'FL3.3', 'FL3.4', 'FL3.5', 'FL3.6', 'FL3.7', 'FL3.8', 'FL3.9', 'FL3.10', 'FL3.11', 'FL3.12', 'FL3.13', 'FL3.14', 'FL3.15', 'HP1', 'HP2', 'HP3', 'HP4', 'HP5', 'LED-B1', 'LED-B2', 'LED-B3', 'LED-B4', 'LED-B5', 'LED-BH1', 'LED-RGB1', 'LED-V1', 'LED-V2', 'ID65', 'ID50']. by default 'default'.
         When 'default', it fetches the illuminant value recorded in the db_config.json file of the package. If no value has been recorded, then it sets the illuminant value to 'D65'.      
 
+    language : Optional[str], optional
+        The language of the computer used to perform the microfading analyses, by default None
+        When None, English is assumed to be the language that was used.
+        If you are working on a Windows computer, you can use of the following languages (non-exhaustive list) : 'en', 'fr', 'it', 'nl', 'de', 'es'.
+        If you are working on a Linux OS, open a terminal, enter " locale -a ", and choose one language among the returned list.
+        For more information, consult the online documentation (https://g-patin.github.io/microfading/language-setting/).
+    
     delete_files : bool, optional
         Whether to delete the raw files, by default True
+
+    return_filename : Optional[bool], optional
+        Whether to return the filename of the created excel file that contains the microfading data and metadata, by default True
 
     Returns
     -------
@@ -389,10 +419,21 @@ def process_rawdata(files: list, device: str, filenaming:Optional[str] = 'none',
 
     # Set the interpolation value
     if interpolation == 'default':
-        if len(config_info['light_dose']) == 0:
-            interpolation = 'He'
+        if len(config_info['devices']) == 0:
+            interpolation = True
         else:
-            interpolation = config.get_light_dose_info().loc['unit'].values[0].split('_')[0]
+            interpolation = config_info['devices'][device]['interpolation']  
+
+    
+    # Set the dose unit value
+    if dose_unit == 'default':
+        if len(config_info['light_dose']) == 0:
+            dose_unit = 'He'
+        else:
+            dose_unit = config_info['devices'][device]['dose_unit'] .split('_')[0] 
+
+    elif dose_unit not in ['t', 'He', 'Hv']:
+        return f'The dose unit value that you entered {dose_unit} is not valid. Please choose a dose unit among the following values ("defaut", "t", "He", "Hv")'
       
     
     # Set the white reference value
@@ -400,8 +441,8 @@ def process_rawdata(files: list, device: str, filenaming:Optional[str] = 'none',
         if len(config_info['devices']) == 0:
             white_standard = 'default'
 
-        elif device.lower() == 'fotonowy':
-            white_standard = 'default'
+        elif device.lower() in ['fotonowy', 'stereo', 'smft']:
+            white_standard = 'default'        
 
         elif device not in config.get_devices_info().columns:
             return f'The device value you entered ({device}) cannot be found in the registered list of devices ({config.get_devices_info().columns}). Please register the device or enter a valid device ID.'
@@ -418,12 +459,27 @@ def process_rawdata(files: list, device: str, filenaming:Optional[str] = 'none',
         process_function = config_info['devices'][device]['process_function']
     
     
+    # Set the fading mode
+    if fading_mode == 'default':
+        if len(config_info['devices']) == 0:
+            if device.lower() in ['fotonowy', 'oriel']:
+                fading_mode = 'continuous'
+            elif device.lower() in ['smft', 'stereo']:
+                fading_mode = 'alternate'
+
+        else:
+            fading_mode = config_info['devices'][device]['fading_mode']            
+    
+    
     # Run the process_rawfiles function
     if 'fotonowy' in process_function:
-
-        return process_rawfiles.MFT_fotonowy(files=files, filenaming=filenaming, folder=folder, db=db, comment=comment, device_nb=device, authors=authors, white_standard=white_standard, interpolation=interpolation, step=step, average=average, observer=observer, illuminant=illuminant, background=background, delete_files=delete_files, return_filename=return_filename)
+        return process_rawfiles.MFT_fotonowy(files=files, filenaming=filenaming, folder=folder, db=db, comment=comment, device_nb=device, authors=authors, white_standard=white_standard, rounding=rounding, interpolation=interpolation, dose_unit=dose_unit, step=step, average=average, observer=observer, illuminant=illuminant, background=background, language=language, delete_files=delete_files, return_filename=return_filename)
 
     
+    elif 'stereo' in process_function:
+        return process_rawfiles.MFT_stereo(files=files, filenaming=filenaming, folder=folder, db=db, comment=comment, device_nb=device, fading_mode=fading_mode, waiting_time=waiting_time, authors=authors, white_standard=white_standard, rounding=rounding, interpolation=interpolation, dose_unit=dose_unit, step=step, observer=observer, illuminant=illuminant, background=background, delete_files=delete_files, return_filename=return_filename)
+    
+
 def reset_config():
     """Reset the content of config_info.json to its initial state, i.e. all empty dictionaries.  
     """
@@ -434,6 +490,12 @@ def set_colorimetry_info():
     """Record the colorimetric information (observer, illuminant, white standard) in the config_info.json file of the microfading package.
     """
     return config.set_colorimetry_info()
+
+
+def set_comments_info():
+    """Set the type and position of info recorded in the comments section of raw microfading files.    
+    """
+    return config.set_comments_info()
 
 
 def set_devices_info():
@@ -453,6 +515,12 @@ def set_DB(folder_path:Optional[str] = '', use:Optional[bool] = True):
     """
     return config.set_db(folder_path=folder_path, use=use)
     
+
+def set_filenaming():
+    """Record the filenaming info in the config_info.json file of the microfading package.
+    """
+    return config.set_filenaming()
+
 
 def set_light_dose():
     """Record the unit of the light dose in the config_info.json file of the microfading package.
@@ -981,7 +1049,7 @@ class MFT(object):
 
         ###### SPECTRAL DATA #######
 
-        data_sp = self.get_data(data='sp')
+        data_sp = self.get_spectra()
 
         # Get the energy dose step
         #H_values = [x.columns.astype(float) for x in data_sp]       
@@ -1075,6 +1143,7 @@ class MFT(object):
         df_info.loc['start_date'] = '_'.join(sorted(set(data_info.loc['start_date'].values)))
         df_info.loc['end_date'] = '_'.join(sorted(set(data_info.loc['end_date'].values)))
         df_info.loc['keywords'] = '_'.join(sorted(set(data_info.loc['keywords'].values)))
+        df_info.loc['methods'] = '_'.join(sorted(set(data_info.loc['methods'].values)))
 
         # Object data info
         if len(set([x.split('_')[0] for x in data_info.loc['institution'].values])) > 1:
@@ -1089,12 +1158,13 @@ class MFT(object):
         df_info.loc['object_creator'] = '_'.join(sorted(set(data_info.loc['object_creator'].values)))
         df_info.loc['object_date'] = '_'.join(sorted(set(data_info.loc['object_date'].values)))
         df_info.loc['object_material'] = '_'.join(sorted(set(data_info.loc['object_material'].values)))
+        df_info.loc['object_comment'] = '_'.join(sorted(set(data_info.loc['object_comment'].values)))
         df_info.loc['color'] = '_'.join(sorted(set(data_info.loc['color'].values)))
-        df_info.loc['colorants'] = '_'.join(sorted(set(data_info.loc['colorants'].values)))
+        df_info.loc['support'] = '_'.join(sorted(set(data_info.loc['support'].values)))
         df_info.loc['colorants_name'] = '_'.join(sorted(set(data_info.loc['colorants_name'].values)))
         df_info.loc['binding'] = '_'.join(sorted(set(data_info.loc['binding'].values)))
         df_info.loc['ratio'] = '_'.join(sorted(set(data_info.loc['ratio'].values)))
-        df_info.loc['thickness_um'] = '_'.join(sorted(set(data_info.loc['thickness_um'].values)))
+        df_info.loc['thickness_microns'] = '_'.join(sorted(set(data_info.loc['thickness_microns'].values)))
         df_info.loc['status'] = '_'.join(sorted(set(data_info.loc['status'].values)))
 
         # Device data info
@@ -1138,7 +1208,7 @@ class MFT(object):
         
         criterion_value = df_info.loc[criterion]
         object_id = df_info.loc['object_id']
-        if criterion == 'group':            
+        if criterion == 'spot_group':            
             df_info.loc['meas_id'] = f'MF.{object_id}.{criterion_value}'
         elif criterion == 'object' or criterion == 'project':
              df_info.loc['meas_id'] = f'MF.{criterion_value}'
@@ -1149,6 +1219,17 @@ class MFT(object):
         df_info.loc['spot_group'] = f'{"-".join(sorted(set(data_info.loc["spot_group"].values)))}_{meas_nbs}'    
         df_info.loc['spot_description'] = '_'.join(sorted(set(data_info.loc['spot_description'].values)))
         df_info.loc['background'] = '_'.join(sorted(set(data_info.loc['background'].values)))  
+        
+        '''
+        spot_images_infos = sorted(set(data_info.loc['spot_images'].values))
+        spot_images_info = spot_images_infos[0]
+        for el in spot_images_infos[1:]:
+            print(el)
+            spot_images_info = spot_images_info + el
+        
+        print(spot_images_info)
+        df_info.loc['spot_images'] = spot_images_info
+        '''
 
         if len(set(data_info.loc['specular_component'].values)) > 1:
             df_info.loc['specular_component'] = '_'.join(sorted(set([x.split('_')[0] for x in data_info.loc['specular_component'].values]))) 
@@ -1167,13 +1248,22 @@ class MFT(object):
         # Beam data info
 
         df_info.loc['beam_photo'] = '_'.join(sorted(set(data_info.loc['beam_photo'].values)))
-        df_info.loc['resolution_micron/pixel'] = '_'.join(set([str(x) if f'{x}'.isnumeric() else x for x in list(data_info.loc['resolution_micron/pixel'].values)]))
+        #df_info.loc['resolution_micron/pixel'] = '_'.join(set([str(x) if f'{x}'.isnumeric() else x for x in list(data_info.loc['resolution_micron/pixel'].values)]))
+        df_info.loc['resolution_micron/pixel'] = '_'.join(set([str(x) for x in list(data_info.loc['resolution_micron/pixel'].values)]))
 
         fwhm = data_info.loc['FWHM_micron']
         fwhm_avg = np.mean([i for i in [to_float(x) for x in fwhm] if isinstance(i, (int, float))])
         df_info.loc['FWHM_micron'] = fwhm_avg
 
-        power_infos = data_info.loc['radiantFlux_mW'].values
+        power_infos = list(data_info.loc['radiantFlux_mW'].values)
+        
+        if len(set(power_infos)) == 1:
+            df_info.loc['radiantFlux_mW'] = power_infos[0]
+
+        else:
+            df_info.loc['radiantFlux_mW'] = "_".join(power_infos)
+        
+        """
         power_values = []
         
         for power_info in power_infos:
@@ -1187,7 +1277,7 @@ class MFT(object):
         power_mean = np.round(np.mean(power_values),3)
         power_std = np.round(np.std(power_values),3)
         df_info.loc['radiantFlux_mW'] = f'{ufloat(power_mean,power_std)}'    
-                 
+        """         
 
         irr_values = [str(ufloat(x,0)) if isinstance(x, int) else x for x in data_info.loc['irradiance_Ee_W/m^2'] ] 
         irr_mean = np.int32(np.mean([unumpy.nominal_values(ufloat_fromstr(x)) for x in irr_values]))
@@ -2394,11 +2484,12 @@ class MFT(object):
             object_ids = df_data['objectID'].values
             
             ls_dic = {'BW1':'-','BW2':'--','BW3':'-.','BW4':':', 'BWS0028':'-','BWS0029':'--','BWS0030':'-.','BWS0031':':'}
+            label_dic = {'BW1':'-','BW2':'--','BW3':'-.','BW4':':', 'BWS0028':'BW1','BWS0029':'BW2','BWS0030':'BW3','BWS0031':'BW4'}
             
             for col in df_BWS.T.columns:
                 data_BWS = df_BWS.T[col]
                 
-                ax.axhline(data_BWS['y'], color='blue', ls =ls_dic[data_BWS['name']], label=data_BWS['name'])
+                ax.axhline(data_BWS['y'], color='blue', ls =ls_dic[data_BWS['name']], label=label_dic[data_BWS['name']])
                 ax.axhspan(ymin=data_BWS['y']-data_BWS['y_std'], ymax=data_BWS['y']+data_BWS['y_std'], alpha=0.5, color='0.75', ec='none')        
         
 
@@ -2494,7 +2585,7 @@ class MFT(object):
         plt.show()     
 
 
-    def plot_bwse(self, frequency:Optional[bool] = False, bins:Optional[list] = [1,2,3,4,5], colors:Union[str,float,list]=None, figsize:Optional[tuple] = (10,10), rotate_xlabels:Optional[int] = 0, position_xlabels:Optional[str] = 'center', fontsize:Optional[int] = 24, title_fontsize:Optional[int] = 24, title:Optional[str] = None, save:Optional[bool] = False, path_fig:Optional[str] = 'cwd'):
+    def plot_bwse(self, frequency:Optional[bool] = False, bins:Optional[list] = [1,2,3,4,5], colors:Union[str,float,list]=None, figsize:Optional[tuple] = (10,10), rotate_xlabels:Optional[int] = 0, position_xlabels:Optional[str] = 'center', fontsize:Optional[int] = 24, fontsize_xaxis:Optional[int] = 20, title_fontsize:Optional[int] = 24, title:Optional[str] = None, save:Optional[bool] = False, path_fig:Optional[str] = 'cwd'):
 
         bwse_df = self.get_metadata(labels=['BWSE']).loc['BWSE']
         bwse_values = bwse_df.values
@@ -2506,7 +2597,7 @@ class MFT(object):
             colors = self.get_sRGB(dose_values=0).values.reshape(len(self.files),-1)
 
         
-        plotting.BWSE(data=wanted_data, frequency=frequency, bins=bins, figsize=figsize, colors=colors, fontsize=fontsize, title=title, title_fontsize=title_fontsize, rotate_xlabels=rotate_xlabels, position_xlabels=position_xlabels,  save=save, path_fig=path_fig)
+        plotting.BWSE(data=wanted_data, frequency=frequency, bins=bins, figsize=figsize, colors=colors, fontsize=fontsize, title=title, title_fontsize=title_fontsize, fontsize_xaxis=fontsize_xaxis, rotate_xlabels=rotate_xlabels, position_xlabels=position_xlabels,  save=save, path_fig=path_fig)
     
     
     def plot_CIELAB(self, stds:Optional[list] = [], dose_unit:Optional[str] = 'He', dose_values:Union[int, float, list, tuple] = 'all', colors:Union[str,list] = None, title:Optional[str] = None, fontsize:Optional[int] = 20, legend_labels:Union[str,list] = 'default', legend_position:Optional[str] = 'in', legend_fontsize:Optional[int] = 20, legend_title:Optional[str] = None, dE:Optional[bool] = False, obs_ill:Optional[bool] = True, save:Optional[bool] = False, path_fig:Optional[str] = 'cwd', report:Optional[bool] = False):
