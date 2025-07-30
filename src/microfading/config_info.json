@@ -1,8 +1,10 @@
 {
     "colorimetry": {},
+    "comments": {},
     "databases": {},
     "devices": {},
     "exposure": {},
+    "filenaming" :{},
     "filters": {},
     "functions": {
         "linear_1p": {
