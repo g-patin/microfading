@@ -1129,8 +1129,9 @@ class MFT(object):
         df_info = data_info.iloc[:,0]
         
 
-        # Rename title file
-        df_info.rename({'[SINGLE MICROFADING ANALYSIS]': '[MEAN MICROFADING ANALYSES]'}, inplace=True)
+        # Measurement type
+        df_info.loc['measurement_type'] = '[MEAN MICROFADING ANALYSES]'
+        
 
         # Date time
         most_recent_dt = max(data_info.loc['date_time'])
@@ -1164,7 +1165,7 @@ class MFT(object):
         df_info.loc['colorants_name'] = '_'.join(sorted(set(data_info.loc['colorants_name'].values)))
         df_info.loc['binding'] = '_'.join(sorted(set(data_info.loc['binding'].values)))
         df_info.loc['ratio'] = '_'.join(sorted(set(data_info.loc['ratio'].values)))
-        df_info.loc['thickness_microns'] = '_'.join(sorted(set(data_info.loc['thickness_microns'].values)))
+        df_info.loc['thickness_um'] = '_'.join(sorted(set(data_info.loc['thickness_um'].values)))
         df_info.loc['status'] = '_'.join(sorted(set(data_info.loc['status'].values)))
 
         # Device data info
@@ -1237,10 +1238,10 @@ class MFT(object):
         
         df_info.loc['integration_time_sample_ms'] = np.round(np.mean(data_info.loc['integration_time_sample_ms'].astype(float).values),1)
         df_info.loc['integration_time_whitestandard_ms'] = np.round(np.mean(data_info.loc['integration_time_whitestandard_ms'].astype(float).values),1)
-        df_info.loc['average'] = '_'.join([str(x) for x in sorted(set(data_info.loc['average'].astype(str).values))]) 
+        df_info.loc['average'] = np.round(np.mean(data_info.loc['average'].astype(float).values),1) 
         df_info.loc['duration_min'] = np.round(np.mean(data_info.loc['duration_min'].values),1)
-        df_info.loc['interval_sec'] = '_'.join([str(x) for x in sorted(set(data_info.loc['interval_sec'].values))])
-        df_info.loc['measurements_N'] = '_'.join([str(x) for x in sorted(set(data_info.loc['measurements_N'].astype(str).values))])
+        df_info.loc['interval_sec'] = np.round(np.mean(data_info.loc['interval_sec'].astype(float).values),1)
+        df_info.loc['measurements_N'] = len(self.files)
         df_info.loc['illuminant'] = '_'.join(sorted(set(data_info.loc['illuminant'].values)))
         df_info.loc['observer'] = '_'.join(sorted(set(data_info.loc['observer'].values)))
 
@@ -1320,10 +1321,17 @@ class MFT(object):
 
             # set the filename
             if filename == 'default':
-                filename = f'{Path(self.files[0]).stem}_MEAN{Path(self.files[0]).suffix}'
+                project_id = df_info['project_id']
+                new_meas_id = df_info['meas_id']
+                object_name = df_info['object_name']
+                spot_description = df_info['spot_description']                
+                date = df_info['date_time'].date()
+                device_id = df_info['device'].split('_')[0]
+
+                filename = f'{project_id}_{new_meas_id}_{object_name}_avg_{spot_description}_{date}_{device_id}.xlsx'
 
             else:
-                filename = f'{filename}.xlsx'
+                filename = f'{Path(self.files[0]).stem}_MEAN{Path(self.files[0]).suffix}'
 
             
             # create a excel writer object
