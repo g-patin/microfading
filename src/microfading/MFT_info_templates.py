@@ -67,7 +67,8 @@ template_default = {
     "parameter": [
         "[SINGLE MICRO-FADING ANALYSIS]",
         "authors",
-        "date_time",
+        "datetime_analysis",
+        "datetime_processing",
         "comment",
         "[PROJECT INFO]",
         "laboratorium",
