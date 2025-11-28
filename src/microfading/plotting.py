@@ -8,10 +8,13 @@ import colour
 from typing import Optional, Union
 import imageio
 from pathlib import Path
+from scipy.signal import savgol_filter
 import os
+import random
 
 ####### DEFINE GENERAL PARAMETERS #######
 
+plt.rcParams["font.family"] = "serif"
 D65 = colour.CCS_ILLUMINANTS["cie_10_1964"]["D65"]
 
 labels_eq = {
@@ -41,6 +44,14 @@ x_labels = {
     't': 'Exposure duration (sec)',
     't_s': 'Exposure duration (sec)',
     't_m': 'Exposure duration (min)'
+}
+
+x_labels_short = {
+    'Hv': '$H_v$ (Mlxh)',
+    'He': '$H_e$ ($MJ/m^2$)',
+    't': '$t$ (sec)',
+    't_s': '$t$ (sec)',
+    't_m': '$t$ (min)'
 }
 
 
@@ -223,7 +234,14 @@ def BWSE(data, frequency=False, bins=[1,2,3,4,5], figsize=(10,10), colors:Union[
     plt.show()
 
 
-def CIELAB(data, stds=None, colors=None, fontsize=24, legend_labels=[], title=None, title_fontsize=24, line=False, legend_position='in', legend_fontsize=20, legend_title='', save=False, path_fig='cwd', start_value=False, dE=False, obs_ill=None, return_data=False, *args, **kwargs):
+def CIELAB(
+        data: pd.DataFrame,
+        stdev: Optional[bool] = True,
+        data_settings: Optional[dict] = {},
+        figure_settings: Optional[dict] = {},
+        legend_settings: Optional[dict] = {},
+        lines_settings: Optional[dict] = {},        
+        colors=None, fontsize=24, legend_labels=[], title=None, title_fontsize=24, line=False, legend_position='in', legend_fontsize=20, legend_title='', save=False, path_fig='cwd', start_value=True, dE=False, obs_ill=None, return_data=False, *args, **kwargs):
     """Plot the CIELAB coordinates of one or several datasets.
 
     Parameters
@@ -231,7 +249,7 @@ def CIELAB(data, stds=None, colors=None, fontsize=24, legend_labels=[], title=No
     data : list
         A list of data points, where each data point is a numpy array. 
 
-    stds : list, optional
+    stdev : list, optional
         A list of standard variation values respective to each element given in the data parameter, by default []
 
     legend_labels : list, optional
@@ -257,34 +275,232 @@ def CIELAB(data, stds=None, colors=None, fontsize=24, legend_labels=[], title=No
     
     path_fig : str, optional
         _description_, by default 'cwd'
-    """    
+    """
 
-    # fetch the colour circle image
+    # Extract the data settings
+    dose_unit = data_settings.get('dose_unit', 'He')
+        
+    # Extract the legend settings    
+    legend_labels = legend_settings.get('labels', [])
+    legend_fontsize = legend_settings.get('fontsize', 14)
+    legend_position = legend_settings.get('position', 'in')
+    legend_title = legend_settings.get('title', None)
+    legend_ncols = legend_settings.get('ncols', 1)
+    legend_obs_ill = legend_settings.get('obs_ill', None)
+
+    # Extract the lines settings
+    mss = lines_settings.get('size', 6)
+    markers = lines_settings.get('markers', 'o')
+    marker_colors = lines_settings.get('colors', None)
+    alphas = lines_settings.get('alpha', 1)
+
+    # Extract the figure settings
+    title = figure_settings.get('title', None)
+    xlabel = figure_settings.get('xlabel', x_labels_short[dose_unit])
+    ylabel = figure_settings.get('ylabel', 'CIE $\Delta E_{00}$')    
+    fontsize = figure_settings.get('fontsize', 18)
+    fontsize_title = figure_settings.get('fontsize_title', 20)
+    
+    # Retrieve the measurement ids
+    meas_ids = data.columns.get_level_values('meas_id').unique()
+        
+    # Fetch the colour circle image
     if dE == False:
         im_colour_circle = imageio.imread(Path(__file__).parent / 'colour_circle.png')
 
-    # set the aesthetics of the figure
+    # Set the aesthetics of the figure
     sns.set_theme(font='serif', style='darkgrid', context='paper', palette='colorblind', font_scale=1)
 
-    # create the figure
+    # Create the figure
     figure_sizes = {'in': (10,10), 'out': (12,10)}
     fig, ax = plt.subplots(2,2, figsize=figure_sizes[legend_position], gridspec_kw=dict(width_ratios=[1, 2], height_ratios=[2, 1]))
     Lb, ab, AB, aL = ax[0, 0], ax[0, 1], ax[1, 0], ax[1, 1]
     
-    # define labels 
-    if legend_labels == None:
-        legend_labels = ['none'] * len(data)        
-    elif legend_labels == 'none':        
-        legend_labels = ['none'] * len(data)    
-    elif len(legend_labels) == 0:
-        legend_labels = ['none'] * len(data)
-        
-    # define std values
-    if stds is None or list(set(stds))[0] is None:
-        stds = [np.zeros(3) for _ in data]
+    
+    # Define the color of the lines
+    if marker_colors == None:
+        colors = [None] * len(meas_ids)
 
+    elif marker_colors == 'sample':
+        colors = ['sample'] * len(meas_ids)
+
+    elif isinstance(marker_colors, str):
+        colors = [marker_colors] * len(meas_ids)
+
+    elif isinstance(marker_colors, list):
+        if len(marker_colors) < len(meas_ids):
+            colors = marker_colors * len(meas_ids)
+
+        else:
+            colors = marker_colors
+        
+   
+    # Define labels 
+    if legend_labels == None:
+        legend_labels = ['none'] * len(meas_ids)        
+    elif legend_labels == 'none':        
+        legend_labels = ['none'] * len(meas_ids)    
+    elif len(legend_labels) == 0:
+        legend_labels = ['none'] * len(meas_ids)
+        
+    # Define the markers
+    if markers == 'random':
+        markers = ['o','s','X','>','D','^','v','P','<','*'] * 5
+
+    elif isinstance(markers, str):
+        markers = markers * len(meas_ids)
+
+    elif isinstance(markers, list):
+        if len(markers) < len(meas_ids):
+            markers = markers * len(meas_ids)
+
+    elif markers == None:
+        markers = ['o'] * len(meas_ids)
+
+    # Define the size of the markers
+    if mss == 'random':
+        mss = [4,3,6,10,7,8,11,2,5,9] * 5
+
+    elif isinstance(mss, int):
+        mss = [mss] * len(meas_ids)
+
+    elif isinstance(markers, list):
+        if len(mss) < len(meas_ids):
+            mss = mss * len(meas_ids)
+
+    elif mss == None:
+        mss = [20] * len(meas_ids)
+
+    # Define the opacity of the markers
+    if isinstance(alphas, (int,float)):
+        alphas = [alphas] * len(meas_ids)
+
+    elif isinstance(alphas, list):
+        if len(alphas) < len(meas_ids):
+            alphas = alphas * len(meas_ids)
+
+    # whether to show the CIELAB colour space
+
+    if dE == False:
+
+        AB.imshow(im_colour_circle, extent=(-110,110,-110,110))                 
+        AB.axhline(0, color="black", lw=0.5)
+        AB.axvline(0, color="black", lw=0.5)
     
     # plot the data
+    for meas_id, color, label, marker, ms, alpha in zip(meas_ids,colors, legend_labels, markers, mss, alphas):
+                
+        
+        data_meas = data[meas_id].dropna(axis=0)
+
+
+        L_n = data_meas['L*'].iloc[:,0].values
+        a_n = data_meas['a*'].iloc[:,0].values
+        b_n = data_meas['b*'].iloc[:,0].values
+
+        if 'std' in data_meas.columns.get_level_values('data_type'):
+            L_s = data_meas['L*']['std'].values
+            a_s = data_meas['a*']['std'].values
+            b_s = data_meas['b*']['std'].values
+
+        else:
+            L_s = np.zeros(len(L_n))
+            a_s = np.zeros(len(a_n))
+            b_s = np.zeros(len(b_n))
+
+        
+        if color == 'sample':
+            Lab = np.array([L_n, a_n, b_n]).transpose()            
+            srgb = colour.XYZ_to_sRGB(colour.Lab_to_XYZ(Lab), D65).clip(0, 1)
+            color = srgb[0] 
+        
+        if start_value:
+            
+            Lb.errorbar(L_n[1:], b_n[1:], yerr=b_s[1:], xerr=L_s[1:], fmt=marker, ms=ms, color=color, ecolor='0.7', alpha=alpha, mew=0, **kwargs)
+            ab.errorbar(a_n[1:], b_n[1:], yerr=b_s[1:], xerr=a_s[1:], fmt=marker, ms=ms, color=color, ecolor='0.7', alpha=alpha, mew=0, label=label, **kwargs)
+            aL.errorbar(a_n[1:], L_n[1:], yerr=L_s[1:], xerr=a_s[1:], fmt=marker, ms=ms, color=color, ecolor='0.7', alpha=alpha, mew=0, **kwargs)
+
+            Lb.scatter(L_n[0], b_n[0], marker = 'x', color='k', s=120, **kwargs)
+            ab.scatter(a_n[0], b_n[0], marker = 'x', color='k', s=120, **kwargs)
+            start_aL = aL.scatter(a_n[0], L_n[0], marker = 'x', color='k', s=120, **kwargs)
+
+        else:
+            Lb.errorbar(L_n, b_n, yerr=b_s, xerr=L_s, fmt=marker, ms=ms, color=color, alpha=alpha, mew=0, **kwargs)
+            ab.errorbar(a_n, b_n, yerr=b_s, xerr=a_s, fmt=marker, ms=ms, color=color, alpha=alpha, mew=0, **kwargs)
+            aL.errorbar(a_n, L_n, yerr=L_s, xerr=a_s, fmt=marker, ms=ms, color=color, alpha=alpha, mew=0, **kwargs)
+
+
+        if dE:
+            H = data_meas.index
+            dE00 = data_meas['dE00'].iloc[:,0].values
+
+            AB.plot(H,dE00, color=color)
+
+            if 'std' in data_meas.columns.get_level_values('data_type'):                
+                dE00_s =  data_meas['dE00']['std'].values
+                AB.fill_between(H,dE00+dE00_s, dE00-dE00_s, alpha=0.5, color='0.75', ec='none')
+
+        else:
+            AB.scatter(a_n,b_n, color='0.5', marker='o') 
+
+
+    if dE:
+        AB.set_xlim(0)
+        AB.set_ylim(0) 
+
+        AB.set_xlabel(xlabel, fontsize=fontsize)
+        AB.set_ylabel(ylabel, fontsize=fontsize) 
+
+    else:
+        AB.grid(False) 
+        AB.set_xlim(-110, 110)
+        AB.set_ylim(-110, 110)  
+
+        AB.set_xlabel("CIE $a^*$", fontsize=fontsize)
+        AB.set_ylabel("CIE $b^*$", fontsize=fontsize)       
+                     
+    Lb.set_xlabel("CIE $L^*$", fontsize=fontsize)
+    Lb.set_ylabel("CIE $b^*$", fontsize=fontsize)    
+    aL.set_xlabel("CIE $a^*$", fontsize=fontsize)
+    aL.set_ylabel("CIE $L^*$", fontsize=fontsize) 
+
+    for axis in [Lb, aL, AB, ab]:
+        axis.xaxis.set_tick_params(labelsize=fontsize)
+        axis.yaxis.set_tick_params(labelsize=fontsize)
+
+
+    if title != None:
+        plt.suptitle(title, fontsize=fontsize_title)
+
+    if legend_labels[0] != 'none' and len(legend_labels) < 19:
+        if legend_position == 'in':
+            ab.legend(loc = 'best', fontsize=legend_fontsize, title=legend_title, title_fontsize=legend_fontsize)
+
+        elif legend_position == 'out':            
+            ab.legend(loc='upper left',fontsize=legend_fontsize, title=legend_title, bbox_to_anchor=(1, 1), title_fontsize=legend_fontsize)
+
+    if legend_obs_ill == None:
+        aL.legend([start_aL], [f'Start'], fontsize=legend_fontsize)
+    else:
+        aL.legend([start_aL], [f'Start\n{legend_obs_ill}'], fontsize=legend_fontsize-2)
+
+    plt.tight_layout()
+    
+    if save == True:
+        if path_fig == 'cwd':
+            path_fig = f'{os.getcwd()}/CIELAB.png'                
+                
+        fig.savefig(path_fig,dpi=300, facecolor='white') 
+
+    plt.show()
+    return
+
+
+
+
+
+
+
     for i, (el_data, label, std) in enumerate(zip(data, legend_labels, stds)):
 
         
@@ -416,53 +632,116 @@ def CIELAB(data, stds=None, colors=None, fontsize=24, legend_labels=[], title=No
         plt.show()
 
 
-def delta(data: list, yerr=None, dose_unit:Optional[list] = ['He'], coordinates:Optional[list] = ['dE00'], initial_values=None, object_ids=None, figsize=(15,9), colors=None, ls='random', lw='default', title=None, fontsize=28, legend_labels=[], legend_title=None, legend_fontsize=24, save=False, path_fig='cwd'):
-    """Plot the delta values of choosen colorimetric coordinates
+def coordinates(data,stds:Optional[bool] = True, fontsize=24, legend_labels=[], legend_fontsize=24, legend_position=0, legend_title=None, title=None, title_fontsize=24, ls=None, colors=None, save=False, path_fig='cwd',):
+
+    coordinates = set(list(data[0].columns.get_level_values(0)))
+    dose_name = data[0].index.name[0].split('_')[0]
+    dose_label = x_labels[dose_name]
+    
+    # Set the aesthetics of the figure
+    sns.set_theme(context='paper', font='serif', palette='colorblind') 
+
+    fig, ax = plt.subplots(len(coordinates),1, figsize=(10,3.5*len(coordinates)), sharex=True)
+
+    # define the linestyles
+    if ls == None:
+        ls = ['-'] * len(data)
+    
+    # define labels 
+    if legend_labels == None:
+        legend_labels = ['none'] * len(data)        
+    elif legend_labels == 'none':        
+        legend_labels = ['none'] * len(data)    
+    elif len(legend_labels) == 0:
+        legend_labels = ['none'] * len(data)
+
+
+    for d, ls_value in zip(data, ls):
+
+        x = d.index
+
+        for i, coord in enumerate(coordinates):
+
+            y = d[coord].iloc[:,0].values
+
+            ax[i].plot(x,y, ls=ls_value)
+
+            if 'std' in d[coord].columns and stds == True:
+                
+                y_std = d[coord]['std'].values
+                ax[i].fill_between(x, y+y_std, y-y_std, color='0.75', alpha=0.5, ec='none')
+    
+
+
+
+
+    ax[-1].set_xlabel(dose_label, fontsize=fontsize)
+    ax[-1].xaxis.set_tick_params(labelsize=fontsize)
+
+    
+    for i, coord in enumerate(coordinates):
+
+        ax[i].set_xlim(0)
+        ax[i].yaxis.set_tick_params(labelsize=fontsize)
+        ax[i].set_ylabel(f'CIE {labels_eq[coord]}', fontsize=fontsize)
+
+        
+
+    if title != None:
+        plt.suptitle(title, fontsize=title_fontsize)
+
+    
+
+    if legend_labels[0] != 'none' and len(legend_labels) < 19:
+
+        ax[legend_position].legend(loc = 'best', fontsize=legend_fontsize, title=legend_title, title_fontsize=legend_fontsize)
+        
+
+    plt.tight_layout()
+    
+    if save == True:
+        if path_fig == 'cwd':
+            path_fig = f'{os.getcwd()}/{"".join([x[0] for x in coordinates])}.png'                
+                
+        fig.savefig(path_fig,dpi=300, facecolor='white') 
+
+
+
+    plt.tight_layout()
+    plt.show()
+
+
+def delta(
+        data: pd.DataFrame,        
+        stdev: Optional[bool] = True,        
+        data_settings: Optional[dict] = {},
+        figure_settings: Optional[dict] = {},
+        legend_settings: Optional[dict] = {},
+        lines_settings: Optional[dict] = {},
+        text_settings: Optional[dict] = {},
+        save=False, 
+        path_fig='cwd'
+    ):
+    """Plot the delta values of choosen colorimetric coordinates.
 
     Parameters
     ----------
-    data : a list of list
+    data : pd.DataFrame
         _description_
-
-    yerr : _type_, optional
-        _description_, by default None
-
-    dose_unit : Optional[list], optional
-        _description_, by default ['He']
-
-    coordinates : Optional[list], optional
-        _description_, by default ['dE00']
-
-    legend_labels : list, optional
-        _description_, by default []
-
-    initial_values : _type_, optional
-        _description_, by default None
-
-    figsize : tuple, optional
-        _description_, by default (15,9)
-
-    colors : _type_, optional
-        _description_, by default None
-
-    ls : str, optional
-        _description_, by default 'random'
-
-    lw : int, optional
-        _description_, by default 2
-
-    title : _type_, optional
-        _description_, by default None
-
-    title_legend : _type_, optional
-        _description_, by default None
-
-    fontsize : int, optional
-        _description_, by default 28
-
+    stdev : Optional[bool], optional
+        _description_, by default True
+    data_settings : Optional[dict], optional
+        _description_, by default {}
+    figure_settings : Optional[dict], optional
+        _description_, by default {}
+    legend_settings : Optional[dict], optional
+        _description_, by default {}
+    lines_settings : Optional[dict], optional
+        _description_, by default {}
+    text_settings : Optional[dict], optional
+        _description_, by default {}
     save : bool, optional
         _description_, by default False
-
     path_fig : str, optional
         _description_, by default 'cwd'
 
@@ -470,8 +749,231 @@ def delta(data: list, yerr=None, dose_unit:Optional[list] = ['He'], coordinates:
     -------
     _type_
         _description_
-    """ 
+
+    Raises
+    ------
+    ValueError
+        _description_
+    ValueError
+        _description_
+    ValueError
+        _description_
+    """
+
+    # Extract the data settings
+    dose_unit = data_settings.get('dose_unit', 'He')
+        
+    # Extract the legend settings    
+    legend_labels = legend_settings.get('labels', [])
+    legend_fontsize = legend_settings.get('fontsize', '22')
+    legend_position = legend_settings.get('position', 'in')
+    legend_title = legend_settings.get('title', None)
+    legend_ncols = lines_settings.get('ncols', 1)
+
+    # Extract the lines settings
+    lines_widths = lines_settings.get('lw', 2)
+    lines_styles = lines_settings.get('ls', '-')
+    lines_colors = lines_settings.get('colors', None)
+
+    # Extract the figure settings
+    title = figure_settings.get('title', '')
+    xlabel = figure_settings.get('xlabel', None)
+    ylabel = figure_settings.get('ylabel', None)
+    xlim = figure_settings.get('xlim', 0)
+    ylim = figure_settings.get('ylim', None)
+    fontsize = figure_settings.get('fontsize', 24)
+    fontsize_title = figure_settings.get('fontsize_title', 26)
+    figsize = figure_settings.get('figsize', (15,9))
+
+    # Extract the text settings
+    texts = text_settings.get('text', [])
+    texts_xy = text_settings.get('xy', [])
+    texts_fontsize = text_settings.get('fontsize', 22)
+        
+
+    # Define possible linestyles for random selection
+    possible_linestyles = ['-', '--', '-.', ':', (0, (3, 1, 1, 1)), (0, (5, 5))] * 5
+
+    # Whether to remove the std values
+    if not stdev:
+        data = data.loc[:, data.columns.get_level_values('data_type') != 'std']
     
+    
+    # Determine the number of curves
+    num_curves = (data.loc[:, data.columns.get_level_values('data_type') != 'std']).shape[1]    
+    meas_ids = data.columns.get_level_values('meas_id').unique()
+        
+    
+    # Handle line styles
+    if lines_styles == 'random':
+        # Ensure we have enough unique linestyles
+        if num_curves > len(possible_linestyles):
+            raise ValueError("Number of curves exceeds the number of available linestyles.")
+        # Randomly select unique linestyles
+        selected_linestyles = random.sample(possible_linestyles, num_curves)
+    elif isinstance(lines_styles, list):
+        if len(lines_styles) < num_curves:
+            raise ValueError("Length of 'ls' list must be greater or equal to the number of curves.")
+        selected_linestyles = lines_styles    
+    else:
+        # Use the same linestyle for all curves
+        selected_linestyles = [lines_styles] * num_curves
+    
+    # Handle line widths
+    if isinstance(lines_widths, list):
+        if len(lines_widths) < num_curves:
+            raise ValueError("Length of 'lw' list must be greater or equal to the number of curves.")
+        selected_lw = lines_widths
+    else:
+        # Use the same linewidth for all curves
+        selected_lw = [lines_widths] * num_curves
+
+    # Handle line colors
+    if isinstance(lines_colors, list):
+        
+        lines_colors = lines_colors
+
+    elif isinstance(lines_colors, str):
+        lines_colors = [lines_colors] * num_curves
+    
+    elif lines_colors == None:
+        lines_colors = [None] * num_curves
+    
+    
+    
+    # Set the observer and illuminant
+    observer = colour.colorimetry.MSDS_CMFS_STANDARD_OBSERVER["CIE 1964 10 Degree Standard Observer"] 
+    illuminant = colour.SDS_ILLUMINANTS['D65'] 
+    d65 = colour.CCS_ILLUMINANTS["cie_10_1964"]["D65"]
+
+
+    # Retrieve the colorimetric coordinates
+    coordinates = data[meas_ids[0]].columns.get_level_values(level='coordinate').unique()
+    
+    
+    # Apply the seaborn aesthetics
+    sns.set_theme(context='paper', font='serif', palette='colorblind')
+
+
+    # Create the figure
+    fig, ax = plt.subplots(1,1, figsize=figsize)
+
+    
+    # Set the list of labels
+    if len(legend_labels) == 0:
+        legend_labels = ['none'] * num_curves
+   
+    elif len(legend_labels) != num_curves:
+        print('The number of given legend labels is different than the number of curves. Please make sure that both are equal.')
+        #return
+    
+        
+    # Plot the spectra
+    i = 0
+    
+    for meas_id in meas_ids:
+
+        df_meas = data[meas_id].dropna(axis=0)
+        
+        for coordinate in coordinates:
+            df_data = df_meas[coordinate]
+
+            
+            x = df_data.index
+            y = df_data.iloc[:,0].values
+
+            ax.plot(x,y, ls=selected_linestyles[i], lw=selected_lw[i], color=lines_colors[i], label=legend_labels[i])
+
+            if 'std' in df_data.columns and stdev == True:
+                y_std = df_data['std']
+
+                ax.fill_between(x, y+y_std, y-y_std, color='0.75', alpha=0.5, ec='none')
+
+            i = i + 1
+
+    ax.set_xlim(xlim)
+    ax.set_ylim(ylim)
+    
+    # Set the size of axes tickslabels
+    ax.xaxis.set_tick_params(labelsize=fontsize)
+    ax.yaxis.set_tick_params(labelsize=fontsize)
+
+    # Set the labels of the x and y axes
+    if xlabel == None:
+        ax.set_xlabel(x_labels[dose_unit], fontsize=fontsize)
+    else:
+        ax.set_xlabel(xlabel, fontsize=fontsize)
+
+    if ylabel == None:
+
+        if len(coordinates) == 1:
+            ax.set_ylabel(labels_eq[coordinates[0]], fontsize=fontsize)
+
+        else:
+            ax.set_ylabel('Colorimetric differences ($\Delta$)', fontsize=fontsize)
+    
+    else:
+        ax.set_ylabel(ylabel, fontsize=fontsize)
+    
+    # Define title
+    if title != 'none':
+        ax.set_title(title, fontsize=fontsize_title)
+        
+
+    # Create and define the legend    
+    if legend_labels[0] != 'none' and len(legend_labels) < 19:
+
+        handles, labels = plt.gca().get_legend_handles_labels()
+        by_label = dict(zip(labels, handles)) 
+        
+        if legend_position == 'in':
+                         
+            ax.legend(by_label.values(), by_label.keys(), ncol=legend_ncols, fontsize=legend_fontsize, title=legend_title, title_fontsize=legend_fontsize, loc='upper left', framealpha=0.5)
+
+        elif legend_position == 'out':
+        
+            ax.legend(by_label.values(), by_label.keys(), loc='upper left', ncol=1, fontsize=legend_fontsize, title=legend_title, title_fontsize=legend_fontsize, bbox_to_anchor=(1, 1)) 
+
+
+    # Insert texts
+    if isinstance(texts, str):
+        texts = [texts]
+
+    if isinstance(texts_xy, tuple):
+        texts_xy = [texts_xy]
+
+    if len(texts) > 0:
+        if len(texts) == len(texts_xy):
+            for text, xy in zip(texts, texts_xy):
+                ax.annotate(text,xy, fontsize=texts_fontsize)
+
+        else:
+            print('Processed aborted. The number of text value should be equal to the number of text position.')
+            return
+
+    
+    # Remove white margins
+    plt.tight_layout()
+
+    
+    # Save the figure
+    if save == True:
+        if path_fig == 'cwd':
+            path_fig = f'{os.getcwd()}/dE.png'                    
+            
+        fig.savefig(path_fig,dpi=300, facecolor='white', bbox_inches="tight") 
+
+    
+    # Display the figure
+    plt.show()
+
+    return
+
+
+
+
+
+    '''
     # define y-std values
     if yerr is None:
         yerr = []
@@ -553,12 +1055,13 @@ def delta(data: list, yerr=None, dose_unit:Optional[list] = ['He'], coordinates:
     
     # Set the aesthetics of the figure
     sns.set_theme(context='paper', font='serif', palette='colorblind') 
-
+    
     # Plot with a single x-axis, ie. 1 light energy unit
     if len(dose_unit) == 1:
 
         # create an empty figure
         fig, ax1 = plt.subplots(1,1, figsize=figsize)
+
         
         # define the random linestyles
         if ls == 'random':
@@ -572,6 +1075,7 @@ def delta(data: list, yerr=None, dose_unit:Optional[list] = ['He'], coordinates:
             x = d[0]            
             
             for y,s_val,l,ls_val,lw_val,c in zip(d[1:],s,label,ls,lw,color):
+                print(c)
                
                 if ls == 'random':
                     ax1.plot(x, y, lw=lw_val, color=c, label=l)
@@ -583,7 +1087,7 @@ def delta(data: list, yerr=None, dose_unit:Optional[list] = ['He'], coordinates:
         handles, list_labels = ax1.get_legend_handles_labels()        
         unique = [(h, l) for i, (h, l) in enumerate(zip(handles, list_labels)) if l not in list_labels[:i]]        
             
-        ax1.legend(*zip(*unique), fontsize=legend_fontsize, title=legend_title, title_fontsize=legend_fontsize)
+        ax1.legend(*zip(*unique), fontsize=legend_fontsize, title=legend_title, title_fontsize=legend_fontsize, loc='best', ncols=legend_columns)
 
         ax1.set_xlim(0)
 
@@ -598,17 +1102,20 @@ def delta(data: list, yerr=None, dose_unit:Optional[list] = ['He'], coordinates:
         else:
             ax1.set_ylabel('Colorimetric differences ($\Delta$)', fontsize=fontsize)
 
+
+        #ax1.annotate('BW1', (2.08,3.75), fontsize=fontsize-3)
+        #ax1.annotate('BW2', (2.08,1.35), fontsize=fontsize-3)
+        #ax1.annotate('BW3', (2.08,0.5), fontsize=fontsize-3)
+    '''
+
+
         
-            
-
-    # Plot with two x-axes, ie. 2 light energy units
-    else:
-
-        print('double x axis')
-        ax2 = ax1.twiny()
 
 
-        '''
+ 
+
+
+    '''
         if legend == 'coordinates':
             
             list_objects = sorted(set(data.columns.get_level_values(0)))        
@@ -661,7 +1168,7 @@ def delta(data: list, yerr=None, dose_unit:Optional[list] = ['He'], coordinates:
         #plt.legend()
         plt.tight_layout()
         plt.show()
-        '''
+    
 
     ax1.set_title(title, fontsize=fontsize)
     plt.tight_layout()
@@ -676,49 +1183,258 @@ def delta(data: list, yerr=None, dose_unit:Optional[list] = ['He'], coordinates:
         return plt, ax1
     else:
         return plt, ax1, ax2
+    '''
 
 
-def spectra(data, stds=[], spectral_mode:Optional[str] = 'R', legend_labels=[], title='none', fontsize=24, fontsize_legend:Optional[int] = 22, legend_title='', x_range=(), colors:Union[str, list] = None, lw:Optional[int] = 2, ls:Union[str, list] = '-', text:Optional[str] = '', text_xy:Optional[tuple] = (0.02, 0.03), save=False, path_fig='cwd', derivation=False, *args, **kwargs):
-    """
-    Description: Plot the reflectance spectrum of one or several datasets.
-
+def spectra(
+        data: pd.DataFrame,        
+        stdev:Optional[bool] = True,        
+        data_settings: Optional[dict] = {},
+        figure_settings: Optional[dict] = {},
+        legend_settings: Optional[dict] = {},
+        lines_settings: Optional[dict] = {},  
+        text_settings: Optional[dict] = {},      
+        remove_last_xtick:Optional[bool] = False, 
+        text:Optional[str] = '',
+        text_xy:Optional[tuple] = (0.02, 0.03), 
+        save=False, 
+        path_fig='cwd',
+        *args, **kwargs):
     
-    Args:
-        _ data (list): A list of data elements, where each element corresponding to a reflectance spectrum is a numpy array. 
-
-        _ std (list, optional): A list of standard variation values respective to each element given in the data parameter. Defaults to [].
-
-        spectral_mode : string, optional
-            When 'R', it diplays the y-axis label for reflectance spectra
-            When 'dR', it displays the y-axis label for the difference in reflectance values
-            When 'A', it displays the y-axis label for absorption spectra using the following equation: A = -log(R)
-
-        _ labels (list, optional): A list of labels respective to each element given in the data parameter that will be shown in the legend. When the list is empty there is no legend displayed. Defaults to [].
-        
-        _ title (str, optional): Suptitle of the figure. When 'none' is passed as an argument, there is no suptitle displayed. Defaults to 'none'.
-        
-        _ color_data (str or list, optional): Color of the data points. When 'sample' is passed as an argument, the color will correspond to the srgb values of the sample. A list of colors - respective to each element given in the data parameter - can be passed. Defaults to 'sample'.
-        
-        _ fs (int, optional): Fontsize of the plot (title, ticks, and labels). Defaults to 24.    
-
-        _ x_range (tuple, optional): Lower and upper limits of the x-axis. Defaults to (). 
-
-                    
-    Returns: A figure showing the reflectance spectra.
-    """    
     
+    # Extract the data settings    
+    derivation = data_settings.get('derivation', False)
+    smoothing = data_settings.get('smoothing', (1,0))
+    data_mode = data_settings.get('mode', 'R')     
+    wl_range = data_settings.get('wl_range', None)
+    
+    # Extract the legend settings    
+    legend_labels = legend_settings.get('labels', [])
+    legend_fontsize = legend_settings.get('fontsize', '22')
+    legend_position = legend_settings.get('position', 'in')
+    legend_title = legend_settings.get('title', None)
+
+    # Extract the lines settings
+    lines_widths = lines_settings.get('lw', 2)
+    lines_styles = lines_settings.get('ls', '-')
+    lines_colors = lines_settings.get('colors', None)
+    
+    # Extract the figure settings
+    title = figure_settings.get('title', '')
+    xlabel = figure_settings.get('xlabel', 'Wavelength $\lambda$ (nm)')
+    ylabel = figure_settings.get('ylabel', 'Reflectance factor')
+    xlim = figure_settings.get('xlim', None)
+    ylim = figure_settings.get('ylim', None)
+    fontsize = figure_settings.get('fontsize', 24)
+    fontsize_title = figure_settings.get('fontsize_title', 26)
+    figsize = figure_settings.get('figsize', 'default')
+
+    # Extract the text settings
+    text = text_settings.get('text', '')
+    text_fontsize = text_settings.get('fontsize', '13')
+    text_xy = text_settings.get('xy', ())
+
+    if text != '':
+        text_xy = (0.01,0.03)
+        
+
+    # Define possible linestyles for random selection
+    possible_linestyles = ['-', '--', '-.', ':', (0, (3, 1, 1, 1)), (0, (5, 5))] * 5
+
+
+    # Determine the number of curves
+    num_curves = (data.loc[:, data.columns.get_level_values('data_type') != 'std']).shape[1]  
+    meas_ids = data.columns.get_level_values('meas_id').unique()
+        
+    
+    # Handle line styles
+    if lines_styles == 'random':
+        # Ensure we have enough unique linestyles
+        if num_curves > len(possible_linestyles):
+            raise ValueError("Number of curves exceeds the number of available linestyles.")
+        # Randomly select unique linestyles
+        selected_linestyles = random.sample(possible_linestyles, num_curves)
+    elif isinstance(lines_styles, list):
+        if len(lines_styles) < num_curves:
+            raise ValueError("Length of 'ls' list must be greater or equal to the number of curves.")
+        selected_linestyles = lines_styles
+    else:
+        # Use the same linestyle for all curves
+        selected_linestyles = [lines_styles] * num_curves
+    
+    # Handle line widths
+    if isinstance(lines_widths, list):
+        if len(lines_widths) < num_curves:
+            raise ValueError("Length of 'lw' list must be greater or equal to the number of curves.")
+        selected_lw = lines_widths
+    else:
+        # Use the same linewidth for all curves
+        selected_lw = [lines_widths] * num_curves
+
     # Set the observer and illuminant
     observer = colour.colorimetry.MSDS_CMFS_STANDARD_OBSERVER["CIE 1964 10 Degree Standard Observer"] 
     illuminant = colour.SDS_ILLUMINANTS['D65'] 
     d65 = colour.CCS_ILLUMINANTS["cie_10_1964"]["D65"]
     
-    # Create the figure
+    # Apply the seaborn aesthetics
     sns.set_theme(context='paper', font='serif', palette='colorblind')
-    fig, ax = plt.subplots(1,1, figsize=(16, 8))
+    
+    # Set the figure size 
+    if legend_position == 'out' and figsize == 'default':
+        figsize = (20,8)
+
+    elif legend_position == 'in' and figsize == 'default':
+        figsize = (16,8)
+
+    # Create the figure
+    fig, ax = plt.subplots(1,1, figsize=figsize)
+    
+    # Define the wavelength range of the data
+    if isinstance(xlim, tuple):
+        data = data.loc[xlim[0]:xlim[1]]
+
     
     # Set the list of labels
     if len(legend_labels) == 0:
         legend_labels = ['none'] * len(data)
+   
+    elif len(legend_labels) != num_curves:
+        print('The number of given legend labels is different than the number of curves. Please make sure that both are equal.')
+        #return
+    
+    # Plot the spectra
+    i = 0
+    for meas_id in meas_ids:
+
+        df_meas = data[meas_id]
+        light_doses = sorted(set(df_meas.columns.get_level_values(0)))
+        
+        for light_dose in light_doses:
+            df_data = df_meas[light_dose]
+
+            wavelengths = df_data.index
+            reflectance = df_data.iloc[:,0]
+        
+            # Drop NaN values
+            valid_indices = ~reflectance.isna()
+            wavelengths = wavelengths[valid_indices]
+            reflectance = reflectance[valid_indices]
+
+            if 'std' in df_data.columns:
+                std_values = df_data['std']
+
+            else:
+                std_values = np.array([0] * len(wavelengths))
+
+            
+            label = legend_labels[i] if i < len(legend_labels) else None
+            
+            ax.plot(wavelengths, reflectance, lw=selected_lw[i], ls=selected_linestyles[i], color=lines_colors[i], label=label)
+
+            if stdev:
+                ax.fill_between(wavelengths, reflectance-std_values, reflectance+std_values, color='0.75', alpha=0.5, ec='none')
+
+            i = i + 1
+
+    
+    # Define the axes limits
+    ax.set_xlim(xlim)
+    ax.set_ylim(ylim)
+    
+    # Define x-axis label
+    ax.set_xlabel(xlabel, fontsize=fontsize)
+
+    
+    # Define y-axis label
+    if derivation == False and data_mode.upper() == 'R':
+        ax.set_ylabel('Reflectance factor', fontsize=fontsize)
+    elif derivation == False and data_mode.lower() == 'dr':
+        ax.set_ylabel('Reflectance difference', fontsize=fontsize)
+    elif derivation == False and data_mode.upper() == 'A':
+        ax.set_ylabel('Absorbance', fontsize=fontsize)
+    elif derivation == True and data_mode.upper() == 'A':
+        ax.set_ylabel(r'$\frac{dA}{d\lambda}$', fontsize=fontsize+10)
+    else:
+        ax.set_ylabel(r'$\frac{dR}{d\lambda}$', fontsize=fontsize+10)
+    
+    
+    # Set the size of axes tickslabels
+    ax.xaxis.set_tick_params(labelsize=fontsize)
+    ax.yaxis.set_tick_params(labelsize=fontsize)
+
+    
+    # Define title
+    if title != 'none':
+        ax.set_title(title, fontsize=fontsize_title)
+
+    
+    # Insert a text box
+    if text != '' or text == 'none':
+        props = dict(boxstyle='round', facecolor='white', alpha=0.7)
+        ax.text(text_xy[0],text_xy[1],text,transform=ax.transAxes,fontsize=text_fontsize,verticalalignment='top', bbox=props)
+    
+
+    # Create and define the legend
+    if len(legend_labels) > 6:
+        ncols = 2
+    else:
+        ncols = 1
+
+    if legend_labels[0] != 'none' and len(legend_labels) < 19:
+
+        handles, labels = plt.gca().get_legend_handles_labels()
+        by_label = dict(zip(labels, handles)) 
+        
+        if legend_position == 'in':
+                         
+            ax.legend(by_label.values(), by_label.keys(), ncol=ncols, fontsize=legend_fontsize, title=legend_title, title_fontsize=legend_fontsize)
+
+        elif legend_position == 'out':
+        
+            ax.legend(by_label.values(), by_label.keys(), loc='upper left', ncol=1, fontsize=legend_fontsize, title=legend_title, title_fontsize=legend_fontsize, bbox_to_anchor=(1, 1)) 
+
+
+    # Remove white margins
+    plt.tight_layout()
+
+    
+    # Save the figure
+    if save == True:
+        if path_fig == 'cwd':
+            path_fig = f'{os.getcwd()}/SP.png'                    
+            
+        fig.savefig(path_fig,dpi=300, facecolor='white', bbox_inches="tight") 
+
+    
+    # Display the figure
+    plt.show()
+
+    return
+
+
+    '''
+    for i, column in enumerate(data.columns):
+        wavelengths = data.index
+        reflectance = data[column]
+        
+        # Drop NaN values
+        valid_indices = ~reflectance.isna()
+        wavelengths = wavelengths[valid_indices]
+        reflectance = reflectance[valid_indices]
+
+        label = legend_labels[i] if i < len(legend_labels) else None
+
+        if derivation:
+            # Compute derivation if needed
+            derivation_data = np.gradient(reflectance) / np.gradient(wavelengths)
+            ax.plot(wavelengths, derivation_data, label=label, linewidth=selected_lw[i], linestyle=selected_linestyles[i], color=colors[i] if isinstance(colors, list) else colors)
+        else:
+            ax.plot(wavelengths, reflectance, label=label, linewidth=selected_lw[i], linestyle=selected_linestyles[i], color=colors[i] if isinstance(colors, list) else colors)
+    '''
+    
+
+
+    
 
     
     # Set the list of colors
@@ -758,6 +1474,7 @@ def spectra(data, stds=[], spectral_mode:Optional[str] = 'R', legend_labels=[], 
         sp = df_sp.iloc[:,0].values
         std = df_sp['std'].values        
 
+        # Define color of the curve
         if isinstance(colors, list) or isinstance(colors, np.ndarray):
             color = colors[i]
         
@@ -768,73 +1485,40 @@ def spectra(data, stds=[], spectral_mode:Optional[str] = 'R', legend_labels=[], 
             color = np.array(srgb)            
         
                
-                
+        # Plot the data       
         ax.plot(wl,sp, color=color, lw=lw[i], ls=ls[i], label=legend_labels[i])
         ax.fill_between(wl, sp-std,sp+std, alpha=0.5, color='0.75', ec='none')
         
-        
+
+    
+    
+    # Define x-axis limits    
     if x_range not in [(), None]:
         ax.set_xlim(x_range[0],x_range[1])
-    
-    ax.set_xlabel('Wavelength $\lambda$ (nm)', fontsize = fontsize)
-
+        
     # Get current x-ticks
     xticks = plt.gca().get_xticks()
-
+    
     # Remove the last tick if it exists
-    if len(xticks) > 0:
+    if remove_last_xtick and len(xticks) > 0:
         xticks = xticks[:-1]
-
-    plt.xticks(xticks)
-
-    if derivation == False and spectral_mode.upper() == 'R':
-        ax.set_ylabel('Reflectance factor', fontsize = fontsize)
-    elif derivation == False and spectral_mode.lower() == 'dr':
-        ax.set_ylabel('Reflectance difference', fontsize = fontsize)
-    elif derivation == False and spectral_mode.upper() == 'A':
-        ax.set_ylabel('Absorbance', fontsize = fontsize)
-    elif derivation == True and spectral_mode.upper() == 'A':
-        ax.set_ylabel(r'$\frac{dA}{d\lambda}$', fontsize = fontsize+10)
-    else:
-        ax.set_ylabel(r'$\frac{dR}{d\lambda}$', fontsize = fontsize+10)
-
-    ax.xaxis.set_tick_params(labelsize = fontsize)
-    ax.yaxis.set_tick_params(labelsize = fontsize)
-
-    if title != 'none':
-        ax.set_title(title, fontsize = fontsize+3)
+        plt.xticks(xticks)
+       
     
-    if len(legend_labels) > 6:
-        ncols = 2
-    else:
-        ncols = 1
-
-    if legend_labels[0] != 'none' and len(legend_labels) < 19:
-        handles, labels = plt.gca().get_legend_handles_labels()
-        by_label = dict(zip(labels, handles))  
-        #plt.legend(labels, fontsize=fontsize_legend, title='Measurement $n^o$', title_fontsize=fontsize_legend) 
-        plt.legend(by_label.values(), by_label.keys(), ncol=ncols, fontsize=fontsize_legend, title=legend_title, title_fontsize=fontsize_legend)
+    
+             
 
     
-    if text != '':
-        props = dict(boxstyle='round', facecolor='white', alpha=0.7)
-        ax.text(text_xy[0],text_xy[1],text,transform=ax.transAxes,fontsize=fontsize-6,verticalalignment='top', bbox=props)
 
-    plt.tight_layout()
+
+def swatches_circle(data, data_type:Optional[str] = 'Lab', orientation:Optional[str] = 'horizontal', light_doses:Optional[list] = [0.5,1,2,5,15], JND:Optional[list] = [], dose_unit:Optional[str] = 'Hv', dE:Optional[bool] = True, museum_exposure:Optional[tuple] = (), fontsize: Optional[int] = 40, save:Optional[bool] = False, path_fig:Optional[str] = 'cwd', title:Optional[str] = None, background_grey: Optional [float] = 0.85, circle_h:Optional[float] = 0):
+
+    if len(museum_exposure) != 0:
+        museum_exposure_scales = {'h': f'Duration exposure (hours) ($E_v$ = {museum_exposure[0]} lux) ', 'd': 'Duration exposure (days)', 'y': 'Duration exposure (years)'} 
+        xlabel = museum_exposure_scales[museum_exposure[1]]
+        light_doses = ((np.array(light_doses) * 1e6) / museum_exposure[0]).astype(int)
     
-
-    if save == True:
-        if path_fig == 'cwd':
-            path_fig = f'{os.getcwd()}/SP.png'                    
-            
-        fig.savefig(path_fig,dpi=300, facecolor='white', bbox_inches="tight")       
-
-    plt.show()
-
-
-def swatches_circle(data, data_type:Optional[str] = 'Lab', orientation:Optional[str] = 'horizontal', light_doses:Optional[list] = [0.5,1,2,5,15], JND:Optional[list] = [], dose_unit:Optional[str] = 'Hv', dE:Optional[bool] = True, fontsize: Optional[int] = 24, save:Optional[bool] = False, path_fig:Optional[str] = 'cwd', title:Optional[str] = None, background_grey: Optional [float] = 0.85):
-
-    if list(set([len(x) for x in data]))[0] == len(JND):
+    elif list(set([len(x) for x in data]))[0] == len(JND):
         xlabel = 'Just noticeable difference (JND)'
 
     elif list(set([len(x) for x in data]))[0] == len(light_doses):
@@ -878,7 +1562,7 @@ def swatches_circle(data, data_type:Optional[str] = 'Lab', orientation:Optional[
 
         if orientation == 'horizontal':
 
-            fig, ax = plt.subplots(1,1, figsize=((N)*5,6))   
+            fig, ax = plt.subplots(1,1, figsize=((N)*5,7))   
         
             ax.set_facecolor((background_grey,background_grey,background_grey))
             fig.patch.set_facecolor((background_grey, background_grey, background_grey))
@@ -890,10 +1574,10 @@ def swatches_circle(data, data_type:Optional[str] = 'Lab', orientation:Optional[
 
             if dE:
                 y = 1
-                h = 0.7 + title_space
+                h = 0.7 + title_space + circle_h
             else:
                 y =0.9
-                h = 0.6 + title_space
+                h = 0.6 + title_space + circle_h
 
             cp_init = matplotlib.patches.Rectangle((0.05, 0.0), 0.9, y, edgecolor='None', fc=d_srgb[0], lw=2)
             ax.add_patch(cp_init)
@@ -916,11 +1600,12 @@ def swatches_circle(data, data_type:Optional[str] = 'Lab', orientation:Optional[
 
             if dE:
                 ax_top = ax.secondary_xaxis('top')
-                ax_top.set_xlabel('$\Delta E^*_{00}$ values', fontsize=fontsize)
+                ax_top.set_xlabel('Estimated $\Delta E_{00}$ values', fontsize=fontsize)
                 ax_top.set_xticks(np.linspace(0,1,N+1)[1:-1]) 
                 ax_top.set_xticklabels(dE_val)
                 ax_top.xaxis.set_tick_params(labelsize=fontsize) 
-                ax_top.spines['top'].set_visible(False) 
+                ax_top.spines['top'].set_visible(False)                 
+                ax_top.xaxis.labelpad = 20
         
         
         elif orientation == 'vertical':
@@ -963,11 +1648,12 @@ def swatches_circle(data, data_type:Optional[str] = 'Lab', orientation:Optional[
 
             if dE:
                 ax_top = ax.secondary_yaxis('right')
-                ax_top.set_ylabel('$\Delta E^*_{00}$ values', fontsize=fontsize)
+                ax_top.set_ylabel('Estimated $\Delta E_{00}$ values', fontsize=fontsize)
                 ax_top.set_yticks(np.linspace(0,1,N+1)[1:-1]) 
                 ax_top.set_yticklabels(dE_val[::-1])
                 ax_top.yaxis.set_tick_params(labelsize=fontsize) 
                 ax_top.spines['right'].set_visible(False) 
+                ax_top.tick_params(axis='x', which='major', pad=20)
 
         
         ax.spines['top'].set_visible(False)
