@@ -41,7 +41,7 @@ def parse_datetime(date_string, language):
         return parsed_datetime_string, f'{parsed_datetime[-1]}-{parsed_datetime[1]}-{parsed_datetime[-3]}' 
 
 
-def MFT_fotonowy(files: list, filenaming:Optional[str] = 'none', folder:Optional[str] = '.', db:Optional[bool] = False, comment:Optional[str] = '', device_nb:Optional[str] = 'default', authors:Optional[str] = 'XX', white_standard:Optional[bool] = 'default', rounding:Optional[int] = None, interpolation:Optional[bool] = True, dose_unit:Optional[str] = 'He', step:Optional[float | int] = 0.1, average:Optional[int] = 'undefined', observer:Optional[str] = 'default', illuminant:Optional[str] = 'default', background:Optional[str] = 'black', language:Optional[str] = None, delete_files:Optional[bool] = True, return_filename:Optional[bool] = True):
+def MFT_fotonowy(files: list, filenaming:Optional[str] = 'none', folder_output:Optional[str] = '.', db:Optional[bool] = False, comment:Optional[str] = '', device_nb:Optional[str] = 'default', authors:Optional[str] = 'XX', white_standard:Optional[bool] = 'default', rounding:Optional[int] = None, interpolation:Optional[bool] = True, dose_unit:Optional[str] = 'He', step:Optional[float | int] = 0.1, average:Optional[int] = 'undefined', observer:Optional[str] = 'default', illuminant:Optional[str] = 'default', background:Optional[str] = 'black', language:Optional[str] = None, delete_files:Optional[bool] = True, return_filename:Optional[bool] = True):
     """Process the microfading rawdata obtained from the Fotonowy device.
 
     Parameters
@@ -52,7 +52,7 @@ def MFT_fotonowy(files: list, filenaming:Optional[str] = 'none', folder:Optional
     filenaming : Optional[str], optional
         _description_, by default 'none'
     
-    folder : Optional[str], optional
+    folder_output : Optional[str], optional
         Path of the folder to save the output file, by default '.'
     
     db : Optional[bool], optional
@@ -187,9 +187,8 @@ def MFT_fotonowy(files: list, filenaming:Optional[str] = 'none', folder:Optional
     
     
     # retrieve counts spectral files to be processed
-    raw_files_counts = [Path(file) for file in files if 'spect_convert.txt' in Path(file).name]
-    
-    
+    raw_files_counts = [Path(file) for file in files if 'spect_convert.txt' in Path(file).name]    
+     
     # process each spectral file
     for raw_file_counts in raw_files_counts:
 
@@ -276,16 +275,16 @@ def MFT_fotonowy(files: list, filenaming:Optional[str] = 'none', folder:Optional
             abs_interp_functions = [sip.interp1d(df_abs.index, df_abs[col], kind='linear', fill_value='extrapolate') for col in df_abs.columns]            
 
             # interpolate all columns of df_abs simultaneously
-            interpolated_abs_data = np.vstack([f(wanted_x) for f in abs_interp_functions]).T
-
+            interpolated_abs_data = np.round(np.vstack([f(wanted_x) for f in abs_interp_functions]).T, 4)
+            
             # Create a new DataFrame with the interpolated data
             interpolated_df = pd.DataFrame(interpolated_abs_data, index=wanted_x, columns=df_abs.columns)
 
             interpolated_df.index.name = abs_scales_name[dose_unit]
             interpolated_df = interpolated_df.reset_index()
 
-            # insert a row at the top with the word 'value' as input
-            df_value = pd.DataFrame({'He_MJ/m2':'value','t_sec':'value','Hv_Mlxh':'value'}, index=['value'])
+            # insert a row at the top with the word 'nominal' as input
+            df_value = pd.DataFrame({'He_MJ/m2':'nominal','t_sec':'nominal','Hv_Mlxh':'nominal'}, index=['nominal'])
             interpolated_df = pd.concat([df_value, interpolated_df])
             interpolated_df = interpolated_df.reset_index().drop('index', axis=1)          
             
@@ -313,11 +312,11 @@ def MFT_fotonowy(files: list, filenaming:Optional[str] = 'none', folder:Optional
             Lab = np.array([colour.XYZ_to_Lab(d / 100, illuminant_CCS) for d in XYZ])
             LCh = np.array([colour.Lab_to_LCHab(d) for d in Lab])
                     
-            L = ['value']
-            a = ['value']
-            b = ['value']
-            C = ['value']
-            h = ['value']
+            L = ['nominal']
+            a = ['nominal']
+            b = ['nominal']
+            C = ['nominal']
+            h = ['nominal']
 
             [L.append(np.round(i[0], rounding_cl)) for i in Lab]
             [a.append(np.round(i[1], rounding_cl)) for i in Lab]
@@ -327,13 +326,13 @@ def MFT_fotonowy(files: list, filenaming:Optional[str] = 'none', folder:Optional
 
                 
             # compute the delta E values
-            dE76 = ['value'] + list(np.round(np.array([colour.delta_E(Lab[0], d, method="CIE 1976") for d in Lab]), rounding_cl))
-            dE00 = ['value'] + list(np.round(np.array([colour.delta_E(Lab[0], d) for d in Lab]), rounding_cl))
+            dE76 = ['nominal'] + list(np.round(np.array([colour.delta_E(Lab[0], d, method="CIE 1976") for d in Lab]), rounding_cl))
+            dE00 = ['nominal'] + list(np.round(np.array([colour.delta_E(Lab[0], d) for d in Lab]), rounding_cl))
 
             # calculate dR_VIS and dR
-            dR_vis = ['value']                                                    # empty list to store the dRvis values                                   
-            df_sp_vis = df_sp_interp.loc[400:740]                                 # reflectance spectra in the visible range
-            sp_initial = (df_sp_vis.iloc[:,0].values) * 100                       # initial spectrum
+            dR_vis = ['nominal']                                    # empty list to store the dRvis values                                   
+            df_sp_vis = df_sp_interp.loc[400:740]                   # reflectance spectra in the visible range
+            sp_initial = (df_sp_vis.iloc[:,0].values) * 100         # initial spectrum
         
             for col in df_sp_vis.columns:
                 sp = df_sp_vis[col]
@@ -353,9 +352,9 @@ def MFT_fotonowy(files: list, filenaming:Optional[str] = 'none', folder:Optional
             
             # concatenate the energy values with df_cl
             df_cl = pd.concat([interpolated_df,df_cl], axis=1, ignore_index=False)
-
-            # add a new row 'value' at the top
-            df_value = pd.DataFrame(df_sp_interp.shape[1] * ['value'], columns=['value']).T
+                        
+            # add a new row 'nominal' at the top which
+            df_value = pd.DataFrame(df_sp_interp.shape[1] * ['nominal'], columns=['data_type']).T
             df_value.index.name = 'wavelength_nm'            
             df_value.columns = df_sp_interp.columns
             df_sp_interp = pd.concat([df_value, df_sp_interp]) 
@@ -420,7 +419,8 @@ def MFT_fotonowy(files: list, filenaming:Optional[str] = 'none', folder:Optional
             "measurement_type",
             "authors",
             "host_institution",
-            "date_time",
+            "datetime_analysis",
+            "datetime_processing",
             "comment",
             "[PROJECT INFO]"] + list(db_projects.columns) + ["[OBJECT INFO]"] + list(db_objects.columns) + MFT_info_templates.device_info + MFT_info_templates.analysis_info + MFT_info_templates.spot_info + MFT_info_templates.beam_info + MFT_info_templates.results_info
 
@@ -433,13 +433,23 @@ def MFT_fotonowy(files: list, filenaming:Optional[str] = 'none', folder:Optional
                 list_authors = []
                 for x in authors.split('-'):
                     x = x.strip()
-                    df_author = df_authors[df_authors['initials'] == x]
-                    list_authors.append(f"{df_author['surname'].values[0]}, {df_author['name'].values[0]}")                    
+                    if x in df_authors['initials'].values:                        
+                        df_author = df_authors[df_authors['initials'] == x]                    
+                        list_authors.append(f"{df_author['surname'].values[0]}, {df_author['name'].values[0]}")   
+                    else:
+                        print(f'The user ("{x}") has not been registered in the database file.')
+                        list_authors.append(x)                    
                 authors_names = '_'.join(list_authors)
                     
-            else:                    
-                df_author = df_authors[df_authors['initials'] == authors]
-                authors_names = f"{df_author['surname'].values[0]}, {df_author['name'].values[0]}"
+            else: 
+                if authors in df_authors['initials'].values:
+                    df_author = df_authors[df_authors['initials'] == authors]
+                    authors_names = f"{df_author['surname'].values[0]}, {df_author['name'].values[0]}"
+                
+                else:
+                    print(f'The author name "{authors}" has not been registered in the databases. Use the function add_new_person() to register the person.')
+                    authors_names = authors
+                   
 
             
             
@@ -460,13 +470,14 @@ def MFT_fotonowy(files: list, filenaming:Optional[str] = 'none', folder:Optional
             date_time_string = df_info.loc['Date'].values[0]
 
             try:
-                date_time = pd.to_datetime(date_time_string)
-                date = date_time.date()
+                date_time_analysis = pd.to_datetime(date_time_string)
+                date = date_time_analysis.date()
 
             except ValueError:
-                date_time,date = parse_datetime(date_string=date_time_string, language=language)
+                date_time_analysis,date = parse_datetime(date_string=date_time_string, language=language)
 
-            
+            date_time_processing = datetime.now()
+
             project_id = raw_file_cl.stem.split(' ')[0]
             object_id = raw_file_cl.stem.split(' ')[1]
             group = raw_file_cl.stem.split(' ')[2]
@@ -489,6 +500,7 @@ def MFT_fotonowy(files: list, filenaming:Optional[str] = 'none', folder:Optional
                 LED_info = LED_ID
                 print(f'The LED_ID ({LED_ID}) related to your analysis is not present in the registered lamps ({existing_LEDs}). Please make sure to register it.')
                           
+            
 
             df_devices = databases.get_devices()
             if device_nb in df_devices['ID'].values:
@@ -496,13 +508,13 @@ def MFT_fotonowy(files: list, filenaming:Optional[str] = 'none', folder:Optional
                 device_name = df_devices.loc[device_nb]['name']
                 device_description = df_devices.loc[device_nb]['description']
 
-            elif device_nb == 'default':
+            elif device_nb == 'default' or device_nb.lower() == 'fotonowy':
                 device_nb = 'none'
                 device_name = 'unnamed'
                 device_description = 'Fotonowy-MFT'
 
             else:
-                print(f'The device you entered ({device_nb}) has not been registered. Please first register the device, by using the function mf.register_devices().')
+                print(f'The device you entered ({device_nb}) has not been registered. Please first register the device, by using the function mf.set_devices_info().')
                 return
 
             # Retrieve the white standard information
@@ -609,7 +621,8 @@ def MFT_fotonowy(files: list, filenaming:Optional[str] = 'none', folder:Optional
                 "SINGLE MICROFADING ANALYSIS",
                 authors_names,
                 host_institution,
-                date_time,
+                date_time_analysis,
+                date_time_processing,
                 comment,
                 " "] + project_info + [" "] + object_info + device_info + analysis_info + spot_info + beam_info + [" ", " "]
 
@@ -640,11 +653,11 @@ def MFT_fotonowy(files: list, filenaming:Optional[str] = 'none', folder:Optional
                
                
         # export the dataframes to an excel file
-        if not Path(folder).exists():
-            print(f'The output folder you entered {folder} does not exist. Please make sure the output folder has been created.')
+        if not Path(folder_output).exists():
+            print(f'The output folder you entered {folder_output} does not exist. Please make sure the output folder has been created.')
             return 
             
-        with pd.ExcelWriter(Path(folder) / f'{filename}.xlsx') as writer:
+        with pd.ExcelWriter(Path(folder_output) / f'{filename}.xlsx') as writer:
 
             df_info.to_excel(writer, sheet_name='info', index=True)
             df_cl.to_excel(writer, sheet_name="CIELAB", index=False)
@@ -657,20 +670,24 @@ def MFT_fotonowy(files: list, filenaming:Optional[str] = 'none', folder:Optional
 
             
         ###### DELETE FILE #######        
-            
+        
         if delete_files:
-            meas_raw_files = [file for file in Path(os.getcwd()).iterdir() if str(raw_file_counts).replace('-spect_convert.txt', '') in file.name]            
+
+            meas_raw_files = [x for x in raw_file_counts.parent.iterdir() if raw_file_counts.name.replace('-spect_convert.txt', '') in str(x)]                      
             [os.remove(file) for file in meas_raw_files]
             
+        
+        ###### FINAL PRINT STATEMENT #######
+        
         print(f'{raw_file_cl} has been successfully processed !')
             
 
         ###### RETURN FILENAME #######
         if return_filename:
-            return Path(folder) / f'{filename}.xlsx'
+            return Path(folder_output) / f'{filename}.xlsx'
             
 
-def MFT_stereo(files: list, filenaming:Optional[str] = 'none', folder:Optional[str] = '.', db:Optional[bool] = False, comment:Optional[str] = '', device_nb:Optional[str] = 'default', fading_mode:Optional[str] = 'alternate', waiting_time:Optional[int] = 1, authors:Optional[str] = 'XX', white_standard:Optional[bool] = 'default', rounding:Optional[int] = None, interpolation:Optional[bool] = True, dose_unit:Optional[str] = 't', step:Optional[float | int] = 10, wl_range:Optional[tuple] = None, observer:Optional[str] = '10deg', illuminant:Optional[str] = 'D65', background:Optional[str] = 'undefined', power_beam:Union[int,float,str] = None, foto_beam:Union[str] = None, delete_files:Optional[bool] = True, return_filename:Optional[bool] = True): 
+def MFT_stereo(files: list, filenaming:Optional[str] = 'none', folder_output:Optional[str] = '.', db:Optional[bool] = False, comment:Optional[str] = '', device_nb:Optional[str] = 'default', fading_mode:Optional[str] = 'alternate', waiting_time:Optional[int] = 1, authors:Optional[str] = 'XX', white_standard:Optional[bool] = 'default', rounding:Optional[int] = None, interpolate_wl:Union[tuple,str] = 'default', interpolate_exposure:Union[tuple,str] = ('He', 0.1), dose_unit:Optional[str] = 't', step:Optional[float | int] = 10, wl_range:Optional[tuple] = None, observer:Optional[str] = '10deg', illuminant:Optional[str] = 'D65', background:Optional[str] = 'undefined', beam_power:Optional[tuple] = None, beam_size:Union[str] = None, delete_files:Optional[bool] = True, return_filename:Optional[bool] = True): 
     
     
     # check whether the objects and projects databases have been created    
@@ -727,6 +744,10 @@ def MFT_stereo(files: list, filenaming:Optional[str] = 'none', folder:Optional[s
     cmfs = cmfs_observers[observer]
 
 
+    if db:
+
+        # retrieve the info in the comment line of the raw file
+        devices_comments = config.get_config_info()['comments']
         
     # retrieve the raw files to be processed
     raw_files = [Path(file) for file in files if '_c0' in Path(file).name and '.txt' in Path(file).name]
@@ -807,26 +828,37 @@ def MFT_stereo(files: list, filenaming:Optional[str] = 'none', folder:Optional[s
         duration_sec = int(np.round((timestamps[-1] - timestamps[0]).total_seconds(),0))        
         duration_min = np.round(duration_sec / 60, 0)
         
-                        
+                     
         # whether to interpolate the spectral data according the wavalength range
-        if interpolation == False:
+        if interpolate_wl == 'none':
             df_sp = df_sp_raw
 
         else:
-
-            # define the wavelength range
-            if device_info == 'none':
-                wl_start = int(df_sp.index[0]) + 1
-                wl_end = int(df_sp.index[-1])
+            if interpolate_wl == 'default':
+                wl_start = int(df_sp_raw.index[0]) + 1
+                wl_end = int(df_sp_raw.index[-1])
                 wl_step = 1
 
-            else:
-                wl_start = device_info['wl_range'][0]              
+            elif interpolate_wl == 'db':
+                if db == False:
+                    print('The "db" parameter is currently set to False. Make sure to set it to True and to register the parameters of your device in the config file in order to interpolate the wavelengths according to the device settings in the config file.')
+                    return
+                
+                wl_start = device_info['wl_range'][0]
                 wl_end = device_info['wl_range'][1]
                 if len(device_info['wl_range']) > 2:
                     wl_step = device_info['wl_range'][2]                
                 else:
                     wl_step = 1
+
+            elif isinstance(interpolate_wl, (list,tuple)):
+                wl_start = interpolate_wl[0]
+                wl_end = interpolate_wl[1]
+                wl_step = interpolate_wl[2]
+
+            else:
+                print(f'Incorrect input values for parameter "interpolate_wl" ({interpolate_wl}). Please enter a list or a tuple containing 3 integers (start, end, step).')
+                return
 
             wanted_wl = pd.Index(np.arange(wl_start,wl_end,wl_step), name='wavelength_nm')
 
@@ -839,12 +871,48 @@ def MFT_stereo(files: list, filenaming:Optional[str] = 'none', folder:Optional[s
             # Create a new DataFrame with the interpolated data
             df_sp = pd.DataFrame(interpolated_sp_data, index=wanted_wl, columns=df_sp_raw.columns)
 
+        
+        # Whether to interpolate the spectral data according to the light exposure range
 
+
+        if interpolate_exposure == 'none' or interpolate_exposure == 't':
+            pass
+
+        else: 
+            # retrieve the power values of the microfading beam
+            if isinstance(beam_power, tuple):
+                power_info = beam_power[1]
+            
+
+            elif beam_power == 'db':
+                if device_nb not in devices_comments.keys():
+                    print(f'To use the power beam info recorded in the config file, you first need to register the parameters of your device.')
+                    return
+                                
+                device_comment = devices_comments[device_nb]
+
+                if 'radiantFlux_mW' in device_comment:                    
+                    power_info = info[device_comment.index('radiantFlux_mW')]
+
+            elif isinstance(beam_power, (str)):
+                power_info = beam_power
+
+            
+
+            
+
+
+        return power_info
+
+        if interpolate_exposure in ['He', 'Hv']:
+            
+            doses = ''
+            df_sp.columns = doses
+    
 
         if db:
 
-            # retrieve the info in the comment line of the raw file
-            db_comments = config.get_config_info()['comments']
+            
 
             
             # retrieve the power values
