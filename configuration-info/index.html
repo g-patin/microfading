@@ -66,7 +66,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#1-configuration-info" class="md-skip">
+        <a href="#1-introduction" class="md-skip">
           Skip to content
         </a>
       
@@ -197,7 +197,7 @@
         
   
   <span class="md-ellipsis">
-    Welcome !
+    Microfading Python Package
   </span>
   
 
@@ -353,9 +353,9 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#1-configuration-info" class="md-nav__link">
+  <a href="#1-introduction" class="md-nav__link">
     <span class="md-ellipsis">
-      1. Configuration info
+      1. Introduction
     </span>
   </a>
   
@@ -791,9 +791,9 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#1-configuration-info" class="md-nav__link">
+  <a href="#1-introduction" class="md-nav__link">
     <span class="md-ellipsis">
-      1. Configuration info
+      1. Introduction
     </span>
   </a>
   
@@ -849,9 +849,12 @@
 
   <h1>Configuration info</h1>
 
-<p>This section deals with the config_info.json file of the <code>microfading</code> package and shows you how to adequately use it. </p>
-<h2 id="1-configuration-info">1. <strong>Configuration info</strong><a class="headerlink" href="#1-configuration-info" title="Permanent link">&para;</a></h2>
-<p>The config_info file contains dictionaries about different aspects of the <code>microfading package</code> (See Table 1, dictionary keys). To access the contain of the config_info file, use the <code>get_config</code> method as illustrated in the figure below.</p>
+<h2 id="1-introduction">1. <strong>Introduction</strong><a class="headerlink" href="#1-introduction" title="Permanent link">&para;</a></h2>
+<p>This section deals with the configuration information of the <code>microfading</code> package. The implementation of a configuration info file gives you the opportunity to define specific default behaviors. These information are stored inside a json file which is located inside the folder of the microfading package. Use the <code>get_config_path()</code> function to obtain the exact location of the configuration info file. </p>
+<p>The config_info file contains several dictionaries about different aspects of the <code>microfading package</code> (See Table 1, dictionary keys). To access the contain of the config_info file, use the <code>get_config()</code> function as illustrated in the figure below.</p>
+<p>For example, inside dictionary 'colorimetry', you can define the illuminant and the observer, so that every time you will use a function involving the use of an illuminant and an observer, it will automatically use the values you registered. </p>
+<p><strong>IMPORTANT !!</strong>
+Whenever you upgrade the <code>microfading</code> package, the <em>config_info</em> is reset to its initial state, i.e. empty dictionaries except for the 'functions' dictionary. This means that you will need to refill the config_info file as it was before the upgrade.</p>
 <figure>
 <p><img align="left" alt="Alt text" class="img-large" src="../images/mf_get_config.png" /></p>
 <figcaption>
@@ -909,9 +912,6 @@
 </tr>
 </tbody>
 </table>
-<p>For each key, information can be stored and used by some of the methods available in the <code>microfading</code> package. For exemple, the key <em>institution</em> enables you to store information about your institution (name, acronym, address, etc.), so that these info can automatically be added in reports or in microfading files as metadata. </p>
-<p><strong>IMPORTANT !!</strong>
-Whenever you upgrade the <code>microfading</code> package, the <em>config_info</em> is reset to its initial state, i.e. empty dictionaries except for the 'functions' dictionary. This means that you will need to refill the config_info file as it was before the upgrade.</p>
 <h2 id="2-content-update">2. <strong>Content update</strong><a class="headerlink" href="#2-content-update" title="Permanent link">&para;</a></h2>
 <p>To add or update the information stored inside the config_info.json file, you will need to use the methods that start with the keyword <code>set</code> (See figure below and Table 2). The functions return ipywdigets inside which you will be able to add the requested information. An example is given below for the <code>set_DB</code> function.</p>
 <figure>
@@ -960,11 +960,11 @@ Whenever you upgrade the <code>microfading</code> package, the <em>config_info</
 </tbody>
 </table>
 <h3 id="set_db">set_DB<a class="headerlink" href="#set_db" title="Permanent link">&para;</a></h3>
-<p>The <code>set_DB</code> function enables you to connect the <code>microfading</code> package with databases files created by the <code>msdb</code> package. As a pre-requesite, you will need to have created databases files on your local computer (<a href="https://g-patin.github.io/microfading/create-databases/">create_DB</a>). You can check the databases that you created by looking at the <a href="https://g-patin.github.io/msdb/get_config/">config file</a> of the msdb package. </p>
+<p>The <code>set_DB</code> function enables you to connect the <code>microfading</code> package with databases files created by the <code>msdb</code> package. As a pre-requesite, you will need to have created databases files on your local computer (see <a href="https://g-patin.github.io/microfading/create-databases/">create_DB section</a>). You can check the databases that you created by looking at the <a href="https://g-patin.github.io/msdb/get_config/">config file</a> of the msdb package. </p>
 <figure>
 <p><img align="left" alt="Alt text" class="img-medium" src="../images/mf_set_DB.png" /></p>
 <figcaption>
-<p>Information about the databases</p>
+<p>Set the information about the databases</p>
 </figcaption>
 </figure>
 <p>In the <em>db_name</em> widget, the names of the existing databases should appear when click on the <code>Tab</code> button. In the example below, we can see that I created 5 differents databases. One of them is called 'MFT' and this is the one I will choose for the microfading package. Its then automatically fills in the <em>db_path</em> widget.</p>
@@ -984,7 +984,7 @@ Whenever you upgrade the <code>microfading</code> package, the <em>config_info</
 </figcaption>
 </figure>
 <hr />
-<p>© 2025 Gauthier Patin. All rights reserved. | Last updated: 2025-05-24</p>
+<p>© 2025 Gauthier Patin. All rights reserved. | Last updated: 2025-12-09</p>
 
 
 

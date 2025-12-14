@@ -197,7 +197,7 @@
         
   
   <span class="md-ellipsis">
-    Welcome !
+    Microfading Python Package
   </span>
   
 
@@ -849,7 +849,8 @@
 
   <h1>Rawdata processing</h1>
 
-<p>In this section, we will show you how to process raw microfading files into our standard <em>interim</em> files, that is required to use the <code>microfading</code> package.</p>
+<p>In this section, we will show you how to process raw microfading files into our standard <em>interim</em> files, that is required to use the <code>microfading</code> package. </p>
+<p>A summary of this page has been compiled inside a Jupyter notebook and is available for download: <a href="../notebooks/Process_rawfiles.zip">Download notebook</a></p>
 <p>The current version of the <code>microfading</code> package can only process raw files obtained with the Fotonowy microfading device. Don't hesitate to contact us to discuss the possibility to process raw files obtained with other microfading systems.</p>
 <p>Processing the rawdata files consists of two main steps:</p>
 <ol>
@@ -859,13 +860,13 @@
 <h2 id="get-raw-files">Get raw files<a class="headerlink" href="#get-raw-files" title="Permanent link">&para;</a></h2>
 <p>There are many ways in python to retrieve a list of files. I will only show two ways of doing it.</p>
 <p><strong>Option 1</strong> - Retrieve the files manually</p>
-<p>In this option you create a list by typing the names of the raw files. To ease process, you can start writing the first letter and then press the <code>Tab</code> button to autocomplete the rest of the filename. </p>
+<p>In this option you create a list by typing the names of the raw files. To ease the process, you can start writing the first letter and then press the <code>Tab</code> button to autocomplete the rest of the filename. This only works if the notebooks is in the same folder as the data files or if you modified the current working directory of the notebook. </p>
 <div class="highlight"><pre><span></span><code><span class="c1"># For example, I created a list of two rawdata files</span>
 <span class="n">files</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;Project01_MF.plume01.01_G01_blue_rawdata.txt&#39;</span><span class="p">,</span>
          <span class="s1">&#39;Project12_MF.S0001.01_G01_paperBlock_rawdata.txt&#39;</span><span class="p">]</span>
 
-<span class="c1"># If the files are located in a different directory than the notebook you are using, then</span>
-<span class="c1"># you will need to give the absolute path of the files       </span>
+<span class="c1"># If the files are located in a different directory than the notebook you are using,</span>
+<span class="c1"># then you will need to give the absolute path of the files      </span>
 <span class="n">files</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;/home/john/Documents/data/Project01_MF.plume01.01_G01_blue_rawdata.txt&#39;</span><span class="p">,</span>
          <span class="s1">&#39;/home/john/Documents/data/Project12_MF.S01.01_G01_paperBlock_rawdata.txt&#39;</span><span class="p">]</span>
 </code></pre></div>
@@ -884,6 +885,9 @@
 </pre>
 </div>
 
+<p>Although option 1 is the easiest one, it can be quite time-consuming. For instance, the Fotonowy device currently produces 4 raw files per analysis, which can quickly become a lot of files to individually write. If you are saving all your microfading raw files inside the same folder, you might want to consider creating a sub-folder called "To_process" and copy-paste any analyses that you want to process. To select all the files in this sub-folder you can use the <code>glob</code> method as showed below.</p>
+<div class="highlight"><pre><span></span><code><span class="n">all_files</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">glob</span><span class="p">(</span><span class="s1">&#39;**&#39;</span><span class="p">))</span>
+</code></pre></div>
 <h2 id="run-function">Run function<a class="headerlink" href="#run-function" title="Permanent link">&para;</a></h2>
 <p>Once you have a list of rawdata files, you will use it inside the <code>process_rawdata()</code> function as illustrated below. This function has two compulsory arguments (<em>files</em> and <em>device</em>) for which you will need to provide values. You will use the list of rawfiles for the <em>files</em> argument and you will select the adequate microfading device you used (see sub-sections below).</p>
 <div class="highlight"><pre><span></span><code><span class="kn">import</span> <span class="nn">microfading</span> <span class="k">as</span> <span class="nn">mf</span>

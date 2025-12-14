@@ -197,7 +197,7 @@
         
   
   <span class="md-ellipsis">
-    Welcome !
+    Microfading Python Package
   </span>
   
 
@@ -463,6 +463,57 @@
       Plot parameters
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="Plot parameters">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#data_settings" class="md-nav__link">
+    <span class="md-ellipsis">
+      data_settings:
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#figure_settings" class="md-nav__link">
+    <span class="md-ellipsis">
+      figure_settings:
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#legend_settings" class="md-nav__link">
+    <span class="md-ellipsis">
+      legend_settings:
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#lines_settings" class="md-nav__link">
+    <span class="md-ellipsis">
+      lines_settings:
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#text_settings" class="md-nav__link">
+    <span class="md-ellipsis">
+      text_settings:
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -773,6 +824,57 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Plot parameters">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#data_settings" class="md-nav__link">
+    <span class="md-ellipsis">
+      data_settings:
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#figure_settings" class="md-nav__link">
+    <span class="md-ellipsis">
+      figure_settings:
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#legend_settings" class="md-nav__link">
+    <span class="md-ellipsis">
+      legend_settings:
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#lines_settings" class="md-nav__link">
+    <span class="md-ellipsis">
+      lines_settings:
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#text_settings" class="md-nav__link">
+    <span class="md-ellipsis">
+      text_settings:
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -848,7 +950,76 @@
 </tbody>
 </table>
 <h2 id="plot-parameters"><strong>Plot parameters</strong><a class="headerlink" href="#plot-parameters" title="Permanent link">&para;</a></h2>
-<p>Most of the plot functions have the same parameters. Knowing how to use the parameters will allow you to adapt the plots according to your needs. You will find below a description and some information about a few plotting parameters.</p>
+<p>Each plot can be adjusted by entering key:value pair in dictionaries. These dictionaries, similar accross the plotting functions, are thoroughly described below:</p>
+<h3 id="data_settings">data_settings:<a class="headerlink" href="#data_settings" title="Permanent link">&para;</a></h3>
+<ul>
+<li>
+<p>The data_settings dictionary encompasses parameters related to the microfading data, for which the following keys can be used:</p>
+<ul>
+<li>
+<p><strong>dose_unit</strong> </p>
+<p>This key defines the unit of the light dose energy. Any of the following units can be used as a value: 'He', 'Hv', 't'. </p>
+<p>'He' corresponds to radiant energy (MJ/m2)</p>
+<p>'Hv' corresponds to exposure dose (Mlxh) </p>
+<p>'t' corresponds to times (sec)</p>
+</li>
+<li>
+<p><strong>dose_values</strong></p>
+<p>This key defines the dose values for which the colourimetric values will be returned. A single dose value (an integer or a float number) can be entered. A list of dose values, as integer or float, can also be entered. A tuple of three values (min, max, step) will be used in a numpy.arange() function to return an array of dose values. </p>
+</li>
+<li>
+<p><strong>derivation</strong></p>
+<p>This key defines whether to compute the first derivative values. When True, it will plot the derivative values of the colourimetric delta values.</p>
+</li>
+<li>
+<p><strong>smoothing</strong></p>
+<p>This key defines whether the data should be smoothed. </p>
+</li>
+</ul>
+</li>
+</ul>
+<h3 id="figure_settings">figure_settings:<a class="headerlink" href="#figure_settings" title="Permanent link">&para;</a></h3>
+<h3 id="legend_settings">legend_settings:<a class="headerlink" href="#legend_settings" title="Permanent link">&para;</a></h3>
+<h3 id="lines_settings">lines_settings:<a class="headerlink" href="#lines_settings" title="Permanent link">&para;</a></h3>
+<h3 id="text_settings">text_settings:<a class="headerlink" href="#text_settings" title="Permanent link">&para;</a></h3>
+<p>Table 2. <code>plot_CIELAB()</code> - dictionaries keys and and values</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;"><div style="width:250px">Dictionaries</div></th>
+<th style="text-align: left;"><div style="width:250px">Valid keys</div></th>
+<th style="text-align: left;"><div style="width:250px">Values</div></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">data_settings</td>
+<td style="text-align: left;">dose_unit</td>
+<td style="text-align: left;">(str) : 'He', 'Hv', 't'</td>
+</tr>
+<tr>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">dose_values</td>
+<td style="text-align: left;">(int, float, list, tuple) : When 'all', it returns the colourimetric values for all the dose values available in the given input data files.</td>
+</tr>
+<tr>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">derivation</td>
+<td style="text-align: left;">(bool) : True or False</td>
+</tr>
+<tr>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">smoothing</td>
+<td style="text-align: left;">(tuple) : A tuple of two integers</td>
+</tr>
+<tr>
+<td style="text-align: left;">figure_settings</td>
+<td style="text-align: left;">figsize</td>
+<td style="text-align: left;"></td>
+</tr>
+</tbody>
+</table>
+<p>Knowing how to use the parameters will allow you to adapt the plots according to your needs. You will find below a description and some information about a few plotting parameters.</p>
 <ul>
 <li>
 <p><em>colours</em> : allow you to modify the colour of the lines or points. You can enter the following types of input values:</p>
