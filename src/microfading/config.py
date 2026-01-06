@@ -15,13 +15,74 @@ style = {"description_width": "initial"}
 config_file = Path(__file__).parent / 'config_info.json'
 
 
+def delete_device_info(key:Optional[str] = None):
+
+    # Retrieve the devices config info
+    config_info = get_config_info()
+    config_info_device = config_info['devices']
+
+
+    
+    if key == None:
+        wg_key = ipw.Dropdown(
+            description='Devices',
+            options=config_info_device.keys()
+        )
+
+        deleting = ipw.Button(
+            description='Delete device info',
+            disabled=False,
+            button_style='', # 'success', 'info', 'warning', 'danger' or ''
+            tooltip='Click me',            
+        )
+
+        button_record_output = ipw.Output()
+
+        def button_record_pressed(b):
+            """
+            Save the lamp info in the db_config.json file.
+            """
+
+            button_record_output.clear_output(wait=True)
+
+            # Remove the keys from the dictionary
+            del config_info_device[wg_key.value]
+
+            # Update the config info file
+            config_info['devices'] = config_info_device
+            
+            # Save the updated config back to the JSON file
+            with open(config_file, "w") as f:
+                json.dump(config_info, f, indent=4)
+
+            # Print output message
+            with button_record_output:
+                print(f'Device {wg_key.value} successfully deleted !')
+
+        deleting.on_click(button_record_pressed)
+        display(wg_key)
+        display(ipw.HBox([deleting,button_record_output]))
+
+    
+    else:
+
+        # Remove the keys from the dictionary
+        del config_info_device[key]
+
+        # Update the config info file
+        config_info['devices'] = config_info_device
+        
+        # Save the updated config back to the JSON file
+        with open(config_file, "w") as f:
+            json.dump(config_info, f, indent=4)
+
 
 def get_colorimetry_info(message:Optional[bool] = True):
 
     # Retrieve the config info
     config_info = get_config_info()    
 
-    # Check if the 'lighting' key exists in the config
+    # Check if the 'colorimetry' key exists in the config
     if "colorimetry" in config_info:
         colorimetry_info = config_info["colorimetry"]
 
@@ -37,6 +98,30 @@ def get_colorimetry_info(message:Optional[bool] = True):
     
     else:
         print("The dictionary named 'colorimetry' has been removed from the config_info.json file. Re-insert it as an empty dictionary or re-install the package.")
+        return None
+    
+
+def get_comments_info(message:Optional[bool] = True):
+
+    # Retrieve the config info
+    config_info = get_config_info()    
+
+    # Check if the 'comments' key exists in the config
+    if "comments" in config_info:
+        comments_info = config_info["comments"]
+
+        # Return nothing if no colorimetric info registered
+        if len(comments_info) == 0:
+            if message:
+                print("The comments information have not been registered. Please register using the 'set_comments_info' function.")
+            return None
+        
+        # Convert the comments info to a DataFrame and return it
+        df = pd.DataFrame.from_dict(comments_info, orient="columns")
+        return df
+
+    else:
+        print("The dictionary named 'comments' has been removed from the config_info.json file. Re-insert it as an empty dictionary or re-install the package.")
         return None
     
 
@@ -83,7 +168,6 @@ def get_databases_info():
     else:
         print("The dictionary named 'databases' has been removed from the config_info.json file. Re-insert it as an empty dictionary or re-install the package.")
         return None
-
 
 
 def get_devices_info():
@@ -201,20 +285,64 @@ def get_light_dose_info():
         return None
 
 
-def reset_config():
+def reset_config(keys:Union[str, list] = 'all'):
     """Reset the config_info.json to its initial state, i.e. all empty dictionaries.
     """
 
     config_info = get_config_info()
 
-    for key in config_info.keys():
-        config_info[key] = {}
+    if keys == 'all':
+    
+        for key in config_info.keys():
+            config_info[key] = {}
 
-    # Save the updated config back to the JSON file
-    with open(config_file, "w") as f:
-        json.dump(config_info, f, indent=4)
+            if key == 'functions':
+                config_info[key] = {
+                    "linear_1p": {
+                        "expression": "c0*x",
+                        "bounds": "[(-np.inf),(np.inf)]"
+                    },
+                    "linear_2p": {
+                        "expression": "c0*x+c1",
+                        "bounds": "[(-np.inf,-np.inf),(np.inf,np.inf)]"
+                    },
+                    "power_2p": {
+                        "expression": "c0*(x**c1)",
+                        "bounds": "[(-np.inf,0),(np.inf,1)]"
+                    },
+                    "power_3p": {
+                        "expression": "c0*(x**c1)+c2",
+                        "bounds": "[(-np.inf,0,-np.inf),(np.inf,1,np.inf)]"
+                    },
+                    "sigmoid_2p": {
+                        "expression": "(c0/(1+np.exp(c1*x)))",
+                        "bounds": "[(-np.inf,-np.inf),(np.inf,np.inf)]"
+                    },
+                    "sigmoid_3p": {
+                        "expression": "(c0/(1+np.exp(c1*x)))+c2",
+                        "bounds": "[(-np.inf,-np.inf,-np.inf),(np.inf,np.inf,np.inf)]"
+                    }
+                }
 
-        print(f'The {config_file.name} file has been successfully reset.')
+        # Save the updated config back to the JSON file
+        with open(config_file, "w") as f:
+            json.dump(config_info, f, indent=4)
+
+            print(f'The {config_file.name} file has been successfully and fully reset.')
+
+    else:
+        print(keys)
+        if isinstance(keys, str) and keys in config_info.keys():
+            keys = [keys]
+
+        for key in keys:
+            config_info[key] = {}
+
+        # Save the updated config back to the JSON file
+        with open(config_file, "w") as f:
+            json.dump(config_info, f, indent=4)
+
+            print(f'The {config_file.name} file has been successfully reset.')
     
 
 def set_colorimetry_info():           
@@ -457,9 +585,9 @@ def set_devices_info():
     )
 
     wg_process_functions = ipw.Dropdown(
-        description = 'Process rawdata function',
-        value = 'Select a function',
-        options = process_functions,
+        description='Process rawdata function',
+        value='Select a function',
+        options=process_functions,
         layout=Layout(width="30%", height="30px"),
         style = style
     )
@@ -473,12 +601,23 @@ def set_devices_info():
         layout=Layout(width="30%", height="30px"),
         style=style
     )
+
     wg_average = ipw.BoundedIntText(
         value=10,
         min=0,
         max=100,
         step=1,
         description='Average',        
+        disabled=False,
+        layout=Layout(width="30%", height="30px"),
+        style=style,
+        
+    )
+
+    wg_delete_rawfiles = ipw.Dropdown(
+        description='Delete rawfiles',
+        options=[True, False],
+        value=True,
         disabled=False,
         layout=Layout(width="30%", height="30px"),
         style=style
@@ -552,6 +691,7 @@ def set_devices_info():
         if len(existing_info) == 0:
             existing_info[wg_id.value] = {
                 'average': wg_average.value,
+                'delete_rawfiles':wg_delete_rawfiles.value,
                 'process_function': wg_process_functions.value,
                 'white_standard': wg_white_standard.value,                
                 'wl_range': wl_range
@@ -561,6 +701,7 @@ def set_devices_info():
                 
             device_dic = existing_info[wg_id.value]
             device_dic['average'] = wg_average.value
+            device_dic['delete_rawfiles'] = wg_delete_rawfiles.value
             device_dic['process_function'] = wg_process_functions.value
             device_dic['white_standard'] = wg_white_standard.value
             device_dic['wl_range'] = wl_range
@@ -568,6 +709,7 @@ def set_devices_info():
         else:                      
             existing_info[wg_id.value] = {
                 'average': wg_average.value,
+                'delete_rawfiles':wg_delete_rawfiles.value,
                 'process_function': wg_process_functions.value,
                 'white_standard': wg_white_standard.value,
                 'wl_range': wl_range
@@ -579,7 +721,7 @@ def set_devices_info():
 
             
         with button_record_output:
-            print(f'Device info recorded in the {config_file.name} file.')
+            print(f'Device info ({wg_id.value}) recorded in the {config_file.name} file.')
 
 
     # link the widgets to the aforementioned functions  
@@ -588,7 +730,7 @@ def set_devices_info():
 
 
     # display the widgets
-    display(ipw.VBox([wg_id, wg_process_functions, wg_average, wg_white_standard, ipw.HBox([wg_if_wavelengths, wavelength_range_output])]))
+    display(ipw.VBox([wg_id, wg_process_functions, wg_average, wg_white_standard, wg_delete_rawfiles, ipw.HBox([wg_if_wavelengths, wavelength_range_output])]))
     display(ipw.HBox([recording, button_record_output]))
 
 
