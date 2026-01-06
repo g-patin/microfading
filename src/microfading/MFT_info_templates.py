@@ -1,3 +1,11 @@
+head_info = [
+    "measurement_type",
+    "authors",
+    "host_institution",
+    "datetime_analysis",
+    "datetime_processing",
+    "comment",
+]
 
 device_info = [
     "[DEVICE INFO]",
