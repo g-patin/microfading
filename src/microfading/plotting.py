@@ -632,22 +632,34 @@ def CIELAB(
         plt.show()
 
 
-def coordinates(data,stds:Optional[bool] = True, fontsize=24, legend_labels=[], legend_fontsize=24, legend_position=0, legend_title=None, title=None, title_fontsize=24, ls=None, colors=None, save=False, path_fig='cwd',):
+def coordinates(data, std:Optional[bool] = True, fontsize=20, legend_labels=[], legend_fontsize=20, legend_position=0, legend_title=None, title=None, title_fontsize=22, ls=None, colors=None, figsize='default', save=False, path_fig='cwd',):
 
-    coordinates = set(list(data[0].columns.get_level_values(0)))
-    dose_name = data[0].index.name[0].split('_')[0]
+    
+    coordinates = data.columns.get_level_values('coordinate').unique()    
+    dose_name = data.index.name.split('_')[0]
     dose_label = x_labels[dose_name]
     
     # Set the aesthetics of the figure
     sns.set_theme(context='paper', font='serif', palette='colorblind') 
 
-    fig, ax = plt.subplots(len(coordinates),1, figsize=(10,3.5*len(coordinates)), sharex=True)
+    # Set the size of the figure
+    if figsize == 'default':
+        figsize = (10,3.5*len(coordinates))
 
-    # define the linestyles
+    elif isinstance(figsize, tuple) and len(figsize) == 2:
+        pass
+    else:
+        print(f'Plotting aborted ! The figsize value you entered ({figsize}) is not valid. Please, enter a tuple of two integers (x,y) where x corresponds to the width and y to the height of the figure.')
+        return
+    
+    # Create the figure
+    fig, ax = plt.subplots(len(coordinates),1, figsize=figsize, sharex=True)
+
+    # Define the linestyles
     if ls == None:
         ls = ['-'] * len(data)
     
-    # define labels 
+    # Define labels 
     if legend_labels == None:
         legend_labels = ['none'] * len(data)        
     elif legend_labels == 'none':        
@@ -655,24 +667,26 @@ def coordinates(data,stds:Optional[bool] = True, fontsize=24, legend_labels=[], 
     elif len(legend_labels) == 0:
         legend_labels = ['none'] * len(data)
 
-
-    for d, ls_value in zip(data, ls):
-
-        x = d.index
-
-        for i, coord in enumerate(coordinates):
-
-            y = d[coord].iloc[:,0].values
-
-            ax[i].plot(x,y, ls=ls_value)
-
-            if 'std' in d[coord].columns and stds == True:
-                
-                y_std = d[coord]['std'].values
-                ax[i].fill_between(x, y+y_std, y-y_std, color='0.75', alpha=0.5, ec='none')
     
+    for i, coordinate in enumerate(coordinates):
+    
+        data_coordinate = data.xs(key=coordinate, level='coordinate', axis=1)    
+        meas_ids = data.columns.get_level_values('meas_id').unique()
+        
+        x = data_coordinate.index    
+        
+        for j, meas_id in enumerate(meas_ids):
+        
+            d = data_coordinate[meas_id].dropna(axis=0)
+            x = d.index
+            y = d.iloc[:,0].values
 
+            ax[i].plot(x,y, ls=ls[j], label=legend_labels[j])
 
+            if 'std' in d.columns and std == True:
+                    
+                y_std = d['std'].values
+                ax[i].fill_between(x, y+y_std, y-y_std, color='0.75', alpha=0.5, ec='none')
 
 
     ax[-1].set_xlabel(dose_label, fontsize=fontsize)
@@ -694,7 +708,15 @@ def coordinates(data,stds:Optional[bool] = True, fontsize=24, legend_labels=[], 
 
     if legend_labels[0] != 'none' and len(legend_labels) < 19:
 
-        ax[legend_position].legend(loc = 'best', fontsize=legend_fontsize, title=legend_title, title_fontsize=legend_fontsize)
+        handles, labels = plt.gca().get_legend_handles_labels()
+        by_label = dict(zip(labels, handles)) 
+        
+        if legend_position == 'out':           
+        
+            ax[0].legend(by_label.values(), by_label.keys(), loc='upper left', ncol=1, fontsize=legend_fontsize, title=legend_title, title_fontsize=legend_fontsize, bbox_to_anchor=(1, 1)) 
+        
+        else:
+            ax[legend_position].legend(by_label.values(), by_label.keys(), loc = 'best', fontsize=legend_fontsize, title=legend_title, title_fontsize=legend_fontsize)
         
 
     plt.tight_layout()
@@ -706,8 +728,6 @@ def coordinates(data,stds:Optional[bool] = True, fontsize=24, legend_labels=[], 
         fig.savefig(path_fig,dpi=300, facecolor='white') 
 
 
-
-    plt.tight_layout()
     plt.show()
 
 
@@ -728,20 +748,28 @@ def delta(
     ----------
     data : pd.DataFrame
         _description_
+    
     stdev : Optional[bool], optional
         _description_, by default True
+    
     data_settings : Optional[dict], optional
         _description_, by default {}
+    
     figure_settings : Optional[dict], optional
         _description_, by default {}
+    
     legend_settings : Optional[dict], optional
         _description_, by default {}
+    
     lines_settings : Optional[dict], optional
         _description_, by default {}
+    
     text_settings : Optional[dict], optional
         _description_, by default {}
+    
     save : bool, optional
         _description_, by default False
+    
     path_fig : str, optional
         _description_, by default 'cwd'
 
@@ -1203,10 +1231,9 @@ def spectra(
     
     
     # Extract the data settings    
-    derivation = data_settings.get('derivation', False)
-    smoothing = data_settings.get('smoothing', (1,0))
+    derivation = data_settings.get('derivation', False)    
     data_mode = data_settings.get('mode', 'R')     
-    wl_range = data_settings.get('wl_range', None)
+    
     
     # Extract the legend settings    
     legend_labels = legend_settings.get('labels', [])
@@ -1217,7 +1244,7 @@ def spectra(
     # Extract the lines settings
     lines_widths = lines_settings.get('lw', 2)
     lines_styles = lines_settings.get('ls', '-')
-    lines_colors = lines_settings.get('colors', None)
+    lines_colors = lines_settings.get('colors', 'none')
     
     # Extract the figure settings
     title = figure_settings.get('title', '')
@@ -1237,7 +1264,7 @@ def spectra(
     if text != '':
         text_xy = (0.01,0.03)
         
-
+    
     # Define possible linestyles for random selection
     possible_linestyles = ['-', '--', '-.', ':', (0, (3, 1, 1, 1)), (0, (5, 5))] * 5
 
@@ -1271,6 +1298,18 @@ def spectra(
         # Use the same linewidth for all curves
         selected_lw = [lines_widths] * num_curves
 
+    
+    # Set the colour lines
+
+    if lines_colors == 'none':
+        lines_colors = [None] * num_curves
+
+    elif lines_colors == 'sample':
+
+        return data
+
+
+
     # Set the observer and illuminant
     observer = colour.colorimetry.MSDS_CMFS_STANDARD_OBSERVER["CIE 1964 10 Degree Standard Observer"] 
     illuminant = colour.SDS_ILLUMINANTS['D65'] 
@@ -1298,10 +1337,11 @@ def spectra(
     if len(legend_labels) == 0:
         legend_labels = ['none'] * len(data)
    
-    elif len(legend_labels) != num_curves:
-        print('The number of given legend labels is different than the number of curves. Please make sure that both are equal.')
+    elif len(legend_labels) < num_curves:
+        print('The number of given legend labels is smaller than the number of curves. Please make sure that both are equal.')
         #return
     
+        
     # Plot the spectra
     i = 0
     for meas_id in meas_ids:
@@ -1405,10 +1445,16 @@ def spectra(
             
         fig.savefig(path_fig,dpi=300, facecolor='white', bbox_inches="tight") 
 
+    text_settings = {}
+    lines_settings = {}
+    legend_settings = {}
+    
     
     # Display the figure
     plt.show()
 
+    
+    
     return
 
 
