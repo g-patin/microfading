@@ -12,7 +12,7 @@
         <link rel="prev" href="../rawdata-processing/">
       
       
-        <link rel="next" href="../retrieve-test-datasets/">
+        <link rel="next" href="../create-databases/">
       
       
       <link rel="icon" href="../assets/images/favicon.png">
@@ -66,7 +66,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#plot-parameters" class="md-skip">
+        <a href="#basic-plotting" class="md-skip">
           Skip to content
         </a>
       
@@ -458,13 +458,22 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#plot-parameters" class="md-nav__link">
+  <a href="#basic-plotting" class="md-nav__link">
     <span class="md-ellipsis">
-      Plot parameters
+      Basic plotting
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Plot parameters">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#advanced-plotting" class="md-nav__link">
+    <span class="md-ellipsis">
+      Advanced plotting
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Advanced plotting">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -584,27 +593,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../retrieve-test-datasets/" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
-    Retrieve test datasets
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../create-databases/" class="md-nav__link">
         
   
@@ -631,6 +619,48 @@
   
   <span class="md-ellipsis">
     Create an MFT class instance
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../register-MFT-devices/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    register MFT devices
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../retrieve-test-datasets/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Retrieve test datasets
   </span>
   
 
@@ -681,6 +711,27 @@
             Explanation
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../jupyter-introduction/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Jupyter notebooks
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
             
               
                 
@@ -818,13 +869,22 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#plot-parameters" class="md-nav__link">
+  <a href="#basic-plotting" class="md-nav__link">
     <span class="md-ellipsis">
-      Plot parameters
+      Basic plotting
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Plot parameters">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#advanced-plotting" class="md-nav__link">
+    <span class="md-ellipsis">
+      Advanced plotting
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Advanced plotting">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -903,7 +963,8 @@
 
   <h1>Data visualization</h1>
 
-<p>In this section, we will show you how to create visualizations of your microfading data. The plot functions, accessible after creating an instance of the microfading class, start with the verb "plot", as illustrated below. There are in total seven plots which are briefly described in Table 1. </p>
+<p>In this section, we will show you how to create visualizations of your microfading data. A summary of this page has been compiled inside a Jupyter notebook and is available for download: <a href="../notebooks/Data_visualization.zip">Download notebook</a></p>
+<p>The plot functions, accessible after creating an instance of the microfading class, start with the verb "plot", as illustrated below. The plot functions are briefly described in Table 1. </p>
 <figure>
 <p><img align="left" alt="Alt text" class="img-medium" src="../images/mf_functions.png" /></p>
 <figcaption>
@@ -924,6 +985,10 @@
 <td style="text-align: left;">plot the value of a single colorimetric coordinates at a given light dose</td>
 </tr>
 <tr>
+<td style="text-align: left;"><code>plot_coordinates()</code></td>
+<td style="text-align: left;">plot the CIE colorimetric coordinates as a function of the light energy</td>
+</tr>
+<tr>
 <td style="text-align: left;"><code>plot_CIELAB()</code></td>
 <td style="text-align: left;">plot the trajectory of the <span class="arithmatex">\(L^*a^*b^*\)</span> coordinates in the CIELAB colour space</td>
 </tr>
@@ -940,8 +1005,12 @@
 <td style="text-align: left;">plot the difference between two reflectance spectra</td>
 </tr>
 <tr>
-<td style="text-align: left;"><code>plot_swatches_cirlce()</code></td>
+<td style="text-align: left;"><code>plot_swatches_circle()</code></td>
 <td style="text-align: left;">plot the colour changes as a series of coloured circles</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>plot_swatches_rectangle()</code></td>
+<td style="text-align: left;">plot the colour changes as two coloured rectangles next to each other</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>plots()</code></td>
@@ -949,80 +1018,157 @@
 </tr>
 </tbody>
 </table>
-<h2 id="plot-parameters"><strong>Plot parameters</strong><a class="headerlink" href="#plot-parameters" title="Permanent link">&para;</a></h2>
-<p>Each plot can be adjusted by entering key:value pair in dictionaries. These dictionaries, similar accross the plotting functions, are thoroughly described below:</p>
-<h3 id="data_settings">data_settings:<a class="headerlink" href="#data_settings" title="Permanent link">&para;</a></h3>
-<ul>
-<li>
-<p>The data_settings dictionary encompasses parameters related to the microfading data, for which the following keys can be used:</p>
-<ul>
-<li>
-<p><strong>dose_unit</strong> </p>
-<p>This key defines the unit of the light dose energy. Any of the following units can be used as a value: 'He', 'Hv', 't'. </p>
-<p>'He' corresponds to radiant energy (MJ/m2)</p>
-<p>'Hv' corresponds to exposure dose (Mlxh) </p>
-<p>'t' corresponds to times (sec)</p>
-</li>
-<li>
-<p><strong>dose_values</strong></p>
-<p>This key defines the dose values for which the colourimetric values will be returned. A single dose value (an integer or a float number) can be entered. A list of dose values, as integer or float, can also be entered. A tuple of three values (min, max, step) will be used in a numpy.arange() function to return an array of dose values. </p>
-</li>
-<li>
-<p><strong>derivation</strong></p>
-<p>This key defines whether to compute the first derivative values. When True, it will plot the derivative values of the colourimetric delta values.</p>
-</li>
-<li>
-<p><strong>smoothing</strong></p>
-<p>This key defines whether the data should be smoothed. </p>
-</li>
-</ul>
-</li>
-</ul>
-<h3 id="figure_settings">figure_settings:<a class="headerlink" href="#figure_settings" title="Permanent link">&para;</a></h3>
-<h3 id="legend_settings">legend_settings:<a class="headerlink" href="#legend_settings" title="Permanent link">&para;</a></h3>
-<h3 id="lines_settings">lines_settings:<a class="headerlink" href="#lines_settings" title="Permanent link">&para;</a></h3>
-<h3 id="text_settings">text_settings:<a class="headerlink" href="#text_settings" title="Permanent link">&para;</a></h3>
-<p>Table 2. <code>plot_CIELAB()</code> - dictionaries keys and and values</p>
+<h2 id="basic-plotting"><strong>Basic plotting</strong><a class="headerlink" href="#basic-plotting" title="Permanent link">&para;</a></h2>
+<p>Each plot function has been written so that you can use them without passing any arguments, as illustrated below. Such a visualization will render the default behaviour of each function. The following section shows how to pass arguments to the function to adjust some aspects of the plots.</p>
+<figure>
+<p><img align="left" alt="Alt text" class="img-Large" src="../images/mf_basic-plot.png" /></p>
+<figcaption>
+<p>Basic plot.</p>
+</figcaption>
+</figure>
+<h2 id="advanced-plotting"><strong>Advanced plotting</strong><a class="headerlink" href="#advanced-plotting" title="Permanent link">&para;</a></h2>
+<p>To modify the aspects of the plots, you will need to enter the information, as <strong>key : value</strong>, inside dictionaries. There are five dictionaries that encompass all aspects of plotting:</p>
+<ol>
+<li><em>data_settings</em> : aspects directly related to the data</li>
+<li><em>figure_settings</em> : aspects about the  figure </li>
+<li><em>legend_settings</em> : aspects about the legend</li>
+<li><em>lines_settings</em> : aspects about the data lines</li>
+<li><em>text_settings</em> : add a text box inside the figure</li>
+</ol>
+<p>As an illustration, the following lines of code show you how to modify the size of a figure:</p>
+<div class="highlight"><pre><span></span><code><span class="n">m</span> <span class="o">=</span> <span class="n">mf</span><span class="o">.</span><span class="n">MFT</span><span class="p">(</span><span class="n">files</span><span class="o">=</span><span class="n">files</span><span class="p">)</span>
+<span class="n">m</span><span class="o">.</span><span class="n">plot_delta</span><span class="p">(</span><span class="n">figure_settings</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;figsize&#39;</span><span class="p">:(</span><span class="mi">15</span><span class="p">,</span><span class="mi">10</span><span class="p">)})</span>
+</code></pre></div>
+<p>Though the same dictionaries are used across all the plot functions, the valid keys for each dictionary can differ from one function to another. Table 2 lists all the valid keys according to each plot function. For a thorough description of each key and their corresponding values, see the paragraphs below.</p>
+<p>Table 2. Valid keys for each function.</p>
 <table>
 <thead>
 <tr>
-<th style="text-align: left;"><div style="width:250px">Dictionaries</div></th>
-<th style="text-align: left;"><div style="width:250px">Valid keys</div></th>
-<th style="text-align: left;"><div style="width:250px">Values</div></th>
+<th style="text-align: left;"><div style="width:100px">Plot functions</div></th>
+<th style="text-align: left;"><div style="width:100px">Parameters</div></th>
+<th style="text-align: left;"><div style="width:300px">Valid keys</div></th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td style="text-align: left;">data_settings</td>
-<td style="text-align: left;">dose_unit</td>
-<td style="text-align: left;">(str) : 'He', 'Hv', 't'</td>
+<td style="text-align: left;">plot_CIELAB</td>
+<td style="text-align: left;">data_settings <br /> figure_settings  <br /> legend_settings <br /> lines_settings</td>
+<td style="text-align: left;">dose_unit, dose_values, derivation, smoothing</td>
 </tr>
 <tr>
-<td style="text-align: left;"></td>
-<td style="text-align: left;">dose_values</td>
-<td style="text-align: left;">(int, float, list, tuple) : When 'all', it returns the colourimetric values for all the dose values available in the given input data files.</td>
+<td style="text-align: left;">plot_coordinates</td>
+<td style="text-align: left;">data_settings <br /> figure_settings  <br /> legend_settings <br /> lines_settings</td>
+<td style="text-align: left;">dose_unit, dose_values, derivation, smoothing</td>
 </tr>
 <tr>
-<td style="text-align: left;"></td>
-<td style="text-align: left;">derivation</td>
-<td style="text-align: left;">(bool) : True or False</td>
+<td style="text-align: left;">plot_delta</td>
+<td style="text-align: left;">data_settings <br /> figure_settings  <br /> legend_settings <br /> lines_settings <br />  text_settings</td>
+<td style="text-align: left;">dose_unit, dose_values, derivation, smoothing <br /> figsize, title, xlabel, ylabel, xlim, ylim, fontsize, fontsize_title <br /> fontsize, labels, ncols, position, title <br /> colors, ls, lw <br /> text, xy, fontsize</td>
 </tr>
 <tr>
-<td style="text-align: left;"></td>
-<td style="text-align: left;">smoothing</td>
-<td style="text-align: left;">(tuple) : A tuple of two integers</td>
-</tr>
-<tr>
-<td style="text-align: left;">figure_settings</td>
-<td style="text-align: left;">figsize</td>
-<td style="text-align: left;"></td>
+<td style="text-align: left;">plot_sp</td>
+<td style="text-align: left;">data_settings <br /> figure_settings  <br /> legend_settings <br /> lines_settings <br />  text_settings</td>
+<td style="text-align: left;">mode, derivation, dose_unit, smoothing, wl_range <br /> figsize, title, xlabel, ylabel, xlim, ylim, fontsize, fontsize_title <br /> fontsize, labels, ncols, position, title <br /> colors, ls, lw <br /> text, xy, fontsize</td>
 </tr>
 </tbody>
 </table>
-<p>Knowing how to use the parameters will allow you to adapt the plots according to your needs. You will find below a description and some information about a few plotting parameters.</p>
+<h3 id="data_settings">data_settings:<a class="headerlink" href="#data_settings" title="Permanent link">&para;</a></h3>
+<p>The <em>data_settings</em> dictionary encompasses parameters related to the microfading data, for which the following keys can be used:</p>
 <ul>
 <li>
-<p><em>colours</em> : allow you to modify the colour of the lines or points. You can enter the following types of input values:</p>
+<p><strong>dose_unit</strong> [str], by default 'He'</p>
+<p>This key defines the unit of the light dose energy. Any of the following units can be used as a value: 'He', 'Hv', 't'. </p>
+<p>'He' corresponds to radiant energy (MJ/m2)</p>
+<p>'Hv' corresponds to exposure dose (Mlxh) </p>
+<p>'t' corresponds to times (sec)</p>
+<p>e.g. : m.plot_delta(data_settings={'dose_unit':'He'})</p>
+</li>
+<li>
+<p><strong>dose_values</strong> [int, float, list, tuple]</p>
+<p>This key defines the dose values for which the colourimetric values will be returned. A single dose value (an integer or a float number) can be entered. A list of dose values, as integer or float, can also be entered. A tuple of three values (min, max, step) will be used in a numpy.arange() function to return an array of dose values. </p>
+</li>
+<li>
+<p><strong>derivation</strong> [bool], by default False</p>
+<p>This key defines whether to compute the first derivative values. When True, it will plot the derivative values of the colourimetric delta values.</p>
+</li>
+<li>
+<p><strong>mode</strong> [str], by default 'R'</p>
+<p>It defines the type or mode of the measurement (absorbance or refectance). When 'R', it returns reflectance spectra. When 'A', it returns absorption spectra using the following equation: A = -log(R).</p>
+</li>
+<li>
+<p><strong>smoothing</strong> [tuple of 2 integers], by default (1,0)</p>
+<p>This key defines whether the data should be smoothed. It takes a tuple of two integers as value which is used as input for the Savitzky-Golay filter. The first value corresponds to the window_length and the second to the polyorder value. The first value should always be greater than the second value.</p>
+</li>
+<li>
+<p><strong>wl_range</strong> [tuple of 2 integers], by default None</p>
+<p>It defines the wavelength range with a two-values integer tuple corresponding to the lowest and highest wavelength values. When None, it plot all the available wavelengths.</p>
+</li>
+</ul>
+<h3 id="figure_settings">figure_settings:<a class="headerlink" href="#figure_settings" title="Permanent link">&para;</a></h3>
+<p>The <em>figure_settings</em> concerns all aspects related to the figure, for which the following keys can be used:</p>
+<ul>
+<li>
+<p><strong>figsize</strong> [tuple], by default (15,9)</p>
+<p>It defines the size of the figure.</p>
+</li>
+<li>
+<p><strong>fontsize</strong> [int], by default 18</p>
+<p>It defines the fontsize of the axes labels and ticks.</p>
+</li>
+<li>
+<p><strong>fontsize_title</strong> [int], by default 20</p>
+<p>It defines the fontsize of the title if any.</p>
+</li>
+<li>
+<p><strong>title</strong> [str], by default None</p>
+<p>Whether to display a title.</p>
+</li>
+<li>
+<p><strong>xlabel</strong> [str]</p>
+<p>Label of the x-axis. The default value varies according to the plot function.</p>
+</li>
+<li>
+<p><strong>xlim</strong> [tuple], by default 0</p>
+<p>It defines the limits of the x-axis as a tuple of two numerical values (start, end).</p>
+</li>
+<li>
+<p><strong>ylabel</strong> [str]</p>
+<p>Label of the y-axis. The default value varies according to the plot function.</p>
+</li>
+<li>
+<p><strong>ylim</strong> [tuple], by default None</p>
+<p>It defines the limits of the y-axis as a tuple of two numerical values (start, end).</p>
+</li>
+</ul>
+<h3 id="legend_settings">legend_settings:<a class="headerlink" href="#legend_settings" title="Permanent link">&para;</a></h3>
+<p>The <em>legend_settings</em> concerns all aspects related to the legend, for which the following keys can be used:</p>
+<ul>
+<li>
+<p><strong>fontsize</strong> [int]</p>
+<p>Fontsize of the legend labels</p>
+</li>
+<li>
+<p><strong>labels</strong> [list]</p>
+</li>
+<li>
+<p><strong>ncols</strong> [int], by default 1</p>
+<p>Number of columns for the labels</p>
+</li>
+<li>
+<p><strong>position</strong> [str], by default 'in'</p>
+<p>Whether to display the legend inside ('in') or outside ('out') the figure.</p>
+</li>
+<li>
+<p><strong>title</strong> [str], by default None</p>
+<p>Whether to display a title above the legend.</p>
+</li>
+</ul>
+<h3 id="lines_settings">lines_settings:<a class="headerlink" href="#lines_settings" title="Permanent link">&para;</a></h3>
+<p>The <em>lines_settings</em> concerns all aspects related to the data lines, for which the following keys can be used:</p>
+<ul>
+<li>
+<p><strong>colors</strong> [str, list, float]</p>
+<p>Modify the colour of the lines or points. You can enter the following types of input values:</p>
 <p><ul class="a">
   <li>String: it can be any colour compatible with the matplotlib colour list. In that case, all the lines or points have the same colour.</p>
 <p>eg: "green", "midnightblue", etc.</li>      </p>
@@ -1032,11 +1178,37 @@
 <p><li>Float: a float between 0 and 1 will give a grey line ranging from black (0) to white (1).</li> 
 </ul></p>
 </li>
+<li>
+<p><strong>ls</strong> [str, list], by default '-'</p>
+<p>Modify the style of data lines. You can enter the following types of input values:</p>
+<p><ul class="a">
+  <li>String: it can be any line styles compatible with the matplotlib styles. In that case, all the lines have the same style. The most common styles are: "-", "--", ":", "-.".</p>
+<p>eg: "-" or  "--", etc.</li> </p>
+<p><li>List: a list of string combining  any line styles compatible with the matplotlib styles. n that case, all the lines have the same style. The most common styles are: '-', '--', ':', '-.'.</p>
+<p>eg: ["-", "--", ":", "-"], etc.</li> </p>
+</ul>
+</li>
+<li>
+<p><strong>lw</strong> [int, list], by default 2</p>
+</li>
+</ul>
+<h3 id="text_settings">text_settings:<a class="headerlink" href="#text_settings" title="Permanent link">&para;</a></h3>
+<p>The <em>text_settings</em> dictionary enables you to insert a text block inside the figure, for which the following keys can be used:</p>
+<ul>
+<li>
+<p><strong>text</strong> [str]</p>
+<p>The text you wish to display.</p>
+</li>
+<li>
+<p><strong>xy</strong> [tuple of two numerical values]</p>
+<p>The position of the text inside figure. </p>
+</li>
+<li>
+<p><strong>fontsize</strong> [int]</p>
+<p>Fontsize of the text.</p>
+</li>
 </ul>
 <p>&nbsp;</p>
-<ul>
-<li><em>dose_unit</em> :</li>
-</ul>
 <h2 id="save-plots"><strong>Save plots</strong><a class="headerlink" href="#save-plots" title="Permanent link">&para;</a></h2>
 <p>If you want to save the plot as an image file, then set the <em>save</em> parameter to True. I also recommend to enter a value for the <em>path_fig</em> parameter, otherwise it will save the figure in the current working directory with a very basic name. </p>
 

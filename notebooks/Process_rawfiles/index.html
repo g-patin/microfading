@@ -473,27 +473,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../../retrieve-test-datasets/" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
-    Retrieve test datasets
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../../create-databases/" class="md-nav__link">
         
   
@@ -520,6 +499,48 @@
   
   <span class="md-ellipsis">
     Create an MFT class instance
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../register-MFT-devices/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    register MFT devices
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../retrieve-test-datasets/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Retrieve test datasets
   </span>
   
 
@@ -570,6 +591,27 @@
             Explanation
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../jupyter-introduction/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Jupyter notebooks
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
             
               
                 
@@ -1150,6 +1192,22 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 </style>
 <!-- End of mermaid configuration --><div class="jupyter-wrapper">
 <div class="jp-Notebook" data-jp-theme-light="true" data-jp-theme-name="JupyterLab Light">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=5a950706-b282-4cb9-ba21-f1a72a6f1e2f">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<p>In this notebook, we will show you how to process the microfading rawdata files to convert them into our standard <em>interim</em> files, which you will need to use microfading python package.</p>
+<p>Processing the rawdata files consists of two main steps, which are described in the following cells:</p>
+<ol>
+<li>Get a list of your raw files (section 2)</li>
+<li>Run the <code>process_rawdata()</code> function (section 3)</li>
+</ol>
+</div>
+</div>
+</div>
+</div>
 <div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=e0a822fb-86ac-4a51-a0aa-4e18fc7831d0">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
@@ -1160,13 +1218,13 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=a624d6f2-6c5b-4ae0-a8c9-b2f2c0369b3c">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=a624d6f2-6c5b-4ae0-a8c9-b2f2c0369b3c">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [11]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [1]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
 <clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-1">
@@ -1179,14 +1237,18 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 </div>
 </clipboard-copy>
 </div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">import</span> <span class="nn">microfading</span> <span class="k">as</span> <span class="nn">mf</span>
-<span class="kn">from</span> <span class="nn">glob</span> <span class="kn">import</span> <span class="n">glob</span>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="c1"># First import the following packages that will be needed to process the rawdata files</span>
+
+<span class="kn">import</span> <span class="nn">microfading</span> <span class="k">as</span> <span class="nn">mf</span>    <span class="c1"># package to manipulate microfading data</span>
+<span class="kn">from</span> <span class="nn">glob</span> <span class="kn">import</span> <span class="n">glob</span>       <span class="c1"># package to manipulate files</span>
 
 <span class="o">%</span><span class="n">load_ext</span> <span class="n">autoreload</span>
 <span class="o">%</span><span class="n">autoreload</span> <span class="mi">2</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-1">import microfading as mf
-from glob import glob
+<div class="clipboard-copy-txt" id="cell-1"># First import the following packages that will be needed to process the rawdata files
+
+import microfading as mf    # package to manipulate microfading data
+from glob import glob       # package to manipulate files
 
 %load_ext autoreload
 %autoreload 2</div>
@@ -1194,31 +1256,33 @@ from glob import glob
 </div>
 </div>
 </div>
-<div class="jp-Cell-outputWrapper">
-<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
-</div>
-<div class="jp-OutputArea jp-Cell-outputArea">
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>The autoreload extension is already loaded. To reload it, use:
-  %reload_ext autoreload
-</pre>
 </div>
 </div>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=21a9ed7b-549d-4205-b604-6f46976817ee">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=5535f863-e825-4481-aa76-98017aab2ce0">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h1 id="move-to-rawfiles-folder">Move to rawfiles folder<a class="anchor-link" href="#move-to-rawfiles-folder">¶</a></h1><p>If you have a unique folder where the rawfiles are being stored, use the <em>cd</em> command to change the current working directory. Inside my rawdata folder, I usually have a folder called "To_process" where I copy-paste all the rawfiles that I want to process. Then in the <code>process_rawdata</code> function, I set the <em>delete_files</em> parameter to True.</p>
+<h1 id="retrieve-the-rawdata-files">Retrieve the rawdata files<a class="anchor-link" href="#retrieve-the-rawdata-files">¶</a></h1><h2 id="move-to-rawfiles-folder">Move to rawfiles folder<a class="anchor-link" href="#move-to-rawfiles-folder">¶</a></h2><p>Prior to selecting the files, we need to shift the current working directory (cwd) of this notebook to the folder where your files are located. If you have a unique folder where the rawfiles are being stored, use the <em>cd</em> command to change the current working directory. Inside my rawdata folder, I usually have a folder called "To_process" where I copy-paste all the rawfiles that I want to process. Then in the <code>process_rawdata</code> function, I set the <em>delete_files</em> parameter to True, so that once the files have been processed, they are automatically deleted from the "To_process" folder.</p>
 <p>e.g : cd /home/john/Documents/MFT/rawdata/To_process</p>
-<p>If you want to check whether you are in the right folder, you can write a <em>ls</em> in code cell and run it.</p>
+<p>If you want to check whether you are in the right folder, you can write a <em>pwd</em> in code cell and run it.</p>
+<table>
+<thead>
+<tr>
+<th>command</th>
+<th>description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>cd [folder path]</td>
+<td>change working directory</td>
+</tr>
+</tbody>
+</table>
+<p>| pwd | print current working directory
+| ls | show files and content of current working directory |</p>
 </div>
 </div>
 </div>
@@ -1249,13 +1313,13 @@ from glob import glob
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=1ec1bd7d-947e-4f59-bc8d-a83ac56044bb">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=71c8ce2b-8170-44eb-93b1-656d7aa64b7b">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [13]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
 <clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-3">
@@ -1268,38 +1332,28 @@ from glob import glob
 </div>
 </clipboard-copy>
 </div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="n">ls</span>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="n">pwd</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-3">ls</div>
+<div class="clipboard-copy-txt" id="cell-3">pwd</div>
 </div>
 </div>
 </div>
 </div>
+<div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
+</div>
+<div class="jp-OutputArea jp-Cell-outputArea">
+<div class="jp-OutputArea-child jp-OutputArea-executeResult">
+<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[13]:</div>
+<div class="jp-RenderedText jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/plain" tabindex="0">
+<pre>'/home/gpatin/Documents'</pre>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=7fc9540d-07d0-4b98-97bd-7698e27b7abf">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h1 id="select-rawfiles">Select rawfiles<a class="anchor-link" href="#select-rawfiles">¶</a></h1>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=019d8752-c514-429a-be1f-af43eb24dbd3">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h2 id="option-1-manual">Option 1 - manual<a class="anchor-link" href="#option-1-manual">¶</a></h2>
 </div>
 </div>
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=474300b6-659e-4504-a71b-8c0cbfc40ddf">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=1ec1bd7d-947e-4f59-bc8d-a83ac56044bb">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -1317,6 +1371,55 @@ from glob import glob
 </div>
 </clipboard-copy>
 </div>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="n">ls</span>
+</pre></div>
+<div class="clipboard-copy-txt" id="cell-4">ls</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=7fc9540d-07d0-4b98-97bd-7698e27b7abf">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<h2 id="select-rawfiles">Select rawfiles<a class="anchor-link" href="#select-rawfiles">¶</a></h2><p>Once the cwd of your notebook is set to the adequate folder, we can retrieve the files. There are many ways in python to retrieve a list of files. I will only show two ways of doing it.</p>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=019d8752-c514-429a-be1f-af43eb24dbd3">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<h3 id="option-1-manual">Option 1 - manual<a class="anchor-link" href="#option-1-manual">¶</a></h3>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=474300b6-659e-4504-a71b-8c0cbfc40ddf">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="CodeMirror cm-s-jupyter">
+<div class="zeroclipboard-container">
+<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-5">
+<div>
+<span class="notice" hidden="">Copied!</span>
+<svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
+<path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25v-7.5z" fill="currentColor" fill-rule="evenodd"></path>
+<path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25v-7.5zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25h-7.5z" fill="currentColor" fill-rule="evenodd"></path>
+</svg>
+</div>
+</clipboard-copy>
+</div>
 <div class="highlight-ipynb hl-python"><pre><span></span><span class="c1"># Manually write the filenames inside a list. Use `Tab` button for auto-completion.</span>
 
 <span class="n">rawfiles</span> <span class="o">=</span> <span class="p">[</span>
@@ -1324,7 +1427,7 @@ from glob import glob
     <span class="o">&lt;</span><span class="n">insert</span> <span class="n">filename2</span><span class="o">&gt;</span><span class="p">,</span>
 <span class="p">]</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-4"># Manually write the filenames inside a list. Use `Tab` button for auto-completion.
+<div class="clipboard-copy-txt" id="cell-5"># Manually write the filenames inside a list. Use `Tab` button for auto-completion.
 
 rawfiles = [
     <insert filename1="">,
@@ -1342,7 +1445,7 @@ rawfiles = [
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h2 id="option-2-glob">Option 2 - glob<a class="anchor-link" href="#option-2-glob">¶</a></h2>
+<h3 id="option-2-glob">Option 2 - glob<a class="anchor-link" href="#option-2-glob">¶</a></h3>
 </div>
 </div>
 </div>
@@ -1352,10 +1455,10 @@ rawfiles = [
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [12]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [6]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
-<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-5">
+<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-6">
 <div>
 <span class="notice" hidden="">Copied!</span>
 <svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
@@ -1365,17 +1468,21 @@ rawfiles = [
 </div>
 </clipboard-copy>
 </div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="c1"># Select the files using glob</span>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="c1"># Preferred option</span>
+<span class="c1"># Select the files using glob</span>
 
-<span class="n">rawfiles</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">glob</span><span class="p">(</span><span class="s1">'*txt*'</span><span class="p">))</span>   <span class="c1"># Select all the files containing "txt"</span>
+<span class="n">rawfiles</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">glob</span><span class="p">(</span><span class="s1">'*txt*'</span><span class="p">))</span>    <span class="c1"># Select all the files containing "txt"</span>
+<span class="n">all_rawfiles</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">glob</span><span class="p">(</span><span class="s1">'**'</span><span class="p">))</span>   <span class="c1"># Select all the files in the cwd</span>
 
 <span class="c1"># if you don't have any rawfiles at your disposal, you can get some from the microfading package</span>
 <span class="n">rawfiles</span> <span class="o">=</span> <span class="n">mf</span><span class="o">.</span><span class="n">get_datasets</span><span class="p">(</span><span class="n">MFT</span><span class="o">=</span><span class="s1">'fotonowy'</span><span class="p">,</span><span class="n">rawfiles</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="n">rawfiles</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-5"># Select the files using glob
+<div class="clipboard-copy-txt" id="cell-6"># Preferred option
+# Select the files using glob
 
-rawfiles = sorted(glob('*txt*'))   # Select all the files containing "txt"
+rawfiles = sorted(glob('*txt*'))    # Select all the files containing "txt"
+all_rawfiles = sorted(glob('**'))   # Select all the files in the cwd
 
 # if you don't have any rawfiles at your disposal, you can get some from the microfading package
 rawfiles = mf.get_datasets(MFT='fotonowy',rawfiles=True)
@@ -1389,7 +1496,7 @@ rawfiles</div>
 </div>
 <div class="jp-OutputArea jp-Cell-outputArea">
 <div class="jp-OutputArea-child jp-OutputArea-executeResult">
-<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[12]:</div>
+<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[6]:</div>
 <div class="jp-RenderedText jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/plain" tabindex="0">
 <pre>[PosixPath('/home/gpatin/anaconda3/lib/python3.11/site-packages/microfading/datasets/2024-8200 P-001 G01 uncleaned_01-spect_convert.txt'),
  PosixPath('/home/gpatin/anaconda3/lib/python3.11/site-packages/microfading/datasets/2024-8200 P-001 G01 uncleaned_01-spect.txt'),
@@ -1399,117 +1506,6 @@ rawfiles</div>
  PosixPath('/home/gpatin/anaconda3/lib/python3.11/site-packages/microfading/datasets/2024-144 BWS0024 G01 BW1_01-spect.txt'),
  PosixPath('/home/gpatin/anaconda3/lib/python3.11/site-packages/microfading/datasets/2024-144 BWS0024 G01 BW1_01.txt'),
  PosixPath('/home/gpatin/anaconda3/lib/python3.11/site-packages/microfading/datasets/2024-144 BWS0024 G01 BW1_01.rfc')]</pre>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=0c3b810f-9236-4150-a1dc-720581964fad">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [8]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="CodeMirror cm-s-jupyter">
-<div class="zeroclipboard-container">
-<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-6">
-<div>
-<span class="notice" hidden="">Copied!</span>
-<svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
-<path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25v-7.5z" fill="currentColor" fill-rule="evenodd"></path>
-<path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25v-7.5zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25h-7.5z" fill="currentColor" fill-rule="evenodd"></path>
-</svg>
-</div>
-</clipboard-copy>
-</div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="n">cd</span> <span class="o">/</span><span class="n">home</span><span class="o">/</span><span class="n">gpatin</span><span class="o">/</span><span class="n">Documents</span><span class="o">/</span><span class="n">RCE</span><span class="o">/</span><span class="n">data</span><span class="o">/</span><span class="n">MFT</span><span class="o">/</span><span class="n">raw</span><span class="o">/</span>
-</pre></div>
-<div class="clipboard-copy-txt" id="cell-6">cd /home/gpatin/Documents/RCE/data/MFT/raw/</div>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell-outputWrapper">
-<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
-</div>
-<div class="jp-OutputArea jp-Cell-outputArea">
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>/home/gpatin/Documents/RCE/data/MFT/raw
-</pre>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=fdb2ad36-8dfb-4d50-8ac2-de5878664dfc">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [10]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="CodeMirror cm-s-jupyter">
-<div class="zeroclipboard-container">
-<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-7">
-<div>
-<span class="notice" hidden="">Copied!</span>
-<svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
-<path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25v-7.5z" fill="currentColor" fill-rule="evenodd"></path>
-<path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25v-7.5zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25h-7.5z" fill="currentColor" fill-rule="evenodd"></path>
-</svg>
-</div>
-</clipboard-copy>
-</div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="nb">sorted</span><span class="p">(</span><span class="n">glob</span><span class="p">(</span><span class="s1">'**'</span><span class="p">))</span>
-</pre></div>
-<div class="clipboard-copy-txt" id="cell-7">sorted(glob('**'))</div>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell-outputWrapper">
-<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
-</div>
-<div class="jp-OutputArea jp-Cell-outputArea">
-<div class="jp-OutputArea-child jp-OutputArea-executeResult">
-<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[10]:</div>
-<div class="jp-RenderedText jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/plain" tabindex="0">
-<pre>['To_process',
- 'noProject_ink0001_01_G01_blue_c01_000001.spc',
- 'noProject_ink0001_01_G01_blue_c01_000001.txt',
- 'noProject_ink0001_01_G01_blue_colref.spc',
- 'noProject_ink0001_01_G01_blue_d01_000001.spc',
- 'noProject_ink0001_01_G01_blue_d01_000001.txt',
- 'noProject_ink0001_01_G01_blue_r01_000001.spc',
- 'noProject_ink0001_01_G01_blue_r01_000001.txt',
- 'noProject_ink0001_01_G01_blue_result_col_c01_000001.col',
- 'noProject_ink0002_01_G01_blue_c01_000001.spc',
- 'noProject_ink0002_01_G01_blue_c01_000001.txt',
- 'noProject_ink0002_01_G01_blue_colref.spc',
- 'noProject_ink0002_01_G01_blue_d01_000001.spc',
- 'noProject_ink0002_01_G01_blue_d01_000001.txt',
- 'noProject_ink0002_01_G01_blue_r01_000001.spc',
- 'noProject_ink0002_01_G01_blue_r01_000001.txt',
- 'noProject_ink0002_01_G01_blue_result_col_c01_000001.col',
- 'noProject_ink0003_01_G01_blue_c01_000001.spc',
- 'noProject_ink0003_01_G01_blue_c01_000001.txt',
- 'noProject_ink0003_01_G01_blue_colref.spc',
- 'noProject_ink0003_01_G01_blue_d01_000001.spc',
- 'noProject_ink0003_01_G01_blue_d01_000001.txt',
- 'noProject_ink0003_01_G01_blue_r01_000001.spc',
- 'noProject_ink0003_01_G01_blue_r01_000001.txt',
- 'noProject_ink0003_01_G01_blue_result_col_c01_000001.col',
- 'noProject_ink0004_01_G01_blue_c01_000001.spc',
- 'noProject_ink0004_01_G01_blue_c01_000001.txt',
- 'noProject_ink0004_01_G01_blue_colref.spc',
- 'noProject_ink0004_01_G01_blue_d01_000001.spc',
- 'noProject_ink0004_01_G01_blue_d01_000001.txt',
- 'noProject_ink0004_01_G01_blue_r01_000001.spc',
- 'noProject_ink0004_01_G01_blue_r01_000001.txt',
- 'noProject_ink0004_01_G01_blue_result_col_c01_000001.col']</pre>
 </div>
 </div>
 </div>
@@ -1526,6 +1522,33 @@ rawfiles</div>
 </div>
 </div>
 </div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=f1a2d55e-784c-4b70-ab0a-5410b4ed7117">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="CodeMirror cm-s-jupyter">
+<div class="zeroclipboard-container">
+<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-7">
+<div>
+<span class="notice" hidden="">Copied!</span>
+<svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
+<path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25v-7.5z" fill="currentColor" fill-rule="evenodd"></path>
+<path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25v-7.5zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25h-7.5z" fill="currentColor" fill-rule="evenodd"></path>
+</svg>
+</div>
+</clipboard-copy>
+</div>
+<div class="highlight-ipynb hl-python"><pre><span></span>
+</pre></div>
+<div class="clipboard-copy-txt" id="cell-7"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
 </div>
 <div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=153ee678-6bfd-43f0-8a07-01db469f71be">
 <div class="jp-Cell-inputWrapper" tabindex="0">
@@ -1533,17 +1556,22 @@ rawfiles</div>
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h2 id="basic-functionalities">basic functionalities<a class="anchor-link" href="#basic-functionalities">¶</a></h2>
+<h2 id="basic-functionalities">basic functionalities<a class="anchor-link" href="#basic-functionalities">¶</a></h2><p>This is the most basic and straightforward way to process the microfading rawdata files. Only two arguments needs to be defined:</p>
+<ol>
+<li>The paths of the raw files</li>
+<li>The name of the microfading device</li>
+</ol>
+<p>As a result, it produces an excel file for each analysis, which is saved in the current working directory of this notebook.</p>
 </div>
 </div>
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=32860bf0-feba-4ac6-adfd-ad2fb5a6ba39">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=5f14e8b6-ca7b-418a-9380-52d7d8707987">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [49]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [3]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
 <clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-8">
@@ -1556,18 +1584,65 @@ rawfiles</div>
 </div>
 </clipboard-copy>
 </div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="n">df</span> <span class="o">=</span> <span class="n">mf</span><span class="o">.</span><span class="n">process_rawdata</span><span class="p">(</span>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="n">mf</span><span class="o">.</span><span class="n">process_rawdata</span><span class="p">(</span>
     <span class="n">files</span><span class="o">=</span><span class="n">rawfiles</span><span class="p">,</span>
-    <span class="n">device</span><span class="o">=</span><span class="s1">'MFT2'</span><span class="p">,</span>
-    <span class="n">db</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">device</span><span class="o">=</span><span class="s1">'Fotonowy'</span>    
+<span class="p">)</span>
+</pre></div>
+<div class="clipboard-copy-txt" id="cell-8">mf.process_rawdata(
+    files=rawfiles,
+    device='Fotonowy'    
+)</div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
+</div>
+<div class="jp-OutputArea jp-Cell-outputArea">
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>/home/gpatin/anaconda3/lib/python3.11/site-packages/microfading/datasets/2024-8200 P-001 G01 uncleaned_01.txt has been successfully processed !
+/home/gpatin/anaconda3/lib/python3.11/site-packages/microfading/datasets/2024-144 BWS0024 G01 BW1_01.txt has been successfully processed !
+</pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=32860bf0-feba-4ac6-adfd-ad2fb5a6ba39">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [7]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="CodeMirror cm-s-jupyter">
+<div class="zeroclipboard-container">
+<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-9">
+<div>
+<span class="notice" hidden="">Copied!</span>
+<svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
+<path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25v-7.5z" fill="currentColor" fill-rule="evenodd"></path>
+<path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25v-7.5zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25h-7.5z" fill="currentColor" fill-rule="evenodd"></path>
+</svg>
+</div>
+</clipboard-copy>
+</div>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="n">mf</span><span class="o">.</span><span class="n">process_rawdata</span><span class="p">(</span>
+    <span class="n">files</span><span class="o">=</span><span class="n">rawfiles</span><span class="p">,</span>
+    <span class="n">device</span><span class="o">=</span><span class="s1">'Fotonowy'</span><span class="p">,</span>
+    <span class="n">db</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
     <span class="n">white_standard</span><span class="o">=</span><span class="s1">'default'</span><span class="p">,</span>
     <span class="n">delete_files</span><span class="o">=</span><span class="kc">False</span>
 <span class="p">)</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-8">df = mf.process_rawdata(
+<div class="clipboard-copy-txt" id="cell-9">mf.process_rawdata(
     files=rawfiles,
-    device='MFT2',
-    db=True,
+    device='Fotonowy',
+    db=False,
     white_standard='default',
     delete_files=False
 )
@@ -1591,244 +1666,14 @@ rawfiles</div>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=cdaacfce-5a79-427a-9c57-b8f88a5b9352">
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=15360672-333f-45a8-8fdf-3c1d72448096">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [46]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="CodeMirror cm-s-jupyter">
-<div class="zeroclipboard-container">
-<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-9">
-<div>
-<span class="notice" hidden="">Copied!</span>
-<svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
-<path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25v-7.5z" fill="currentColor" fill-rule="evenodd"></path>
-<path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25v-7.5zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25h-7.5z" fill="currentColor" fill-rule="evenodd"></path>
-</svg>
-</div>
-</clipboard-copy>
-</div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="n">df</span><span class="p">[</span><span class="mi">30</span><span class="p">:</span><span class="mi">60</span><span class="p">]</span>
-</pre></div>
-<div class="clipboard-copy-txt" id="cell-9">df[30:60]</div>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell-outputWrapper">
-<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
-</div>
-<div class="jp-OutputArea jp-Cell-outputArea">
-<div class="jp-OutputArea-child jp-OutputArea-executeResult">
-<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[46]:</div>
-<div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/html" tabindex="0">
-<div>
-<style scoped="">
-    .dataframe tbody tr th:only-of-type {
-        vertical-align: middle;
-    }
-
-    .dataframe tbody tr th {
-        vertical-align: top;
-    }
-
-    .dataframe thead th {
-        text-align: right;
-    }
-</style>
-<table border="1" class="dataframe">
-<thead>
-<tr style="text-align: right;">
-<th></th>
-<th>parameter</th>
-<th>value</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<th>30</th>
-<td>ratio</td>
-<td>na</td>
-</tr>
-<tr>
-<th>31</th>
-<td>thickness_um</td>
-<td>na</td>
-</tr>
-<tr>
-<th>32</th>
-<td>color</td>
-<td>na</td>
-</tr>
-<tr>
-<th>33</th>
-<td>status</td>
-<td>na</td>
-</tr>
-<tr>
-<th>34</th>
-<td>object_comment</td>
-<td>none</td>
-</tr>
-<tr>
-<th>35</th>
-<td>[DEVICE INFO]</td>
-<td></td>
-</tr>
-<tr>
-<th>36</th>
-<td>device</td>
-<td>MFT2_fMFT_fotonowy</td>
-</tr>
-<tr>
-<th>37</th>
-<td>measurement_mode</td>
-<td>none</td>
-</tr>
-<tr>
-<th>38</th>
-<td>zoom</td>
-<td>none</td>
-</tr>
-<tr>
-<th>39</th>
-<td>iris</td>
-<td>none</td>
-</tr>
-<tr>
-<th>40</th>
-<td>geometry</td>
-<td>0° : 45°</td>
-</tr>
-<tr>
-<th>41</th>
-<td>distance_ill_mm</td>
-<td>unknown</td>
-</tr>
-<tr>
-<th>42</th>
-<td>distance_coll_mm</td>
-<td>unknown</td>
-</tr>
-<tr>
-<th>43</th>
-<td>fiber_fading</td>
-<td>none</td>
-</tr>
-<tr>
-<th>44</th>
-<td>fiber_ill</td>
-<td>none</td>
-</tr>
-<tr>
-<th>45</th>
-<td>fiber_coll</td>
-<td>Thorlabs, FT030</td>
-</tr>
-<tr>
-<th>46</th>
-<td>lamp_fading</td>
-<td>LED1_warm white (2700K)</td>
-</tr>
-<tr>
-<th>47</th>
-<td>lamp_ill</td>
-<td>none</td>
-</tr>
-<tr>
-<th>48</th>
-<td>filter_fading</td>
-<td>none</td>
-</tr>
-<tr>
-<th>49</th>
-<td>filter_ill</td>
-<td>none</td>
-</tr>
-<tr>
-<th>50</th>
-<td>white_standard</td>
-<td>WR4_Fotonowy, Fotolon PTFE</td>
-</tr>
-<tr>
-<th>51</th>
-<td>[ANALYSIS INFO]</td>
-<td></td>
-</tr>
-<tr>
-<th>52</th>
-<td>meas_id</td>
-<td>MF.P-001.01</td>
-</tr>
-<tr>
-<th>53</th>
-<td>specular_component</td>
-<td>SCE_excluded</td>
-</tr>
-<tr>
-<th>54</th>
-<td>integration_time_sample_ms</td>
-<td>85</td>
-</tr>
-<tr>
-<th>55</th>
-<td>integration_time_whitestandard_ms</td>
-<td>85</td>
-</tr>
-<tr>
-<th>56</th>
-<td>average</td>
-<td>undefined</td>
-</tr>
-<tr>
-<th>57</th>
-<td>duration_min</td>
-<td>30</td>
-</tr>
-<tr>
-<th>58</th>
-<td>interval_sec</td>
-<td>10</td>
-</tr>
-<tr>
-<th>59</th>
-<td>measurements_N</td>
-<td>1</td>
-</tr>
-</tbody>
-</table>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=e40f34b4-cd38-4196-beb3-47bc123da594">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="CodeMirror cm-s-jupyter">
-<div class="zeroclipboard-container">
-<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-10">
-<div>
-<span class="notice" hidden="">Copied!</span>
-<svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
-<path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25v-7.5z" fill="currentColor" fill-rule="evenodd"></path>
-<path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25v-7.5zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25h-7.5z" fill="currentColor" fill-rule="evenodd"></path>
-</svg>
-</div>
-</clipboard-copy>
-</div>
-<div class="highlight-ipynb hl-python"><pre><span></span>
-</pre></div>
-<div class="clipboard-copy-txt" id="cell-10"></div>
-</div>
-</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<p>However, this output excel files do not contains information about the project or the object. Additionally</p>
 </div>
 </div>
 </div>
@@ -1852,7 +1697,7 @@ rawfiles</div>
 <div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
-<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-11">
+<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-10">
 <div>
 <span class="notice" hidden="">Copied!</span>
 <svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
@@ -1868,7 +1713,7 @@ rawfiles</div>
     <span class="n">delete_files</span><span class="o">=</span><span class="kc">False</span>
 <span class="p">)</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-11">mf.process_rawdata(
+<div class="clipboard-copy-txt" id="cell-10">mf.process_rawdata(
     files=rawfiles,
     device='fotonwy',
     delete_files=False
@@ -1878,13 +1723,209 @@ rawfiles</div>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=a466d2b9-2d06-4350-afed-5765b7c41b79">
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=d5c89eb2-988f-41f8-832d-7cb5be41d7f1">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<table>
+<thead>
+<tr>
+<th>parameter</th>
+<th>input type</th>
+<th>description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>filenaming</td>
+<td>str</td>
+<td>Define the filename of the output file</td>
+</tr>
+<tr>
+<td>folder</td>
+<td>str</td>
+<td>Folder where the output files should be saved</td>
+</tr>
+<tr>
+<td>db</td>
+<td>bool</td>
+<td>Whether to make use of the databases info</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=c45339ba-c266-434d-aead-209ea4b78778">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [29]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [15]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="CodeMirror cm-s-jupyter">
+<div class="zeroclipboard-container">
+<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-11">
+<div>
+<span class="notice" hidden="">Copied!</span>
+<svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
+<path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25v-7.5z" fill="currentColor" fill-rule="evenodd"></path>
+<path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25v-7.5zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25h-7.5z" fill="currentColor" fill-rule="evenodd"></path>
+</svg>
+</div>
+</clipboard-copy>
+</div>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="n">mf</span><span class="o">.</span><span class="n">process_rawdata</span><span class="err">?</span>
+</pre></div>
+<div class="clipboard-copy-txt" id="cell-11">mf.process_rawdata?</div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
+</div>
+<div class="jp-OutputArea jp-Cell-outputArea">
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre><span class="ansi-red-fg">Signature:</span>
+mf<span class="ansi-blue-fg">.</span>process_rawdata<span class="ansi-blue-fg">(</span>
+    files<span class="ansi-blue-fg">:</span> list<span class="ansi-blue-fg">,</span>
+    device<span class="ansi-blue-fg">:</span> str<span class="ansi-blue-fg">,</span>
+    filenaming<span class="ansi-blue-fg">:</span> Optional<span class="ansi-blue-fg">[</span>str<span class="ansi-blue-fg">]</span> <span class="ansi-blue-fg">=</span> <span class="ansi-blue-fg">'none'</span><span class="ansi-blue-fg">,</span>
+    folder<span class="ansi-blue-fg">:</span> Optional<span class="ansi-blue-fg">[</span>str<span class="ansi-blue-fg">]</span> <span class="ansi-blue-fg">=</span> <span class="ansi-blue-fg">'.'</span><span class="ansi-blue-fg">,</span>
+    db<span class="ansi-blue-fg">:</span> Optional<span class="ansi-blue-fg">[</span>bool<span class="ansi-blue-fg">]</span> <span class="ansi-blue-fg">=</span> <span class="ansi-blue-fg">'default'</span><span class="ansi-blue-fg">,</span>
+    comment<span class="ansi-blue-fg">:</span> Optional<span class="ansi-blue-fg">[</span>str<span class="ansi-blue-fg">]</span> <span class="ansi-blue-fg">=</span> <span class="ansi-blue-fg">''</span><span class="ansi-blue-fg">,</span>
+    fading_mode<span class="ansi-blue-fg">:</span> Optional<span class="ansi-blue-fg">[</span>str<span class="ansi-blue-fg">]</span> <span class="ansi-blue-fg">=</span> <span class="ansi-blue-fg">'default'</span><span class="ansi-blue-fg">,</span>
+    waiting_time<span class="ansi-blue-fg">:</span> Optional<span class="ansi-blue-fg">[</span>int<span class="ansi-blue-fg">]</span> <span class="ansi-blue-fg">=</span> <span class="ansi-cyan-fg">1</span><span class="ansi-blue-fg">,</span>
+    authors<span class="ansi-blue-fg">:</span> Optional<span class="ansi-blue-fg">[</span>str<span class="ansi-blue-fg">]</span> <span class="ansi-blue-fg">=</span> <span class="ansi-blue-fg">'XX'</span><span class="ansi-blue-fg">,</span>
+    white_standard<span class="ansi-blue-fg">:</span> Optional<span class="ansi-blue-fg">[</span>str<span class="ansi-blue-fg">]</span> <span class="ansi-blue-fg">=</span> <span class="ansi-blue-fg">'default'</span><span class="ansi-blue-fg">,</span>
+    rounding<span class="ansi-blue-fg">:</span> Union<span class="ansi-blue-fg">[</span>int<span class="ansi-blue-fg">,</span> tuple<span class="ansi-blue-fg">,</span> list<span class="ansi-blue-fg">]</span> <span class="ansi-blue-fg">=</span> <span class="ansi-blue-fg">(</span><span class="ansi-cyan-fg">4</span><span class="ansi-blue-fg">,</span> <span class="ansi-cyan-fg">3</span><span class="ansi-blue-fg">)</span><span class="ansi-blue-fg">,</span>
+    interpolate_wl<span class="ansi-blue-fg">:</span> Union<span class="ansi-blue-fg">[</span>tuple<span class="ansi-blue-fg">,</span> str<span class="ansi-blue-fg">]</span> <span class="ansi-blue-fg">=</span> <span class="ansi-blue-fg">'default'</span><span class="ansi-blue-fg">,</span>
+    interpolate_exposure<span class="ansi-blue-fg">:</span> Union<span class="ansi-blue-fg">[</span>tuple<span class="ansi-blue-fg">,</span> str<span class="ansi-blue-fg">]</span> <span class="ansi-blue-fg">=</span> <span class="ansi-blue-fg">(</span><span class="ansi-blue-fg">'He'</span><span class="ansi-blue-fg">,</span> <span class="ansi-cyan-fg">0.1</span><span class="ansi-blue-fg">)</span><span class="ansi-blue-fg">,</span>
+    interpolation<span class="ansi-blue-fg">:</span> Optional<span class="ansi-blue-fg">[</span>bool<span class="ansi-blue-fg">]</span> <span class="ansi-blue-fg">=</span> <span class="ansi-blue-fg">'default'</span><span class="ansi-blue-fg">,</span>
+    dose_unit<span class="ansi-blue-fg">:</span> Optional<span class="ansi-blue-fg">[</span>str<span class="ansi-blue-fg">]</span> <span class="ansi-blue-fg">=</span> <span class="ansi-blue-fg">'default'</span><span class="ansi-blue-fg">,</span>
+    step<span class="ansi-blue-fg">:</span> Union<span class="ansi-blue-fg">[</span>float<span class="ansi-blue-fg">,</span> int<span class="ansi-blue-fg">,</span> NoneType<span class="ansi-blue-fg">]</span> <span class="ansi-blue-fg">=</span> <span class="ansi-cyan-fg">0.1</span><span class="ansi-blue-fg">,</span>
+    average<span class="ansi-blue-fg">:</span> Optional<span class="ansi-blue-fg">[</span>int<span class="ansi-blue-fg">]</span> <span class="ansi-blue-fg">=</span> <span class="ansi-blue-fg">'undefined'</span><span class="ansi-blue-fg">,</span>
+    observer<span class="ansi-blue-fg">:</span> Optional<span class="ansi-blue-fg">[</span>str<span class="ansi-blue-fg">]</span> <span class="ansi-blue-fg">=</span> <span class="ansi-blue-fg">'default'</span><span class="ansi-blue-fg">,</span>
+    illuminant<span class="ansi-blue-fg">:</span> Optional<span class="ansi-blue-fg">[</span>str<span class="ansi-blue-fg">]</span> <span class="ansi-blue-fg">=</span> <span class="ansi-blue-fg">'default'</span><span class="ansi-blue-fg">,</span>
+    background<span class="ansi-blue-fg">:</span> Optional<span class="ansi-blue-fg">[</span>str<span class="ansi-blue-fg">]</span> <span class="ansi-blue-fg">=</span> <span class="ansi-blue-fg">'undefined'</span><span class="ansi-blue-fg">,</span>
+    beam_power<span class="ansi-blue-fg">:</span> Optional<span class="ansi-blue-fg">[</span>tuple<span class="ansi-blue-fg">]</span> <span class="ansi-blue-fg">=</span> <span class="ansi-green-fg">None</span><span class="ansi-blue-fg">,</span>
+    language<span class="ansi-blue-fg">:</span> Optional<span class="ansi-blue-fg">[</span>str<span class="ansi-blue-fg">]</span> <span class="ansi-blue-fg">=</span> <span class="ansi-green-fg">None</span><span class="ansi-blue-fg">,</span>
+    output_format<span class="ansi-blue-fg">:</span> Optional<span class="ansi-blue-fg">[</span>str<span class="ansi-blue-fg">]</span> <span class="ansi-blue-fg">=</span> <span class="ansi-blue-fg">'xlsx'</span><span class="ansi-blue-fg">,</span>
+    delete_files<span class="ansi-blue-fg">:</span> Optional<span class="ansi-blue-fg">[</span>bool<span class="ansi-blue-fg">]</span> <span class="ansi-blue-fg">=</span> <span class="ansi-blue-fg">'default'</span><span class="ansi-blue-fg">,</span>
+    return_filename<span class="ansi-blue-fg">:</span> Optional<span class="ansi-blue-fg">[</span>bool<span class="ansi-blue-fg">]</span> <span class="ansi-blue-fg">=</span> <span class="ansi-green-fg">False</span><span class="ansi-blue-fg">,</span>
+<span class="ansi-blue-fg">)</span>
+<span class="ansi-red-fg">Docstring:</span>
+Process the microfading raw files created by the software that performed the microfading analysis. 
+
+
+Parameters
+----------
+files : list
+    A list of string that corresponds to the absolute path of the raw files.
+
+device : str
+    Define the  microfading that has been used to generate the raw files ('fotonowy_default', 'sMFT_default').
+
+filenaming : [str | list], optional
+    Define the filename of the output excel file, by default 'none' 
+    When 'none', it uses the filename of the raw files
+    When 'auto', it creates a filename based on the info provided by the databases
+    A list of parameters provided in the info sheet of the excel output can be used to create a filename   
+
+folder : str, optional
+    Folder where the final data files should be saved, by default '.'
+
+db : bool, optional
+    Whether to make use of the databases, by default False
+    When True, it will populate the info sheet in the interim file (the output excel file) with the data found in the databases.
+    Make sure that the databases were created and that the information about about the project and the objects were recorded.
+
+comment : str, optional
+    Whether to include a comment in the final excel file, by default ''
+
+authors : str, optional
+    Initials of the persons that performed and processed the microfading measurements, by default 'XX' (unknown).
+    Make sure that you registered the persons in the users.txt file (see function 'add_users' of the msdb package).
+    If there are several persons, use a dash to connect the initials (e.g: 'JD-MG-OL').
+
+white_standard : str, optional
+    ID number of the white standard used when performing the microfading analyses, by default 'default'
+    When 'default', it will search for the registered values in the config_info.json file. If you have not registered any values, it assumes that you used the Fotolon provided by Fotonowy.
+
+rounding : [int, tuple], optional
+    Rounding the spectral and colorimetric coordinates, by default (4,3)
+    The value corresponds to the amount of digits after the decimal separator.
+    When an integer is provided, it is applied to both the spectral and colorimetric value.
+    When a tuple is provided, the first value relates to the spectral values while the second relates to the colorimetric values.
+
+interpolation : bool, optional
+    Whether to interpolate the spectral and colorimetric data, by default True
+    When True, it will interpolate the data according to the "dose_unit" and "step" values provided in the following parameters.
+    When True, it will also interpolate the spectral values along the wavelengths (1 value every 1 nm).                 
+    
+dose_unit : str, optional
+    The unit of the light dose energy for which the spectral values are being interpolated, by default 'default'
+    When 'default', it will search for the registered values in the config_info.json file. If you have not registered any values, it will select 'He' by default.
+    When 'He', it performs interpolation based on the radiant exposure (MJ/m²) and for which you can define a step (see next parameter)
+    When 'Hv', it performs interpolation based on the exposure dose (Mlxh) and for which you can define a step (see next parameter)
+    When 't', it performs interpolation based on the exposure duration (sec) and for which you can define a step (see next parameter) 
+
+step : [float  |  int], optional
+    Interpolation step related to the scale previously mentioned ('He', 'Hv', 't'), by default 0.1
+
+average : [int], optional
+    Average of the measurements, by default 'undefined'
+    If you use always the same average value, you can save it up in the config_info.json file (use the set_devices_info() function). Then enter 'default' as  value for the average parameter in order to retrieve the average value savied in the config file.
+
+observer : str, optional
+    Reference CIE *observer* in degree ('10deg' or '2deg'). by default 'default'.
+    When 'default', it fetches the observer value recorded in the db_config.json file of the package. If no value has been recorded, then it sets the observer value to '10deg'. 
+
+illuminant : (str, optional)  
+    Reference CIE *illuminant*. It can be any value of the following list: ['A', 'B', 'C', 'D50', 'D55', 'D60', 'D65', 'D75', 'E', 'FL1', 'FL2', 'FL3', 'FL4', 'FL5', 'FL6', 'FL7', 'FL8', 'FL9', 'FL10', 'FL11', 'FL12', 'FL3.1', 'FL3.2', 'FL3.3', 'FL3.4', 'FL3.5', 'FL3.6', 'FL3.7', 'FL3.8', 'FL3.9', 'FL3.10', 'FL3.11', 'FL3.12', 'FL3.13', 'FL3.14', 'FL3.15', 'HP1', 'HP2', 'HP3', 'HP4', 'HP5', 'LED-B1', 'LED-B2', 'LED-B3', 'LED-B4', 'LED-B5', 'LED-BH1', 'LED-RGB1', 'LED-V1', 'LED-V2', 'ID65', 'ID50']. by default 'default'.
+    When 'default', it fetches the illuminant value recorded in the db_config.json file of the package. If no value has been recorded, then it sets the illuminant value to 'D65'.      
+
+language : Optional[str], optional
+    The language of the computer used to perform the microfading analyses, by default None
+    When None, English is assumed to be the language that was used.
+    If you are working on a Windows computer, you can use of the following languages (non-exhaustive list) : 'en', 'fr', 'it', 'nl', 'de', 'es'.
+    If you are working on a Linux OS, open a terminal, enter " locale -a ", and choose one language among the returned list.
+    For more information, consult the online documentation (https://g-patin.github.io/microfading/language-setting/).
+
+output_format : str, optional
+    Output file format for the interim files, by default 'xlsx'.
+    By default, the interim files will be saved as '.xlxs' (excel). When 'ods', it will save the output files as '.ods', which is the open source version of excel.
+    
+delete_files : bool, optional
+    Whether to delete the raw files, by default 'default'
+
+return_filename : Optional[bool], optional
+    Whether to return the filename of the created excel file that contains the microfading data and metadata, by default True
+
+Returns
+-------
+Excel file
+    It returns an excel file composed of three tabs (info, CIELAB, spectra).
+<span class="ansi-red-fg">File:</span>      ~/anaconda3/lib/python3.11/site-packages/microfading/microfading.py
+<span class="ansi-red-fg">Type:</span>      function</pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=eff22034-da9a-4998-8cf9-4d63b4ea349d">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
 <clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-12">
@@ -1897,21 +1938,21 @@ rawfiles</div>
 </div>
 </clipboard-copy>
 </div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">import</span> <span class="nn">msdb</span>
+<div class="highlight-ipynb hl-python"><pre><span></span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-12">import msdb</div>
+<div class="clipboard-copy-txt" id="cell-12"></div>
 </div>
 </div>
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=cd468ea1-82a2-40bf-be75-889814d0f6cd">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=cd468ea1-82a2-40bf-be75-889814d0f6cd">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [35]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
 <clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-13">
@@ -1924,71 +1965,9 @@ rawfiles</div>
 </div>
 </clipboard-copy>
 </div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="n">msdb</span><span class="o">.</span><span class="n">DB</span><span class="p">(</span><span class="n">db_name</span><span class="o">=</span><span class="s1">'db_local'</span><span class="p">)</span><span class="o">.</span><span class="n">get_white_standards</span><span class="p">()</span>
+<div class="highlight-ipynb hl-python"><pre><span></span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-13">msdb.DB(db_name='db_local').get_white_standards()</div>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell-outputWrapper">
-<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
-</div>
-<div class="jp-OutputArea jp-Cell-outputArea">
-<div class="jp-OutputArea-child jp-OutputArea-executeResult">
-<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[35]:</div>
-<div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/html" tabindex="0">
-<div>
-<style scoped="">
-    .dataframe tbody tr th:only-of-type {
-        vertical-align: middle;
-    }
-
-    .dataframe tbody tr th {
-        vertical-align: top;
-    }
-
-    .dataframe thead th {
-        text-align: right;
-    }
-</style>
-<table border="1" class="dataframe">
-<thead>
-<tr style="text-align: right;">
-<th></th>
-<th>ID</th>
-<th>description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<th>0</th>
-<td>WR1</td>
-<td>Dr Lange LZM 013, pressed barium sulphate powder</td>
-</tr>
-<tr>
-<th>1</th>
-<td>WR2</td>
-<td>Konica Minolta, calibration plate 22191004</td>
-</tr>
-<tr>
-<th>2</th>
-<td>WR3</td>
-<td>Konica Minolta, CM-A145</td>
-</tr>
-<tr>
-<th>3</th>
-<td>WR4</td>
-<td>Fotonowy, Fotolon PTFE</td>
-</tr>
-<tr>
-<th>4</th>
-<td>WR5</td>
-<td>Specim, 0605221</td>
-</tr>
-</tbody>
-</table>
-</div>
+<div class="clipboard-copy-txt" id="cell-13"></div>
 </div>
 </div>
 </div>

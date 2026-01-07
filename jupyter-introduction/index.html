@@ -9,10 +9,10 @@
       
       
       
-        <link rel="prev" href="../generate-report/">
+        <link rel="prev" href="../retrieve-test-datasets/">
       
       
-        <link rel="next" href="../data-visualization/">
+        <link rel="next" href="../package-usage/">
       
       
       <link rel="icon" href="../assets/images/favicon.png">
@@ -20,7 +20,7 @@
     
     
       
-        <title>Rawdata processing - microfading</title>
+        <title>Jupyter notebooks - microfading</title>
       
     
     
@@ -65,11 +65,6 @@
     <label class="md-overlay" for="__drawer"></label>
     <div data-md-component="skip">
       
-        
-        <a href="#get-raw-files" class="md-skip">
-          Skip to content
-        </a>
-      
     </div>
     <div data-md-component="announce">
       
@@ -101,7 +96,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Rawdata processing
+              Jupyter notebooks
             
           </span>
         </div>
@@ -250,19 +245,17 @@
       
   
   
-    
   
   
-  
     
     
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
         
           
           <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
@@ -276,7 +269,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_4">
             <span class="md-nav__icon md-icon"></span>
             Tutorials
@@ -392,28 +385,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  <span class="md-ellipsis">
-    Rawdata processing
-  </span>
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../rawdata-processing/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -422,66 +397,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#get-raw-files" class="md-nav__link">
-    <span class="md-ellipsis">
-      Get raw files
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#run-function" class="md-nav__link">
-    <span class="md-ellipsis">
-      Run function
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Run function">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#fotonowy-device" class="md-nav__link">
-    <span class="md-ellipsis">
-      Fotonowy device
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#function-arguments" class="md-nav__link">
-    <span class="md-ellipsis">
-      Function arguments
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -645,17 +560,19 @@
       
   
   
+    
   
   
+  
     
     
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" checked>
         
           
           <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
@@ -669,7 +586,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_6">
             <span class="md-nav__icon md-icon"></span>
             Explanation
@@ -680,10 +597,17 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../jupyter-introduction/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   <span class="md-ellipsis">
@@ -692,6 +616,7 @@
   
 
       </a>
+      
     </li>
   
 
@@ -826,56 +751,6 @@
   
   
   
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#get-raw-files" class="md-nav__link">
-    <span class="md-ellipsis">
-      Get raw files
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#run-function" class="md-nav__link">
-    <span class="md-ellipsis">
-      Run function
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Run function">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#fotonowy-device" class="md-nav__link">
-    <span class="md-ellipsis">
-      Fotonowy device
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#function-arguments" class="md-nav__link">
-    <span class="md-ellipsis">
-      Function arguments
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
 </nav>
                   </div>
                 </div>
@@ -889,73 +764,17 @@
                   
 
 
-  <h1>Rawdata processing</h1>
+  <h1>Jupyter notebooks</h1>
 
-<p>In this section, we will show you how to process raw microfading files into our standard <em>interim</em> files, that are required to use the <code>microfading</code> package. </p>
-<p>A summary of this page has been compiled inside a Jupyter notebook and is available for download: <a href="../notebooks/Process_rawfiles.zip">Download notebook</a></p>
-<p>The current version of the <code>microfading</code> package can only process raw files obtained with the Fotonowy microfading device. Don't hesitate to contact us to discuss the possibility to process raw files obtained with other microfading systems.</p>
-<p>Processing the rawdata files consists of two main steps:</p>
-<ol>
-<li>Get a list of your raw files</li>
-<li>Run the <code>process_rawdata()</code> function</li>
-</ol>
-<h2 id="get-raw-files">Get raw files<a class="headerlink" href="#get-raw-files" title="Permanent link">&para;</a></h2>
-<p>There are many ways in python to retrieve a list of files. I will only show two ways of doing it.</p>
-<p><strong>Option 1</strong> - Retrieve the files manually</p>
-<p>In this option you create a list by typing the names of the raw files. To ease the process, you can start writing the first letter and then press the <code>Tab</code> button to autocomplete the rest of the filename. This only works if the notebooks is in the same folder as the data files or if you modified the current working directory of the notebook. </p>
-<div class="highlight"><pre><span></span><code><span class="c1"># For example, I created a list of two rawdata files</span>
-<span class="n">files</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;Project01_MF.plume01.01_G01_blue_rawdata.txt&#39;</span><span class="p">,</span>
-         <span class="s1">&#39;Project12_MF.S0001.01_G01_paperBlock_rawdata.txt&#39;</span><span class="p">]</span>
-
-<span class="c1"># If the files are located in a different directory than the notebook you are using,</span>
-<span class="c1"># then you will need to give the absolute path of the files      </span>
-<span class="n">files</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;/home/john/Documents/data/Project01_MF.plume01.01_G01_blue_rawdata.txt&#39;</span><span class="p">,</span>
-         <span class="s1">&#39;/home/john/Documents/data/Project12_MF.S01.01_G01_paperBlock_rawdata.txt&#39;</span><span class="p">]</span>
-</code></pre></div>
-<p>&nbsp;</p>
-<p><strong>Option 2</strong> - Retrieve with <code>glob</code></p>
-<div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">glob</span> <span class="kn">import</span> <span class="n">glob</span>
-
-<span class="c1"># Ask glob to retrieve all the files containing the expression *MF* and *rawdata* in their filenames</span>
-<span class="c1"># I also asked to sort the files</span>
-<span class="n">files</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">glob</span><span class="p">(</span><span class="s1">&#39;*MF*rawdata*&#39;</span><span class="p">))</span>
-<span class="n">files</span>
-</code></pre></div>
-<div class="output-area">
-<pre>['/home/john/Documents/data/Project01_MF.plume01.01_G01_blue_rawdata.txt',
-'/home/john/Documents/data/Project12_MF.S01.01_G01_paperBlock_rawdata.txt']
-</pre>
-</div>
-
-<p>Although option 1 is the easiest one, it can be quite time-consuming. For instance, the Fotonowy device currently produces 4 raw files per analysis, which can quickly become a lot of files to individually write. If you are saving all your microfading raw files inside the same folder, you might want to consider creating a sub-folder called "To_process" and copy-paste any analyses that you want to process. To select all the files in this sub-folder you can use the <code>glob</code> method as showed below.</p>
-<div class="highlight"><pre><span></span><code><span class="n">all_files</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">glob</span><span class="p">(</span><span class="s1">&#39;**&#39;</span><span class="p">))</span>
-</code></pre></div>
-<h2 id="run-function">Run function<a class="headerlink" href="#run-function" title="Permanent link">&para;</a></h2>
-<p>Once you have a list of rawdata files, you will use it in combination with the <code>process_rawdata()</code> function as illustrated below. This function has two compulsory arguments (<em>files</em> and <em>device</em>) for which you will need to provide values. You will use the list of rawfiles for the <em>files</em> argument and you will select the adequate microfading device you used (see sub-sections below).</p>
-<div class="highlight"><pre><span></span><code><span class="kn">import</span> <span class="nn">microfading</span> <span class="k">as</span> <span class="nn">mf</span>
-
-<span class="c1"># get the raw files (see step above)</span>
-<span class="n">files</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;filename1&#39;</span><span class="p">,</span> <span class="s1">&#39;filename2&#39;</span><span class="p">,</span> <span class="n">etc</span><span class="o">.</span><span class="p">]</span>
-
-<span class="c1"># run the function to process the rawfiles</span>
-<span class="n">mf</span><span class="o">.</span><span class="n">process_rawdata</span><span class="p">(</span><span class="n">files</span><span class="o">=</span><span class="n">files</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="s1">&#39;&lt;MFT_device_name&gt;&#39;</span><span class="p">)</span>
-</code></pre></div>
-<h3 id="fotonowy-device">Fotonowy device<a class="headerlink" href="#fotonowy-device" title="Permanent link">&para;</a></h3>
-<p>Currently, the Fotonowy device produces 4 raw files for each analysis, thus you will need to enter these 4 files in the list of required raw files.
-The list of raw files can contain several analyses. The algorithm will automatically detect that there are more than one analyses, and will thus process them separately. </p>
-<p>For the argument 'device' of the <code>process_rawdata()</code> function, you can start by entering 'fotonowy' as value (see code below).</p>
-<div class="highlight"><pre><span></span><code><span class="c1">#### BASIC RAWDATA PROCESSING STEPS ####</span>
-
-<span class="c1"># retrieve raw files</span>
-<span class="n">rawfiles</span> <span class="o">=</span> <span class="o">....</span> <span class="p">[</span><span class="n">see</span> <span class="n">above</span><span class="p">]</span>
-
-<span class="c1"># run the function to process the rawfiles</span>
-<span class="n">mf</span><span class="o">.</span><span class="n">process_rawdata</span><span class="p">(</span><span class="n">files</span><span class="o">=</span><span class="n">rawfiles</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="s1">&#39;fotonowy&#39;</span><span class="p">)</span>
-</code></pre></div>
-<p>The method showed in the above cell corresponds to the most basic way of processing your raw files. It can be viewed as a 'quick and dirty way' ! This is not the recommended method, but we understand that at first, you might prefer to use such a method. </p>
-<p>For a better way to process your raw files, you will need to use the other arguments of the <code>process_rawdata()</code> function for which more information is provided in the following sub-section.</p>
-<h2 id="function-arguments">Function arguments<a class="headerlink" href="#function-arguments" title="Permanent link">&para;</a></h2>
-<p>The <code>process_rawdata()</code> function contains several arguments that enable you to process your data in a more rigorous way. I will let you read the docstrings for detailed information. But I will just focus on two parameters that you might find important to be aware of. </p>
+<p>In the field of heritage science, the most common way to manipulate numerical data involves the use of spreadsheet environment such as Excel or Libre Office. In most cases, it is a perfect solution fullfilling the needs of the users. </p>
+<p>However, when dealing with microfading data, we were quickly confronted with several challenges and limitations that initially prompted us to step away from spreadsheet environments. </p>
+<ul>
+<li>The first limitation dealt with the scalability. While a spreadsheet can easily handle small datasets, it becomes more difficult when the amount and complexity of the data significantly increase. </li>
+<li>The second issue concerned task automation, which is hardly possible with a spreadsheet, where the file measurements can only be processed individually. One can have a template spreadsheet that can be re-use, but every time the raw data will need to be copied and pasted into the spreadsheet. </li>
+<li>Complex calculations can be quite cumbersome to perform with spreadsheet software. For example, difficulty in calculating the dE00 values from the Lab values prevent some users to use such an equation.</li>
+<li>The visualization provided by most spreasheet software is often of low quality. Complex figures or imaged-related visualizations complying with the recommendations provided by Edward Tufte is hardly possible in Excel or Libre Office. The ability to visualize our microfading data in a very intuitive way is a crucial aspect for us.</li>
+</ul>
+<p>One of the most common alternatives to spreadsheets is cell code based environment such as Matlab or Juyter.</p>
 
 
 

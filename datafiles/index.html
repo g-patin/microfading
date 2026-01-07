@@ -472,27 +472,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../retrieve-test-datasets/" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
-    Retrieve test datasets
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../create-databases/" class="md-nav__link">
         
   
@@ -519,6 +498,48 @@
   
   <span class="md-ellipsis">
     Create an MFT class instance
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../register-MFT-devices/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    register MFT devices
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../retrieve-test-datasets/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Retrieve test datasets
   </span>
   
 
@@ -571,6 +592,27 @@
             Explanation
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../jupyter-introduction/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Jupyter notebooks
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
             
               
                 
@@ -725,16 +767,23 @@
   <h1>Datafiles</h1>
 
 <p>The <code>microfading</code> package aims to facilitate the manipulation of microfading data. Consequently, the microfading data files play a central role in the package. Like in most analytical techniques, several microfading devices have been developed over the years. Each device creates its own specfic rawfiles that are usually very different from one device to another. To compare the results obtained with different devices, one solution is to convert each rawfile into a unique file format, which is the method that has been chosen in this package. </p>
-<p>This unique file format, called <em>interim</em> file, is simply an excel file with a specific inner structure to organize the data. Each excel file is composed of three sheets:</p>
+<p>This unique file format, called <em>interim</em> file, is simply an Excel or an OpenDocument file with a specific inner structure to organize the data. Each <em>interim</em> file is composed of three sheets:</p>
 <ol>
-<li><strong>info</strong> : contains the metadata related to the measurements, the object, and the project</li>
-<li><strong>CIELAB</strong> : contains the colorimetric values</li>
-<li><strong>spectra</strong> : contains the spectral values</li>
+<li><strong>info</strong> : it contains the metadata related to the measurements, the object, and the project</li>
+<li><strong>CIELAB</strong> : it contains the colorimetric values</li>
+<li><strong>spectra</strong> : it contains the spectral values</li>
 </ol>
-<p>An exemple of an interim file can be found in the microfading package <a href="https://g-patin.github.io/microfading/retrieve-test-datasets/">(get_datasets() function)</a>.</p>
-<p>The overall landscape of the package can be viewed as a tree or an hourglass shape. </p>
+<p>An example of an <em>interim</em> file can be found in the microfading package <a href="https://g-patin.github.io/microfading/retrieve-test-datasets/">(get_datasets() function)</a>. As an illustration of the content of <em>interim</em> files, the picture below shows the CIELAB sheet of an <em>interim</em> file. The first three rows on the left are related to the light dose energy, while the other columns show various colorimetric units.</p>
+<figure>
+<p><img align="left" alt="Alt text" class="img-large" src="../images/mf_interim-file_CIELAB-sheet.png" /></p>
+<figcaption>
+<p>CIELAB sheet of a microfading interim file.</p>
+</figcaption>
+</figure>
+<p>If you prefer to use the functionalities provided by Excel or OpenDocument, you can always create a new sheet inside an <em>interim</em> file to perform more calculations or create figures. I would not recommend to delete the existing columns or rows inside the first three sheets (info, CIELAB, spectra), or to create figures inside them. This might lead to some issues with the functions of the <code>microfading</code> package, and thus preventing its use.</p>
+<p>Our conception of the structure related to scientific data and files can be viewed as a tree or an hourglass shape. At the bottom, there are multiple roots. Each root can be viewed as a device that produces its own raw files with a specific structure inside the files. It is very common in laboratory, to have different devices that are doing similar analyses. Comparing the data from these various raw files can be quite tidious. This is the reason why, the first step of our package is to convert raw files into <em>interim</em> files, so that whatever the microfading device you used to perform your analyses, the <em>interim</em> file will always have a similar structure. This is what makes the <code>microfading</code> functional because it expects a given structure that makes it easy to retrieve data or perform further computational processes. Above the <em>interim</em> files are the <em>processed</em> files. Their structure can be different and be specific according to the projects, the research questions, etc. This is where data and files gain in flexibility so that it can adequately fullfill the needs and objectives of each project.</p>
 <hr />
-<p>© 2024 Gauthier Patin. All rights reserved. | Last updated: 2024-09-20</p>
+<p>© 2026 Gauthier Patin. All rights reserved. | Last updated: 2026-01-05</p>
 
 
 

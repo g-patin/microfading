@@ -24,9 +24,9 @@
      inkscape:pagecheckerboard="0"
      inkscape:deskcolor="#d1d1d1"
      inkscape:document-units="mm"
-     inkscape:zoom="0.31112698"
-     inkscape:cx="2759.3235"
-     inkscape:cy="-2228.9934"
+     inkscape:zoom="0.34"
+     inkscape:cx="-545.58824"
+     inkscape:cy="-2554.4118"
      inkscape:window-width="1850"
      inkscape:window-height="1016"
      inkscape:window-x="0"
@@ -714,73 +714,73 @@
        transform="translate(125.55668,-2.285038)"><tspan
          x="619.23004"
          y="-765.82172"
-         id="tspan2"><tspan
-           style="text-align:start;text-anchor:start;fill:#000000"
-           id="tspan1">Welcome on the</tspan><tspan
-           y="-765.82172"
-           id="tspan3"> </tspan></tspan><tspan
+         id="tspan30"><tspan
+   style="text-align:start;text-anchor:start;fill:#000000"
+   id="tspan29">Welcome on the</tspan><tspan
+   y="-765.82172"
+   id="tspan31"> </tspan></tspan><tspan
          x="619.23004"
          y="-748.04169"
-         id="tspan5"><tspan
-           style="text-align:start;text-anchor:start;fill:#000000"
-           id="tspan4">documentation website of the</tspan><tspan
-           y="-748.04169"
-           id="tspan6"> </tspan></tspan><tspan
+         id="tspan33"><tspan
+   style="text-align:start;text-anchor:start;fill:#000000"
+   id="tspan32">documentation website of the</tspan><tspan
+   y="-748.04169"
+   id="tspan34"> </tspan></tspan><tspan
          x="619.23004"
          y="-730.26166"
-         id="tspan9"><tspan
+         id="tspan37"><tspan
            style="font-style:italic;-inkscape-font-specification:'Serif Italic';text-align:start;text-anchor:start"
-           id="tspan7">microfading </tspan><tspan
+           id="tspan35">microfading </tspan><tspan
            style="text-align:start;text-anchor:start;fill:#000000"
-           id="tspan8">python package.
+           id="tspan36">python package.
 </tspan></tspan><tspan
          x="619.23004"
          y="-712.48163"
-         id="tspan11"><tspan
+         id="tspan39"><tspan
            style="text-align:start;text-anchor:start;fill:#000000"
-           id="tspan10">
+           id="tspan38">
 </tspan></tspan><tspan
          x="619.23004"
          y="-694.7016"
-         id="tspan13"><tspan
-           style="text-align:start;text-anchor:start;fill:#000000"
-           id="tspan12">This package aims to facilitate</tspan><tspan
-           y="-694.7016"
-           id="tspan14"> </tspan></tspan><tspan
+         id="tspan41"><tspan
+   style="text-align:start;text-anchor:start;fill:#000000"
+   id="tspan40">This package aims to facilitate</tspan><tspan
+   y="-694.7016"
+   id="tspan42"> </tspan></tspan><tspan
          x="619.23004"
          y="-676.92157"
-         id="tspan16"><tspan
-           style="text-align:start;text-anchor:start;fill:#000000"
-           id="tspan15">the manipulation of</tspan><tspan
-           y="-676.92157"
-           id="tspan17"> </tspan></tspan><tspan
+         id="tspan44"><tspan
+   style="text-align:start;text-anchor:start;fill:#000000"
+   id="tspan43">the manipulation of</tspan><tspan
+   y="-676.92157"
+   id="tspan45"> </tspan></tspan><tspan
          x="619.23004"
          y="-659.14154"
-         id="tspan19"><tspan
-           dx="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 -1.5875 1.5874974"
-           style="text-align:start;text-anchor:start;fill:#000000"
-           id="tspan18">microfading data. You will find</tspan><tspan
-           y="-659.14154"
-           id="tspan20"> </tspan></tspan><tspan
+         id="tspan47"><tspan
+   dx="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 -1.5875 1.5874974"
+   style="text-align:start;text-anchor:start;fill:#000000"
+   id="tspan46">microfading data. You will find</tspan><tspan
+   y="-659.14154"
+   id="tspan48"> </tspan></tspan><tspan
          x="619.23004"
          y="-641.36151"
-         id="tspan22"><tspan
-           style="text-align:start;text-anchor:start;fill:#000000"
-           id="tspan21">on this website information on</tspan><tspan
-           y="-641.36151"
-           id="tspan23"> </tspan></tspan><tspan
+         id="tspan50"><tspan
+   style="text-align:start;text-anchor:start;fill:#000000"
+   id="tspan49">on this website information on</tspan><tspan
+   y="-641.36151"
+   id="tspan51"> </tspan></tspan><tspan
          x="619.23004"
          y="-623.58148"
-         id="tspan25"><tspan
-           style="text-align:start;text-anchor:start;fill:#000000"
-           id="tspan24">how to install and use the</tspan><tspan
-           y="-623.58148"
-           id="tspan26"> </tspan></tspan><tspan
+         id="tspan53"><tspan
+   style="text-align:start;text-anchor:start;fill:#000000"
+   id="tspan52">how to install and use the</tspan><tspan
+   y="-623.58148"
+   id="tspan54"> </tspan></tspan><tspan
          x="619.23004"
          y="-605.80146"
-         id="tspan28"><tspan
+         id="tspan57"><tspan
            style="text-align:start;text-anchor:start;fill:#000000"
-           id="tspan27">package.
+           id="tspan55">package.
 </tspan></tspan></text>
     <text
        xml:space="preserve"
@@ -793,5 +793,242 @@
          style="stroke-width:1.5"
          x="708.49536"
          y="-702.55347" /></text>
+    <text
+       xml:space="preserve"
+       style="font-size:12.7px;line-height:1.4;font-family:Serif;-inkscape-font-specification:Serif;text-align:center;text-decoration-color:#000000;letter-spacing:1.5875px;word-spacing:0px;writing-mode:lr-tb;direction:ltr;text-anchor:middle;white-space:pre;inline-size:245.804;fill:#ffffff;stroke-width:1.5;-inkscape-stroke:none"
+       x="619.23004"
+       y="-765.82172"
+       id="text84"
+       transform="translate(-511.38879,256.85099)"><tspan
+         x="619.23004"
+         y="-765.82172"
+         id="tspan62"><tspan
+           style="text-align:start;text-anchor:start;fill:#000000"
+           id="tspan59">D</tspan><tspan
+           style="font-size:65%;baseline-shift:sub"
+           id="tspan60">n</tspan><tspan
+           style="text-align:start;text-anchor:start;fill:#000000"
+           id="tspan61">
+</tspan></tspan></text>
+    <path
+       style="opacity:1;fill:#000000;stroke:#000000;stroke-width:1.5;stroke-dasharray:none"
+       d="M -143.49198,-572.25029 V -722.25021"
+       id="path98" />
+    <path
+       style="opacity:1;fill:#000000;stroke:#000000;stroke-width:1.5;stroke-dasharray:none"
+       d="M -49.300008,-572.25029 V -722.25021"
+       id="path99" />
+    <path
+       style="opacity:1;fill:#000000;stroke:#000000;stroke-width:0.5;stroke-dasharray:1.5,1.5;stroke-dashoffset:0"
+       d="M -46.878109,-572.2229 H -146.87795"
+       id="path100" />
+    <path
+       style="opacity:1;fill:#000000;stroke:#000000;stroke-width:0.5;stroke-dasharray:1.5, 1.5;stroke-dashoffset:0"
+       d="M -46.878109,-721.97801 H -146.87795"
+       id="path101" />
+    <path
+       style="opacity:1;fill:#000000;stroke:#000000;stroke-width:0.999995;stroke-dasharray:none"
+       d="m -12.069524,-520.49585 -37.108026,-51.6784"
+       id="path102" />
+    <path
+       style="opacity:1;fill:#000000;stroke:#000000;stroke-width:0.999999;stroke-dasharray:none"
+       d="m -46.271787,-520.6861 -23.736868,-51.5715"
+       id="path103" />
+    <path
+       style="opacity:1;fill:#000000;stroke:#000000;stroke-width:0.999998;stroke-dasharray:none"
+       d="m -83.104764,-520.30803 -5.104282,-52.09966"
+       id="path104" />
+    <path
+       style="opacity:1;fill:#000000;stroke:#000000;stroke-width:0.999997;stroke-dasharray:none"
+       d="m -109.90495,-520.72135 5.10431,-51.68578"
+       id="path105" />
+    <path
+       style="opacity:1;fill:#000000;stroke:#000000;stroke-width:0.999995;stroke-dasharray:none"
+       d="m -180.41142,-520.49585 37.10824,-51.6784"
+       id="path106" />
+    <path
+       style="opacity:1;fill:#000000;stroke:#000000;stroke-width:0.999994;stroke-dasharray:none"
+       d="m -146.20896,-520.55631 23.737,-51.70968"
+       id="path107" />
+    <text
+       xml:space="preserve"
+       style="font-size:12.7px;line-height:1.4;font-family:Serif;-inkscape-font-specification:Serif;text-align:center;text-decoration-color:#000000;letter-spacing:1.5875px;word-spacing:0px;writing-mode:lr-tb;direction:ltr;text-anchor:middle;white-space:pre;inline-size:245.804;fill:#ffffff;stroke-width:1.5;-inkscape-stroke:none"
+       x="619.23004"
+       y="-765.82172"
+       id="text110"
+       transform="translate(-548.43069,256.85099)"><tspan
+         x="619.23004"
+         y="-765.82172"
+         id="tspan66"><tspan
+           style="text-align:start;text-anchor:start;fill:#000000"
+           id="tspan63">D</tspan><tspan
+           style="font-size:65%;baseline-shift:sub"
+           id="tspan64">...</tspan><tspan
+           style="text-align:start;text-anchor:start;fill:#000000"
+           id="tspan65">
+</tspan></tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:12.7px;line-height:1.4;font-family:Serif;-inkscape-font-specification:Serif;text-align:center;text-decoration-color:#000000;letter-spacing:1.5875px;word-spacing:0px;writing-mode:lr-tb;direction:ltr;text-anchor:middle;white-space:pre;inline-size:245.804;fill:#ffffff;stroke-width:1.5;-inkscape-stroke:none"
+       x="619.23004"
+       y="-765.82172"
+       id="text113"
+       transform="translate(-587.58927,256.85099)"><tspan
+         x="619.23004"
+         y="-765.82172"
+         id="tspan71"><tspan
+           style="text-align:start;text-anchor:start;fill:#000000"
+           id="tspan67">D</tspan><tspan
+           style="font-size:65%;baseline-shift:sub"
+           id="tspan68">4</tspan><tspan
+           style="text-align:start;text-anchor:start;fill:#000000"
+           id="tspan69">
+</tspan></tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:12.7px;line-height:1.4;font-family:Serif;-inkscape-font-specification:Serif;text-align:center;text-decoration-color:#000000;letter-spacing:1.5875px;word-spacing:0px;writing-mode:lr-tb;direction:ltr;text-anchor:middle;white-space:pre;inline-size:245.804;fill:#ffffff;stroke-width:1.5;-inkscape-stroke:none"
+       x="619.23004"
+       y="-765.82172"
+       id="text116"
+       transform="translate(-614.04777,256.85099)"><tspan
+         x="619.23004"
+         y="-765.82172"
+         id="tspan75"><tspan
+           style="text-align:start;text-anchor:start;fill:#000000"
+           id="tspan72">D</tspan><tspan
+           style="font-size:65%;baseline-shift:sub"
+           id="tspan73">3</tspan><tspan
+           style="text-align:start;text-anchor:start;fill:#000000"
+           id="tspan74">
+</tspan></tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:12.7px;line-height:1.4;font-family:Serif;-inkscape-font-specification:Serif;text-align:center;text-decoration-color:#000000;letter-spacing:1.5875px;word-spacing:0px;writing-mode:lr-tb;direction:ltr;text-anchor:middle;white-space:pre;inline-size:245.804;fill:#ffffff;stroke-width:1.5;-inkscape-stroke:none"
+       x="619.23004"
+       y="-765.82172"
+       id="text119"
+       transform="translate(-651.61884,256.85099)"><tspan
+         x="619.23004"
+         y="-765.82172"
+         id="tspan79"><tspan
+           style="text-align:start;text-anchor:start;fill:#000000"
+           id="tspan76">D</tspan><tspan
+           style="font-size:65%;baseline-shift:sub"
+           id="tspan77">2</tspan><tspan
+           style="text-align:start;text-anchor:start;fill:#000000"
+           id="tspan78">
+</tspan></tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:12.7px;line-height:1.4;font-family:Serif;-inkscape-font-specification:Serif;text-align:center;text-decoration-color:#000000;letter-spacing:1.5875px;word-spacing:0px;writing-mode:lr-tb;direction:ltr;text-anchor:middle;white-space:pre;inline-size:245.804;fill:#ffffff;stroke-width:1.5;-inkscape-stroke:none"
+       x="619.23004"
+       y="-765.82172"
+       id="text122"
+       transform="translate(-686.01489,256.85099)"><tspan
+         x="619.23004"
+         y="-765.82172"
+         id="tspan83"><tspan
+           style="text-align:start;text-anchor:start;fill:#000000"
+           id="tspan80">D</tspan><tspan
+           style="font-size:65%;baseline-shift:sub"
+           id="tspan81">1</tspan><tspan
+           style="text-align:start;text-anchor:start;fill:#000000"
+           id="tspan82">
+</tspan></tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:12.7px;line-height:1.4;font-family:Serif;-inkscape-font-specification:Serif;text-align:center;text-decoration-color:#000000;letter-spacing:1.5875px;word-spacing:0px;writing-mode:lr-tb;direction:ltr;text-anchor:middle;white-space:pre;inline-size:245.804;fill:#ffffff;stroke-width:1.5;-inkscape-stroke:none"
+       x="588.94971"
+       y="-765.82172"
+       id="text127"
+       transform="translate(-539.34094,249.73978)"><tspan
+         x="588.94971"
+         y="-765.82172"
+         id="tspan85"><tspan
+           style="fill:#000000"
+           id="tspan84">MFT
+</tspan></tspan><tspan
+         x="588.94971"
+         y="-748.04169"
+         id="tspan87"><tspan
+           style="fill:#000000"
+           id="tspan86">Devices
+</tspan></tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:12.7px;line-height:1.4;font-family:Serif;-inkscape-font-specification:Serif;text-align:center;text-decoration-color:#000000;letter-spacing:1.5875px;word-spacing:0px;writing-mode:lr-tb;direction:ltr;text-anchor:middle;white-space:pre;inline-size:245.804;fill:#ffffff;stroke-width:1.5;-inkscape-stroke:none"
+       x="588.94971"
+       y="-765.82172"
+       id="text129"
+       transform="translate(-837.58229,219.47543)"><tspan
+         x="588.94971"
+         y="-765.82172"
+         id="tspan89"><tspan
+           style="fill:#000000"
+           id="tspan88">Raw
+</tspan></tspan><tspan
+         x="588.94971"
+         y="-748.04169"
+         id="tspan91"><tspan
+           dx="0 -1.5875 1.5875002"
+           style="fill:#000000"
+           id="tspan90">files
+</tspan></tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:12.7px;line-height:1.4;font-family:Serif;-inkscape-font-specification:Serif;text-align:center;text-decoration-color:#000000;letter-spacing:1.5875px;word-spacing:0px;writing-mode:lr-tb;direction:ltr;text-anchor:middle;white-space:pre;inline-size:245.804;fill:#ffffff;stroke-width:1.5;-inkscape-stroke:none"
+       x="588.94971"
+       y="-765.82172"
+       id="text130"
+       transform="translate(-819.97394,110.5238)"><tspan
+         x="588.94971"
+         y="-765.82172"
+         id="tspan93"><tspan
+           style="fill:#000000"
+           id="tspan92">Interim
+</tspan></tspan><tspan
+         x="588.94971"
+         y="-748.04169"
+         id="tspan95"><tspan
+           dx="0 -1.5875 1.5875002"
+           style="fill:#000000"
+           id="tspan94">files
+</tspan></tspan></text>
+    <path
+       style="opacity:1;fill:#000000;stroke:#000000;stroke-width:0.999994;stroke-dasharray:none"
+       d="M -69.937521,-572.25029 V -722.25021"
+       id="path130" />
+    <path
+       style="opacity:1;fill:#000000;stroke:#000000;stroke-width:0.999994;stroke-dasharray:none"
+       d="M -88.204331,-572.25029 V -722.25021"
+       id="path131" />
+    <path
+       style="opacity:1;fill:#000000;stroke:#000000;stroke-width:0.999994;stroke-dasharray:none"
+       d="M -104.86258,-572.25029 V -722.25021"
+       id="path132" />
+    <path
+       style="opacity:1;fill:#000000;stroke:#000000;stroke-width:0.999994;stroke-dasharray:none"
+       d="M -122.69573,-572.25029 V -722.25021"
+       id="path133" />
+    <text
+       xml:space="preserve"
+       style="font-size:12.7px;line-height:1.4;font-family:Serif;-inkscape-font-specification:Serif;text-align:center;text-decoration-color:#000000;letter-spacing:1.5875px;word-spacing:0px;writing-mode:lr-tb;direction:ltr;text-anchor:middle;white-space:pre;inline-size:245.804;fill:#ffffff;stroke-width:1.5;-inkscape-stroke:none"
+       x="588.94971"
+       y="-765.82172"
+       id="text133"
+       transform="translate(-824.25396,-25.939028)"><tspan
+         x="588.94971"
+         y="-765.82172"
+         id="tspan97"><tspan
+           style="fill:#000000"
+           id="tspan96">Processed
+</tspan></tspan><tspan
+         x="588.94971"
+         y="-748.04169"
+         id="tspan99"><tspan
+           dx="0 -1.5875 1.5875002"
+           style="fill:#000000"
+           id="tspan98">files
+</tspan></tspan></text>
   </g>
 </svg>
