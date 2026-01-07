@@ -25,11 +25,13 @@ nav:
       - generate-report.md
       - rawdata-processing.md
       - data-visualization.md      
-  - How-to-guides:             
-      - retrieve-test-datasets.md
+  - How-to-guides:
       - create-databases.md
-      - Create an MFT class instance: create-MFT-class-instance.md      
+      - Create an MFT class instance: create-MFT-class-instance.md  
+      - register-MFT-devices.md
+      - retrieve-test-datasets.md    
   - Explanation:
+      - Jupyter notebooks: jupyter-introduction.md
       - package-usage.md
       - datafiles.md
       - config-vs-database.md

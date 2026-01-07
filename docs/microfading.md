@@ -10,7 +10,7 @@ Microfadeometry can be defined as an analytical technique that assesses the ligh
 
 - The prefix **micro** is used because the intense light beam is very small. The fading beam of most microfading devices has a diameter - usually obtained by calculating the full width at half maximum of the fading spot - of about 0.5 mm. In contrast with traditional light ageing methods such as xenotest or light boxes, the ability to perform measurements on a tiny spot allows us to use the technique directly on objects, so that the recorded ageing data directly relates to the objetcs we care for.
 
-The technique can be considered as micro-destructive. A colour change consists of a change in the optical properties of a materials, more precisely it is a change in the reflectance properties, which is the consequence of chemical changes happening at the molecular level. In other words, a colour change - permanent or reversible - cannot occur without chemical changes. When performing a microfading analysis, we are intentionally provoking a colour change, ie.  chemical change, but in a controlled manner. This 'controlled' aspect of the technique is what makes it acceptable. 
+The technique can be considered as micro-destructive. A colour change consists of a change in the optical properties of materials, more precisely it is a change in the reflectance properties, which is the consequence of chemical changes happening at the molecular level. In other words, a colour change - permanent or reversible - cannot occur without chemical changes. When performing a microfading analysis, we are intentionally provoking a colour change, i.e. a chemical change, but in a controlled manner. This 'controlled' aspect of the technique is what makes it acceptable. 
 
 
 

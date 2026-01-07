@@ -1,4 +1,6 @@
 
+For an optimal use of the `microfading` package, we recommend you to use the package inside a [Jupyter notebook environment](https://jupyter.org/). If you are not familiar with such an environment or if Jupyter is not installed on your computer, please first consult the appropriate documentation to install or learn about Jupyter notebooks.
+
 To install the latest version of the microfading package, open a terminal and enter the following command:
 
 ```

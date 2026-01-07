@@ -1,21 +1,11 @@
-# Welcome !
+# Microfading Python Package
 
-<img src="images/MF_logo_wbg-circle.png" alt="Logo" style="width: 300px; display: block; margin: 0 auto;">
-
-Welcome on the documentation website of the *microfading* python package. You will find on this website information and tutorials on how to install and use the *microfading* package.
+<img src="images/MF_logo_01.png" alt="Logo" style="width: 700px; display: block; margin: 0 auto;">
 
 
 ## New users
 
-If you are a new user, look at the [Get started section](https://g-patin.github.io/microfading/get-started/). It provides all the basic information you need to know about the package.
-
-## Contributions 
-
-We are welcoming any contributions, comments (positive and negative), ideas, etc. This is important to improve the quality of the package and its documentation. If you have encountered a bug or spotted an error, please don't hesitate to contact us by email (see below).
-
-## Contacts
-
-Email: microfading@mailo.com 
+If you are a new user, take a look at the [Get started section](https://g-patin.github.io/microfading/get-started/). It provides all the basic information you need to know about the package.
 
 ------------------------------------------
 
@@ -39,6 +29,15 @@ The package provies computational tools to ease the manipulation of microfading 
 	- Compute delta values
 	- Data fitting and extrapolation
 	
+------------------------------------------
+
+## Contributions 
+
+We are welcoming any contributions, comments (positive and negative), ideas, etc. This is important to improve the quality of the package and its documentation. If you have encountered a bug or spotted an error, please don't hesitate to contact us by email (see below).
+
+## Contacts
+
+Email: microfading@mailo.com 
 	
 
 ## Website structure
@@ -50,7 +49,7 @@ The package provies computational tools to ease the manipulation of microfading 
 
 If you are using this package for a publication, please cite the package as follows: 
 
-- Patin, G., 2025, *Microfading*, Python Package, v.1.4.0, [https://github.com/g-patin/microfading](https://github.com/g-patin/microfading)
+- Patin, G., 2025, *Microfading*, Python Package, v.2.1.0, [https://github.com/g-patin/microfading](https://github.com/g-patin/microfading)
 
  
 

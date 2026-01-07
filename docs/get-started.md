@@ -1,10 +1,12 @@
 In this section, we will give you all the essential information to correctly start using the `microfading` package.
 
+If you are not familiar with Python or Jupyter notebooks, you might want to consult our section on [Jupyter notebooks](https://g-patin.github.io/microfading/jupyter-introduction/), where we briefly describe what they are and why did we choose them for manipulating our microfading data.
+
 ## 1. **Do you have microfading data files?**
 
-The whole package is based on microfading data files that you either obtained yourself when performing microfading measurements or obtained from someone else. Each file corresponds to a single microfading measurement. The files consist of excel files with a specific structure organizing the data inside the files. Check the [datafiles section](https://g-patin.github.io/microfading/datafiles/) for more information about it. 
+The whole package is based on microfading data files that you either created yourself when performing microfading measurements or obtained from someone else. Each file corresponds to a single microfading measurement. The files consist of Excel or OpenDocument files with a specific structure organizing the data inside the files. Check the [datafiles section](https://g-patin.github.io/microfading/datafiles/) for more information about it. 
 	
-If you don't have any microfading files, the package has a function to load microfading files, so that you can use these files to play with the functionalities of the package (see [get_datasets](https://g-patin.github.io/microfading/get_datasets/) section).  
+If you don't have any microfading files, the package has a function to load microfading files, so that you can use these files to play with the functionalities of the package (see [get_datasets](https://g-patin.github.io/microfading/get_datasets/) section). To create the required files based on microfading raw files, consult the [rawdata processing section](https://g-patin.github.io/microfading/rawdata-processing/) of this website.
 	
 If you have files, the following lines of code shows how you can import them in the jupyter notebook:
 &nbsp;
@@ -37,6 +39,8 @@ PosixPath('/home/username/Documents/MFT/2024-144_MF.BWS003.G01_avg_BW1_model_202
 &nbsp;
 
 
+
+
 ## 2. **Central role of the `MFT` class**
 
 Once you have selected microfading files and encapsulated them inside a python list, you will need to create an instance of the `MFT` class passing the variable for your microfading files as argument (see code below). Most of the functions provided by the package can only be accessed through the `MFT` class.  
@@ -61,19 +65,21 @@ Once you have created an instance of the `MFT` class, you can access the functio
 List of all the plotting functions.
 ///
 	
-The functions can be run without passing any arguments, this will output the default values. To adjust the output to your needs, you will need to modify the values of the arguments. For instance, the function `get_cielab()` returns the $\Delta E_{00}$ values by default. If you want to retrieve other CIELAB coordinates, you will need to pass in a new value for the argument *coordinates* (see code below). To know the role of each argument in a function and which values can you pass in, you will need to read the documentation (see below). The latter can either be access in the jupyter notebook or in the [References section](https://g-patin.github.io/microfading/references/) of this website.
+The functions can be run without passing any arguments, this will output the default values. To adjust the output to your needs, you will need to modify the values of the arguments. For instance, the function `get_cielab()` returns the $\Delta E_{00}$ values by default. If you want to retrieve other CIE colorimetric coordinates, you will need to pass in a new value for the argument *coordinates* (see code below). To know the role of each argument in a function and which values can you pass in, you will need to read the documentation (see below). The latter can either be access in the jupyter notebook or in the [References section](https://g-patin.github.io/microfading/references/) of this website.
 	
-![Alt text](images/mf_functions_arguments.png){: .img-large align=left }
+![Alt text](images/mf_functions_arguments.png){: .img-Large align=left }
 /// caption
 Play with the argument values of functions 
 ///
 
 
-## 4. **Use the databases**
+## 4. **Configuration and databases files**
 
-If you are planning to perform microfading measurements more than once, we advise you to make use of the databases. This will allow you to save metadata about the microfaded object in the excel data file, which can ultimately be used to perform queries. For example, you could ask to retrieve all measurements performed on a given material or on objects created by a specific artist,etc. Unfortunately, such as a possibility has not been implemented yet.
-	
-To start using the databases, you will first need to create them and fill them with some information. To learn how to create databases, see the [Create databases section](https://g-patin.github.io/microfading/create-databases/). To learn how to fill the databases and properly manage them, see the [Databases management section](https://g-patin.github.io/microfading/databases-management/). 
+If you are planning to perform microfading measurements more than once, we advise you to make use of the configuration and database files. 
+
+The use of the configuration file allows you to set up some default behaviours to create some consistency across your measurements. For more information about the configuration, see the [Configuration info section](https://g-patin.github.io/microfading/configuration-info/).
+
+The database flies will allow you to save metadata about the microfaded object in the excel data file, which can ultimately be used to perform queries. For example, you could ask to retrieve all measurements performed on a given material or on objects created by a specific artist, etc. Unfortunately, such as a possibility has not been implemented yet. To start using the databases, you will first need to create them and fill them with some information. To learn how to create databases, see the [Create databases section](https://g-patin.github.io/microfading/create-databases/). To learn how to fill the databases and properly manage them, see the [Databases management section](https://g-patin.github.io/microfading/databases-management/). 
 
 
 ## 5. **Use the docstrings**

@@ -1,10 +1,14 @@
 
-This section deals with the config_info.json file of the `microfading` package and shows you how to adequately use it. 
+## 1. **Introduction**
 
+This section deals with the configuration information of the `microfading` package. The implementation of a configuration info file gives you the opportunity to define specific default behaviors. These information are stored inside a json file which is located inside the folder of the microfading package. Use the `get_config_path()` function to obtain the exact location of the configuration info file. 
 
-## 1. **Configuration info**
+The config_info file contains several dictionaries about different aspects of the `microfading package` (See Table 1, dictionary keys). To access the contain of the config_info file, use the `get_config()` function as illustrated in the figure below.
 
-The config_info file contains dictionaries about different aspects of the `microfading package` (See Table 1, dictionary keys). To access the contain of the config_info file, use the `get_config` method as illustrated in the figure below.
+For example, inside dictionary 'colorimetry', you can define the illuminant and the observer, so that every time you will use a function involving the use of an illuminant and an observer, it will automatically use the values you registered. 
+
+**IMPORTANT !!**
+Whenever you upgrade the `microfading` package, the *config_info* is reset to its initial state, i.e. empty dictionaries except for the 'functions' dictionary. This means that you will need to refill the config_info file as it was before the upgrade.
 
 ![Alt text](images/mf_get_config.png){: .img-large align=left }
 /// caption
@@ -27,11 +31,6 @@ Table 1. Description of the dictionary keys.
 |institution| Information about the institution using the microfading devices
 |report_figures | Information about the figures displayed in microfading reports
 
-For each key, information can be stored and used by some of the methods available in the `microfading` package. For exemple, the key *institution* enables you to store information about your institution (name, acronym, address, etc.), so that these info can automatically be added in reports or in microfading files as metadata. 
-
-
-**IMPORTANT !!**
-Whenever you upgrade the `microfading` package, the *config_info* is reset to its initial state, i.e. empty dictionaries except for the 'functions' dictionary. This means that you will need to refill the config_info file as it was before the upgrade.
 
 
 ## 2. **Content update**
@@ -60,12 +59,12 @@ Table 2. Description of the 'set' methods.
 
 ### set_DB
 
-The `set_DB` function enables you to connect the `microfading` package with databases files created by the `msdb` package. As a pre-requesite, you will need to have created databases files on your local computer ([create_DB](https://g-patin.github.io/microfading/create-databases/)). You can check the databases that you created by looking at the [config file](https://g-patin.github.io/msdb/get_config/) of the msdb package. 
+The `set_DB` function enables you to connect the `microfading` package with databases files created by the `msdb` package. As a pre-requesite, you will need to have created databases files on your local computer (see [create_DB section](https://g-patin.github.io/microfading/create-databases/)). You can check the databases that you created by looking at the [config file](https://g-patin.github.io/msdb/get_config/) of the msdb package. 
 
 
 ![Alt text](images/mf_set_DB.png){: .img-medium align=left }
 /// caption
-Information about the databases
+Set the information about the databases
 ///
 
 In the *db_name* widget, the names of the existing databases should appear when click on the `Tab` button. In the example below, we can see that I created 5 differents databases. One of them is called 'MFT' and this is the one I will choose for the microfading package. Its then automatically fills in the *db_path* widget.
@@ -91,5 +90,5 @@ Information about the microfading devices
 
 ---
 
-© 2025 Gauthier Patin. All rights reserved. | Last updated: 2025-05-24
+© 2025 Gauthier Patin. All rights reserved. | Last updated: 2025-12-09
 
