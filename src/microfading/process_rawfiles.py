@@ -41,7 +41,7 @@ def parse_datetime(date_string, language):
         return parsed_datetime_string, f'{parsed_datetime[-1]}-{parsed_datetime[1]}-{parsed_datetime[-3]}' 
 
 
-def MFT_fotonowy(files: list, filenaming:Optional[str] = 'none', folder_output:Optional[str] = '.', db:Optional[bool] = False, comment:Optional[str] = '', device_nb:Optional[str] = 'default', authors:Optional[str] = 'XX', white_standard:Optional[bool] = 'default', rounding:Optional[int] = None, interpolation:Optional[bool] = True, dose_unit:Optional[str] = 'He', step:Optional[float | int] = 0.1, average:Optional[int] = 'undefined', observer:Optional[str] = 'default', illuminant:Optional[str] = 'default', background:Optional[str] = 'black', language:Optional[str] = None, delete_files:Optional[bool] = True, return_filename:Optional[bool] = True):
+def MFT_fotonowy(files: list, filenaming:Optional[str] = 'none', folder_output:Optional[str] = '.', db:Optional[bool] = False, comment:Optional[str] = '', device_nb:Optional[str] = 'none', authors:Optional[str] = 'XX', white_standard:Optional[bool] = 'default', rounding:Optional[int] = None, interpolation:Optional[bool] = True, dose_unit:Optional[str] = 'He', step:Optional[float | int] = 0.1, average:Optional[int] = 'undefined', observer:Optional[str] = 'default', illuminant:Optional[str] = 'default', background:Optional[str] = 'black', language:Optional[str] = None, output_format:Optional[str] = 'excel', delete_files:Optional[bool] = True, return_filename:Optional[bool] = True):
     """Process the microfading rawdata obtained from the Fotonowy device.
 
     Parameters
@@ -113,6 +113,10 @@ def MFT_fotonowy(files: list, filenaming:Optional[str] = 'none', folder_output:O
         If you are working on a Windows computer, you can use of the following languages (non-exhaustive list) : 'en', 'fr', 'it', 'nl', 'de', 'es'.
         If you are working on a Linux OS, open a terminal, enter " locale -a ", and choose one language among the returned list.
         For more information, consult the online documentation (https://g-patin.github.io/microfading/language-setting/).
+    
+    output_format : str, optional
+        Output file format for the interim files, by default 'xlsx'.
+        By default, the interim files will be saved as '.xlxs' (excel). When 'ods', it will save the output files as '.ods', which is the open source version of excel.
     
     delete_files : Optional[bool], optional
         Whether to delete the raw files, by default True
@@ -383,46 +387,204 @@ def MFT_fotonowy(files: list, filenaming:Optional[str] = 'none', folder_output:O
         dic_infos.pop('Illuminant') # remove the Illuminant info
         dic_infos['meas_id'] = f'{dic_infos["Object"][0]}_{dic_infos["Sample"][0]}'
         df_info = pd.DataFrame.from_dict(dic_infos).T 
+
+        # retrieve light info
+        LED_nb = df_info.loc['LED'].values[0]
+        LED_ID = f'LED{LED_nb}'
+        LED_info = f'{LED_ID}_{MFT_info_dictionaries.LEDs_info[LED_nb]}'
+
+        # retrieve light energy info
+        current = int(df_info.loc['Curr'].values[0].split(' ')[0]) 
+        fwhm = MFT_info_dictionaries.beam_FWHM[LED_nb]
+        area = pi * (((fwhm/1e6)/2)**2)
+        power = np.round((irr * area) * 1e3, 3)
+        lum = np.round(area * (ill * 1e6),3)        
+        
+        # retrieve the integration times
+        int_time_sample = int(df_info.loc['Sample integration time [ms]'].values[0])
+        int_time_whitestandard = int(df_info.loc['White standard integration time [ms]'].values[0])
+
+        # specular component info
+        spec_comp = 'SCE_excluded'
+
+        # retrieve the dates
+        date_time_string = df_info.loc['Date'].values[0]
+
+        try:
+            date_time_analysis = pd.to_datetime(date_time_string)
+            date = date_time_analysis.date()
+
+        except ValueError:
+            date_time_analysis,date = parse_datetime(date_string=date_time_string, language=language)
+
+        date_time_processing = datetime.now()
+
+        
+        # retrieve the white standard info
+        if db == False:
+            if white_standard == 'default':
+                white_standard_info = 'undefined'
+            else:
+                white_standard_info = white_standard
+        else:            
+            # Retrieve the white standard information
+            df_WR = databases.get_white_standards()
+            if white_standard in df_WR['ID'].values:
+                df_WR = df_WR.set_index('ID')
+                WR_nb = white_standard
+                WR_description = df_WR.loc[white_standard]['description']
+            elif white_standard == 'default':
+                WR_nb = 'none'
+                WR_description = 'Fotonowy fotolon PTFE'
+            elif white_standard == 'unknown':
+                WR_nb = 'none'
+                WR_description = 'unknown'
+            else:
+                print(f'The white reference you entered ({white_standard}) has not been registered. Please, consult the online documentation for more information about registering information (https://g-patin.github.io/microfading/).')
+                return
+            white_standard_info = f'{WR_nb}_{WR_description}'
+        
+        # retrieve the institution info
+        config_info = config.get_config_info()
+        if len(config_info['institution']) > 0:
+            institution_info = config.get_institution_info()['value']
+            host_institution_name = institution_info['name']
+            host_institution_department = institution_info['department']
+
+            if len(host_institution_department) > 0:
+                host_institution = f'{host_institution_name}_{host_institution_department}'
+            else:
+                host_institution = host_institution_name
+        else:
+            host_institution = 'undefined'
+            print('You might want to register the info of your institution in the config_info.json file -> mf.set_institution_info().')
+
+        
+        # retrieve device ID info
+        if db == False:
+            if device_nb == 'none':
+                device = 'Fotonowy'
+            else:
+                device = device_nb
+        
+        else:
+            df_devices = databases.get_devices()
+            if device_nb in df_devices['ID'].values:
+                df_devices = df_devices.set_index('ID')                    
+                device_name = df_devices.loc[device_nb]['name']
+                device_description = df_devices.loc[device_nb]['description']
+
+            elif device_nb == 'default' or device_nb.lower() == 'fotonowy':
+                device_nb = 'none'
+                device_name = 'unnamed'
+                device_description = 'Fotonowy-MFT'
+
+            else:
+                print(f'The device you entered ({device_nb}) has not been registered. Please first register the device, by using the function mf.set_devices_info().')
+                return
+            
+            device = f'{device_nb}_{device_name}_{device_description}'
+
+        # device info
+        device_info = [
+            "",
+            device, 
+            'none',
+            'none',
+            'none',
+            '0° : 45°',
+            'unknown',
+            'unknown',
+            'none',
+            'none',
+            'Thorlabs, FT030',
+            f'{LED_info}',
+            'none',
+            'none',
+            'none',
+            white_standard_info
+        ]
+
+        # results info
+        results_info = ["", "ND", "ND"]
+        
+            
+        if db == False: 
+
+            info_parameters = MFT_info_templates.head_info + MFT_info_templates.device_info + MFT_info_templates.analysis_info + MFT_info_templates.spot_info + MFT_info_templates.beam_info + MFT_info_templates.results_info      
+
+                        
+            df_info.loc['numDataPoints'] = numDataPoints                
+            
+            # define meas_id
+            meas_id = df_info.loc['meas_id'].values[0]        
+            
+            # define authors
+            if authors == 'XX':
+                authors = 'unknown'
+            
+            # head info
+            head_info = [
+                "SINGLE MICROFADING ANALYSIS",
+                authors,
+                host_institution,
+                date_time_analysis,
+                date_time_processing,
+                comment,                
+            ]
             
             
-        if db == False:          
+            # analysis info 
+            analysis_info = [
+                " ",
+                meas_id,                
+                spec_comp,
+                int_time_sample,
+                int_time_whitestandard,
+                average, 
+                int(duration_min), 
+                interval_sec,
+                1,
+                illuminant,
+                observer,
+            ]
+            
+            # spot info         
+            spot_info = [
+                "",
+                "ND",                 # group 
+                "ND",                 # group_description
+                "ND",                 # spot_color
+                "ND",                 # spot_components
+                "ND",                 # background
+                "ND",                 # spot_image
+                "ND",                 # other_analyses
+            ]
 
-            df_info.loc['authors'] = authors
-            df_info.loc['comment'] = comment
-            df_info.loc['illuminant'] = illuminant
-            df_info.loc['observer'] = observer
-            df_info.loc['duration_min'] = int(duration_min)
-            df_info.loc['interval_sec'] = interval_sec
-            df_info.loc['numDataPoints'] = numDataPoints 
-            df_info.loc['radiantExposure_He_MJ/m^2'] = np.round(total_He, 3)
-            df_info.loc['exposureDose_Hv_Mlxh'] = np.round(total_Hv, 3)
-            df_info.loc['illuminance_Ev_Mlx'] = np.round(ill, 4)
-            df_info.loc['irradiance_Ee_W/m^2'] = int(irr)    
-
-            for param in MFT_info_templates.results_info:
-                df_info.loc[param] = ''        
-
-            current = int(df_info.loc['Curr'].values[0].split(' ')[0])
-            df_info.loc['Curr'] = current
-            df_info = df_info.rename(index={'Curr': 'current_mA'})
-
-            df_info.index.name = 'parameter'
-            df_info.columns = ['value']  
-            df_info = df_info.reset_index()
+            # beam info               
+            beam_info = [
+                "",
+                'ND',
+                'ND',
+                fwhm,
+                current,
+                power,
+                lum,
+                int(irr),
+                np.round(ill, 4),
+                np.round(total_He, 3),
+                np.round(total_Hv, 3),                   
+            ]            
+            
+            info_values = head_info + device_info + analysis_info + spot_info + beam_info + results_info            
+            
 
         else:
                 
             if 'project_id' in db_objects.columns:
                 db_objects = db_objects.drop('project_id', axis=1)
                 
-            info_parameters = [
-            "measurement_type",
-            "authors",
-            "host_institution",
-            "datetime_analysis",
-            "datetime_processing",
-            "comment",
-            "[PROJECT INFO]"] + list(db_projects.columns) + ["[OBJECT INFO]"] + list(db_objects.columns) + MFT_info_templates.device_info + MFT_info_templates.analysis_info + MFT_info_templates.spot_info + MFT_info_templates.beam_info + MFT_info_templates.results_info
+            info_parameters = MFT_info_templates.head_info + ["[PROJECT INFO]"] + list(db_projects.columns) + ["[OBJECT INFO]"] + list(db_objects.columns) + MFT_info_templates.device_info + MFT_info_templates.analysis_info + MFT_info_templates.spot_info + MFT_info_templates.beam_info + MFT_info_templates.results_info
 
             df_authors = databases.get_users()
 
@@ -447,36 +609,9 @@ def MFT_fotonowy(files: list, filenaming:Optional[str] = 'none', folder_output:O
                     authors_names = f"{df_author['surname'].values[0]}, {df_author['name'].values[0]}"
                 
                 else:
-                    print(f'The author name "{authors}" has not been registered in the databases. Use the function add_new_person() to register the person.')
+                    print(f'The author name "{authors}" has not been registered in the databases. Please, consult the online documentation for more information about registering information (https://g-patin.github.io/microfading/).')
                     authors_names = authors
-                   
-
-            
-            
-            config_info = config.get_config_info()
-            if len(config_info['institution']) > 0:
-                institution_info = config.get_institution_info()['value']
-                host_institution_name = institution_info['name']
-                host_institution_department = institution_info['department']
-
-                if len(host_institution_department) > 0:
-                    host_institution = f'{host_institution_name}_{host_institution_department}'
-                else:
-                    host_institution = host_institution_name
-            else:
-                host_institution = 'undefined'
-                print('You might want to register the info of your institution in the config_info.json file -> mf.set_institution_info().')
-
-            date_time_string = df_info.loc['Date'].values[0]
-
-            try:
-                date_time_analysis = pd.to_datetime(date_time_string)
-                date = date_time_analysis.date()
-
-            except ValueError:
-                date_time_analysis,date = parse_datetime(date_string=date_time_string, language=language)
-
-            date_time_processing = datetime.now()
+                     
 
             project_id = raw_file_cl.stem.split(' ')[0]
             object_id = raw_file_cl.stem.split(' ')[1]
@@ -499,78 +634,16 @@ def MFT_fotonowy(files: list, filenaming:Optional[str] = 'none', folder_output:O
             else:
                 LED_info = LED_ID
                 print(f'The LED_ID ({LED_ID}) related to your analysis is not present in the registered lamps ({existing_LEDs}). Please make sure to register it.')
-                          
-            
-
-            df_devices = databases.get_devices()
-            if device_nb in df_devices['ID'].values:
-                df_devices = df_devices.set_index('ID')                    
-                device_name = df_devices.loc[device_nb]['name']
-                device_description = df_devices.loc[device_nb]['description']
-
-            elif device_nb == 'default' or device_nb.lower() == 'fotonowy':
-                device_nb = 'none'
-                device_name = 'unnamed'
-                device_description = 'Fotonowy-MFT'
-
-            else:
-                print(f'The device you entered ({device_nb}) has not been registered. Please first register the device, by using the function mf.set_devices_info().')
-                return
-
-            # Retrieve the white standard information
-            df_WR = databases.get_white_standards()
-            if white_standard in df_WR['ID'].values:
-                df_WR = df_WR.set_index('ID')
-                WR_nb = white_standard
-                WR_description = df_WR.loc[white_standard]['description']
-            elif white_standard == 'default':
-                WR_nb = 'none'
-                WR_description = 'Fotonowy fotolon PTFE'
-            elif white_standard == 'unknown':
-                WR_nb = 'none'
-                WR_description = 'unknown'
-            else:
-                print(f'The white reference you entered ({white_standard}) has not been registered. Please first register the white reference, by using the function mf.add_references().')
-                return
-                
-            # Gather all the device info inside a list
-            device_info = [
-                " ",
-                f'{device_nb}_{device_name}_{device_description}', 
-                'none',
-                'none',
-                'none',
-                '0° : 45°',
-                'unknown',
-                'unknown',
-                'none',
-                'none',
-                'Thorlabs, FT030',
-                f'{LED_info}',
-                'none',
-                'none',
-                'none',
-                f'{WR_nb}_{WR_description}'   
-            ]
-
-
+                 
+             
             # Retrieve the analysis info values
                 
             meas_nb = raw_file_cl.stem.split('_')[1]
-            meas_id = f'MF.{object_id}.{meas_nb}'
-            spec_comp = 'SCE_excluded'
-
-            int_time_sample = int(df_info.loc['Sample integration time [ms]'].values[0])
-            int_time_whitestandard = int(df_info.loc['White standard integration time [ms]'].values[0])
-            fwhm = MFT_info_dictionaries.beam_FWHM[LED_nb]
-
-            area = pi * (((fwhm/1e6)/2)**2)
-            power = np.round((irr * area) * 1e3, 3)
-            lum = np.round(area * (ill * 1e6),3)
-            current = int(df_info.loc['Curr'].values[0].split(' ')[0])       
+            meas_id = f'MF.{object_id}.{meas_nb}'                       
+                              
                            
             analysis_info = [
-                " ",
+                "",
                 meas_id,                
                 spec_comp,
                 int_time_sample,
@@ -585,13 +658,13 @@ def MFT_fotonowy(files: list, filenaming:Optional[str] = 'none', folder_output:O
 
 
             # spot info
-            spot_image = ""
-            other_analyses = ""
-            spot_color = ""
-            spot_components = ""
+            spot_image = "ND"
+            other_analyses = "ND"
+            spot_color = "ND"
+            spot_components = "ND"
 
             spot_info = [
-                " ",
+                "",
                 group, 
                 group_description,
                 spot_color,
@@ -604,9 +677,9 @@ def MFT_fotonowy(files: list, filenaming:Optional[str] = 'none', folder_output:O
 
             # beam info               
             beam_info = [
-                " ",
-                'none',
-                'none',
+                "",
+                'ND',
+                'ND',
                 fwhm,
                 current,
                 power,
@@ -624,11 +697,12 @@ def MFT_fotonowy(files: list, filenaming:Optional[str] = 'none', folder_output:O
                 date_time_analysis,
                 date_time_processing,
                 comment,
-                " "] + project_info + [" "] + object_info + device_info + analysis_info + spot_info + beam_info + [" ", " "]
+                " "] + project_info + [" "] + object_info + device_info + analysis_info + spot_info + beam_info + results_info
 
-            df_info = pd.DataFrame({'parameter':info_parameters})
-            df_info["value"] = pd.Series(info_values)            
+        df_info = pd.DataFrame({'parameter':info_parameters})
+        df_info["value"] = pd.Series(info_values)            
             
+        
         df_info = df_info.set_index('parameter')
 
         # define the output filename
@@ -657,7 +731,7 @@ def MFT_fotonowy(files: list, filenaming:Optional[str] = 'none', folder_output:O
             print(f'The output folder you entered {folder_output} does not exist. Please make sure the output folder has been created.')
             return 
             
-        with pd.ExcelWriter(Path(folder_output) / f'{filename}.xlsx') as writer:
+        with pd.ExcelWriter(Path(folder_output) / f'{filename}.{output_format}') as writer:
 
             df_info.to_excel(writer, sheet_name='info', index=True)
             df_cl.to_excel(writer, sheet_name="CIELAB", index=False)
