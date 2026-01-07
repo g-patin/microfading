@@ -82,6 +82,19 @@ def create_DB():
     return msdb.create_db()
 
 
+def delete_device_info(key:Optional[str] = None):
+    """Delete information about devices stored in the config_info.json file
+
+    Parameters
+    ----------
+    key : Optional[str], optional
+        Device ID value, by default None
+        When None, it returns an ipywidget from which one can select the device ID.    
+    """
+
+    return config.delete_device_info(key=key)
+
+
 def is_DB():
     """Check whether the databases files were created and registered.
 
@@ -230,7 +243,7 @@ def get_config(key:Optional[str] = 'all'):
 
     Parameters
     ----------
-    key : Optional[str], optional
+    key : str, optional
         Give you the possibility to retrieve a specific category of information, by default 'all'
         One can enter a key value among the following list: ['colorimetry', 'databases', 'devices', 'exposure', 'filters', 'functions', 'lamps', 'light_dose', 'institution', 'report_figures']
 
@@ -321,8 +334,36 @@ def get_parameters_info():
     return parameters
 
 
-def process_rawdata(files: list, device: str, filenaming:Optional[str] = 'none', folder:Optional[str] = '.', db:Optional[bool] = 'default', comment:Optional[str] = '', fading_mode:Optional[str] = 'default', waiting_time:Optional[int] = 1, authors:Optional[str] = 'XX', white_standard:Optional[str] = 'default', rounding:Union[int,tuple,list] = (4,3), interpolate_wl:Union[tuple,str] = 'default', interpolate_exposure:Union[tuple,str] = ('He', 0.1), interpolation:Optional[bool] = 'default', dose_unit:Optional[str] = 'default', step:Optional[float | int] = 0.1, average:Optional[int] = 'undefined', observer:Optional[str] = 'default', illuminant:Optional[str] = 'default', background:Optional[str] = 'undefined', beam_power:Optional[tuple] = None, language:Optional[str] = None, delete_files:Optional[bool] = True, return_filename:Optional[bool] = True):
-    """Process the microfading raw files created by the software that performed the microfading analysis. 
+def process_rawdata(
+        
+    files: list,
+    device: str,
+    filenaming:Optional[str] = 'none',
+    folder:Optional[str] = '.',
+    db:Optional[bool] = 'default',
+    comment:Optional[str] = '',
+    fading_mode:Optional[str] = 'default',
+    waiting_time:Optional[int] = 1,
+    authors:Optional[str] = 'XX',
+    white_standard:Optional[str] = 'default',
+    rounding:Union[int,tuple,list] = (4,3),
+    interpolate_wl:Union[tuple,str] = 'default',
+    interpolate_exposure:Union[tuple,str] = ('He', 0.1),
+    interpolation:Optional[bool] = 'default',
+    dose_unit:Optional[str] = 'default',
+    step:Optional[float | int] = 0.1,
+    average:Optional[int] = 'undefined',
+    observer:Optional[str] = 'default',
+    illuminant:Optional[str] = 'default',
+    background:Optional[str] = 'undefined',
+    beam_power:Optional[tuple] = None,
+    language:Optional[str] = None,
+    output_format:Optional[str] = 'xlsx',
+    delete_files:Optional[bool] = 'default',
+    return_filename:Optional[bool] = False
+    ):
+    """
+    Process the microfading raw files created by the software that performed the microfading analysis. 
 
 
     Parameters
@@ -331,7 +372,9 @@ def process_rawdata(files: list, device: str, filenaming:Optional[str] = 'none',
         A list of string that corresponds to the absolute path of the raw files.
     
     device : str
-        Define the  microfading that has been used to generate the raw files ('fotonowy_default', 'sMFT_default').
+        Define the  microfading that has been used to generate the raw files ('fotonowy'). Currently, this function can only process raw files obtained with a Fotonowy. Don't hesitate to contact us, if you would like process your own specific microfading raw files with our package.
+
+        If you registered your microfading device using the function set_devices_info() (for more information about it: https://g-patin.github.io/microfading/retrieve-test-datasets/), you can also entered the ID number of your device and it will directly take into account the parameters and information that you provided. 
     
     filenaming : [str | list], optional
         Define the filename of the output excel file, by default 'none' 
@@ -399,8 +442,12 @@ def process_rawdata(files: list, device: str, filenaming:Optional[str] = 'none',
         If you are working on a Linux OS, open a terminal, enter " locale -a ", and choose one language among the returned list.
         For more information, consult the online documentation (https://g-patin.github.io/microfading/language-setting/).
     
+    output_format : str, optional
+        Output file format for the interim files, by default 'xlsx'.
+        By default, the interim files will be saved as '.xlxs' (excel). When 'ods', it will save the output files as '.ods', which is the open source version of excel.
+        
     delete_files : bool, optional
-        Whether to delete the raw files, by default True
+        Whether to delete the raw files, by default 'default'
 
     return_filename : Optional[bool], optional
         Whether to return the filename of the created excel file that contains the microfading data and metadata, by default True
@@ -426,7 +473,6 @@ def process_rawdata(files: list, device: str, filenaming:Optional[str] = 'none',
     # Is the device recorded ?
     if device not in config_info['devices'].keys():
         pass
-
 
 
     # Set the average value (not relevant for all microfading devices)
@@ -490,6 +536,13 @@ def process_rawdata(files: list, device: str, filenaming:Optional[str] = 'none',
         else:
             white_standard = config.get_devices_info()[device]['white_standard']
     
+    # Set the delete_files value
+    if delete_files == 'default' and db==True:
+        if len(config_info['devices']) == 0:
+            delete_files = False 
+
+        else:
+            delete_files = config.get_devices_info()[device]['delete_rawfiles']
 
     # Retrieve the process function
     if device.lower() in ['fotonowy', 'smft', 'stereo']:
@@ -513,17 +566,26 @@ def process_rawdata(files: list, device: str, filenaming:Optional[str] = 'none',
     
     # Run the process_rawfiles function
     if 'fotonowy' in process_function:
-        return process_rawfiles.MFT_fotonowy(files=files, filenaming=filenaming, folder_output=folder, db=db, comment=comment, device_nb=device, authors=authors, white_standard=white_standard, rounding=rounding, interpolation=interpolation, dose_unit=dose_unit, step=step, average=average, observer=observer, illuminant=illuminant, background=background, language=language, delete_files=delete_files, return_filename=return_filename)
+        return process_rawfiles.MFT_fotonowy(files=files, filenaming=filenaming, folder_output=folder, db=db, comment=comment, device_nb=device, authors=authors, white_standard=white_standard, rounding=rounding, interpolation=interpolation, dose_unit=dose_unit, step=step, average=average, observer=observer, illuminant=illuminant, background=background, language=language,output_format=output_format, delete_files=delete_files, return_filename=return_filename)
 
     
     elif 'stereo' in process_function:
         return process_rawfiles.MFT_stereo(files=files, filenaming=filenaming, folder_output=folder, db=db, comment=comment, device_nb=device, fading_mode=fading_mode, waiting_time=waiting_time, authors=authors, white_standard=white_standard, rounding=rounding, interpolate_wl=interpolate_wl, interpolate_exposure=interpolate_exposure, observer=observer, illuminant=illuminant, background=background, beam_power=beam_power, delete_files=delete_files, return_filename=return_filename)
     
 
-def reset_config():
-    """Reset the content of config_info.json to its initial state, i.e. all empty dictionaries.  
+def reset_config(keys:Union[str, list] = 'all'):
+    """Reset the content of config_info.json to its initial state, i.e. an empty dictionary.
+
+    Parameters
+    ----------
+    keys : Union[str, list], optional
+        Select which dictionaries inside the config_info file to reset by entering the keys related to each dictionary, by default 'all'
+        The following keys are valid: 'colorimetry', 'comments', 'databases', 'devices', 'exposure', 'filenaming', 'filters', 'functions', 'light_dose', 'lamps', 'institution', 'report_figures'.
+
+        When 'all', it resets all the dictionaries.
     """
-    return config.reset_config()
+    
+    return config.reset_config(keys=keys)
 
 
 def set_colorimetry_info():
@@ -552,7 +614,17 @@ def set_exposure_conditions():
 
 def set_DB(folder_path:Optional[str] = '', use:Optional[bool] = True):
     """Record the databases info in the config_info.json file of the microfading package.
+
+    Parameters
+    ----------
+    folder_path : Optional[str], optional
+        Location of the database files on your local computer, by default ''
+
+    use : Optional[bool], optional
+        Whether the functions of the microfading package should use by default the database files, by default True
+
     """
+    
     return config.set_db(folder_path=folder_path, use=use)
     
 
@@ -693,7 +765,7 @@ class MFT(object):
         derivation : bool, optional
             Whether to return the first derivative values of the desired coordinates, by default False
 
-        rounding : Optional[int], optional
+        rounding : int, optional
             Rounding of the colorimetric values, by default 4
             The value corresponds to the amount of digits after the decimal separator.
 
@@ -751,25 +823,25 @@ class MFT(object):
             Mathematical equation used to fit the coordinate values, by default 'c0*(x**c1)'.
             Any others mathematical can be given. The following equation is often relevant for fitting microfading data: '((x) / (c0 + (c1*x))) + c2'.
 
-        initial_params : Optional[List[float]], optional
+        initial_params : List[float], optional
             Initial guesses of the 'c' parameters given in the equation (c0, c1, c2, etc.), by default [0.1, 0.0]
 
-        bounds : Optional[List[float]], optional
+        bounds : List[float], optional
             Bound with lower and upper limits the parameters of the equation computed by the algorithm, by default None.
             
-        x_range : Optional[Tuple[int]], optional
+        x_range : Tuple[int], optional
             Values along which the fitted values should be computed (start, end, step), by default (0, 1001, 1)
 
-        save : Optional[bool], optional
+        save : bool, optional
             Whether to save the plot, by default False
 
-        path_fig : Optional[str], optional
+        path_fig : str, optional
             Absolute path of the figure to be saved, by default 'default'
 
         Returns
         -------
         Union[None, Tuple[np.ndarray, np.ndarray]]
-            _description_
+            It returns a typle of four element: fitted_parameters, fitted_data, pcov values, r_squared value. When plot is set to True, a figure plotting the x and fitted y values will appear.
         """
 
         # Retrieve the range light dose values
@@ -906,7 +978,7 @@ class MFT(object):
                     c2 = y_data[0]
                     p = [c0,-0.1,c2]
 
-            print(bounds)
+            
             # perform the curve fitting, return the optimized parameters (popt) and the covariance matrix (pcov)
             popt, pcov = curve_fit(fit_function, x_data, y_data, p0=p, bounds=bounds)
             
@@ -1040,22 +1112,19 @@ class MFT(object):
         """Compute mean and standard deviation values of several microfading measurements.
 
         Parameters
-        ----------
-        common_dose : Optional[bool], optional
-            Compute the average values up to the smallest common light dose value, by default True      
-            When False, it will compute the average values up to the maximum light dose available, returning std values of 0 when only one measurement will be available. 
+        ----------        
         
-        return_data : Optional[bool], optional
+        return_data : bool, optional
             Whether to return the data, by default True        
 
-        criterion : Optional[str], optional
+        criterion : str, optional
             _description_, by default 'group'            
 
-        dose_unit : Optional[str], optional
+        dose_unit : str, optional
             The ligth dose unit used to average the colorimetric and spectral data, by default 'He' 
             Any of the following units can be entered: 'He', 'Hv', 't'. Where 'He' corresponds to radiant energy (MJ/m2), 'Hv' to exposure dose (Mlxh), and 't' to times (sec)
         
-        dose_values : Optional[tuple], optional
+        dose_values : tuple, optional
             Tuple of three values (start, end, step) defining the dose values for which the average values will be returned, by default (0, 'chd', 0.1)
             The logical start value is 0, but it does not have to be. Just make sure that it is smaller than the end values. 
             The end value can be one of the following options: 'chd', 'max', an integer or float of your choice smaller or equal to the common highest available dose (chd).
@@ -1071,16 +1140,16 @@ class MFT(object):
             When an integer is provided, it is applied to both the spectral and colorimetric value.
             When a tuple is provided, the first value relates to the spectral values while the second relates to the colorimetric values.
             
-        save : Optional[bool], optional
+        save : bool, optional
             Whether to save the average data as an excel file, by default False
 
-        folder : Optional[str], optional
+        folder : str, optional
             Folder where the excel file will be saved, by default 'default'
             When 'default', the file will be saved in the same folder as the input files
             When '.', the file will be saved in the current working directory
             One can also enter a valid path as a string.
 
-        filename : Optional[str], optional
+        filename : str, optional
             Filename of the excel file containing the average values, by default 'default'
             When 'default', it will use the filename of the first input file
             One can also enter a filename, but without a filename extension.
@@ -1528,6 +1597,9 @@ class MFT(object):
             When 'R', it returns the reflectance spectra
             When 'A', it returns the absorption spectra using the following equation: A = -log(R)
 
+        derivation : bool, optional
+            Whether to return the first derivative values of the desired spectral values, by default False.
+        
         smoothing : list of two integers, optional
             Whether to smooth the reflectance data using the Savitzky-Golay filter from the Scipy package, by default [1,0]
             The first integer corresponds to the window length and should be less than or equal to the size of a reflectance spectrum. The second integer corresponds to the polyorder parameter which is used to fit the samples. The polyorder value must be less than the value of the window length.
@@ -1535,8 +1607,8 @@ class MFT(object):
         concat : bool, optional
             Whether to concat the reflectance data column-wise
             When True, it returns a single pandas dataframe
-            When False, it returns a list of pandas dataframes
-
+            When False, it returns 
+            
         Returns
         -------
         A list of pandas dataframes
@@ -1720,7 +1792,7 @@ class MFT(object):
               
         # Compute the delta LabCh values and add the data into the list all_data  
         for data in cielab_data:
-
+            
             # for data with std values
             if sorted(set(data.columns.get_level_values(1))) == ['mean', 'std']:
                 data_dLabCh = delta_coord = [unumpy.uarray(d[coord, 'mean'], d[coord, 'std']) - unumpy.uarray(d[coord, 'mean'], d[coord, 'std'])[0] for coord in ['L*', 'a*', 'b*', 'C*', 'h'] for d in [data]]
@@ -1824,6 +1896,10 @@ class MFT(object):
             print(f'Process aborted. The data_type value you entered {data_type} is not valid.')
             return
                         
+        # Sort the data
+        if concat:
+            wanted_output = wanted_output.sort_index()
+        
         # Return the values
         return wanted_output    
     
@@ -2520,7 +2596,7 @@ class MFT(object):
                 self.plot_delta()
 
   
-    def plot_bars(self, BWS_lines:Optional[bool] = True, coordinate:Optional[str] = 'dE00', dose_unit:Optional[str] = 'Hv', dose_value:Union[int, float] = 0.5, xlabels:Union[str, list] = 'default', group_objects:Optional[bool] = False, fontsize:Optional[int] = 24, rotate_xlabels:Optional[int] = 0, position_xlabels:Optional[str] = 'center', position_text:Optional[tuple] = (0.03,0.92), colors:Union[str,float,list]=None, save:Optional[bool] = False, path_fig:Optional[str] = 'cwd'):
+    def plot_bars(self, BWS_lines:Optional[bool] = False, coordinate:Optional[str] = 'dE00', dose_unit:Optional[str] = 'Hv', dose_value:Union[int, float, str] = 'hcd', xlabels:Union[str, list] = 'default', group_objects:Optional[bool] = False, fontsize:Optional[int] = 24, rotate_xlabels:Optional[int] = 45, position_xlabels:Optional[str] = 'right', position_text:Optional[tuple] = (0.75,0.98), colors:Union[str,float,list]=None, save:Optional[bool] = False, path_fig:Optional[str] = 'cwd'):
         """Plot a bar graph of a given colorimetric coordinate for a given light dose value.
 
         Parameters
@@ -2536,8 +2612,9 @@ class MFT(object):
             Unit of the light energy dose, by default 'Hv'
             Any of the following units can be used: 'He', 'Hv', 't'. Where 'He' corresponds to radiant energy (MJ/m2), 'Hv' to exposure dose (Mlxh), and 't' to times (sec)
 
-        dose_value : Union[int, float], optional
-            Values of the light dose energy, by default 0.5
+        dose_value : Union[int, float, str], optional
+            Values of the light dose energy, by default 'hcd'
+            'hcd' stands for 'highest common dose' value. When 'hcd' it will take the highest dose values common to all the microfading files.
 
         xlabels : Union[str, list], optional
             Values of the labels on the x-axis (one label per bar), by default 'default'
@@ -2570,16 +2647,23 @@ class MFT(object):
             When 'cwd', it will save the figure in the current working directory.
         """
 
+        # Function to truncate decimal values
+        def trunc(values, decs=0):
+            return np.trunc(values*10**decs)/(10**decs)
+
               
         # Define the light dose value      
         doses_dic = {'He':'He_MJ/m2', 'Hv':'Hv_Mlxh', 't':'t_sec'}
-        max_doses = [x for x in self.get_doses(dose_unit=dose_unit, max_doses=True)]
-
-        if dose_value > np.min(max_doses):
+        max_doses = self.get_doses(dose_unit=dose_unit, max_doses=True, concat=True).values
+        hcd = trunc(np.min(max_doses), 3)   # highest common dose truncated to 3 decimals
+        
+        if dose_value == 'hcd':
+            dose_value = hcd
+        elif dose_value > hcd:
             print(f'The choosen dose_value ({dose_value} {doses_dic[dose_unit].split("_")[1]}) is bigger than one of the final dose values. Thus the dose_value has been set to {np.min(max_doses)} {doses_dic[dose_unit].split("_")[1]}, which is the lowest final dose value.')
             dose_value = np.min(max_doses)
 
-
+        
         # Define the labels on the x-axis
         if xlabels == 'default':
             xlabels = self.get_meas_ids
@@ -2590,10 +2674,10 @@ class MFT(object):
         elif xlabels in [x for x in self.get_metadata().index if '[' not in x]:
             xlabels = self.get_metadata(labels=xlabels).values
 
-        
+                
         # Define the colour of the bars
         if colors == 'sample':
-            colors = [x for x in self.get_sRGB(dose_values=0).values.reshape(len(self.files),-1)]
+            colors =[list(x) for x in self.get_sRGB(dose_values=0).T.values]
         
         elif isinstance(colors, str):
             colors = [colors] * len(self.files)
@@ -2601,17 +2685,19 @@ class MFT(object):
         elif isinstance(colors, float):
             colors = [str(colors)] * len(self.files)
               
+        
         # Define the objects ID
         object_ids = self.get_metadata(labels='object_id').values
 
+        
         # Define the object name
         object_names = self.get_metadata(labels='object_name').values
         
         # Gather the data and relevant info inside a dataframe
-        all_data = self.get_cielab(coordinates=[coordinate], dose_unit=dose_unit, dose_values=dose_value)
+        all_data = self.get_cielab(coordinates=[coordinate], dose_unit=dose_unit, dose_values=dose_value, concat=False)
         cl_data = [x.iloc[0].values[0] for x in all_data]
-        cl_data_std = [x.iloc[0].values[1] if 'std' in x.columns.get_level_values(1) else 0 for x in all_data]
-
+        cl_data_std = [x.iloc[0].values[1] if 'std' in x.columns.get_level_values(2) else 0 for x in all_data]
+        
         plot_data = {
             'y': cl_data,
             'y_std': cl_data_std, 
@@ -2644,7 +2730,7 @@ class MFT(object):
                 ax.axhline(data_BWS['y'], color='blue', ls =ls_dic[data_BWS['name']], label=label_dic[data_BWS['name']])
                 ax.axhspan(ymin=data_BWS['y']-data_BWS['y_std'], ymax=data_BWS['y']+data_BWS['y_std'], alpha=0.5, color='0.75', ec='none')        
         
-
+        #return df_data
         x = np.arange(0,len(df_data))
 
         
@@ -2748,8 +2834,10 @@ class MFT(object):
         if colors == 'sample':
             colors = self.get_sRGB(dose_values=0).values.reshape(len(self.files),-1)
 
-        
-        plotting.BWSE(data=wanted_data, frequency=frequency, bins=bins, figsize=figsize, colors=colors, fontsize=fontsize, title=title, title_fontsize=title_fontsize, fontsize_xaxis=fontsize_xaxis, rotate_xlabels=rotate_xlabels, position_xlabels=position_xlabels,  save=save, path_fig=path_fig)
+        print('Work in progress. Function to be implemented in future versions.')
+        return
+        return wanted_data
+        plotting.BWSE(data=wanted_data, frequency=frequency, bins=bins, figsize=figsize, colors=colors, fontsize=fontsize, title=title, title_fontsize=title_fontsize, rotate_xlabels=rotate_xlabels, position_xlabels=position_xlabels,  save=save, path_fig=path_fig)
     
     
     def plot_CIELAB(
@@ -2788,7 +2876,7 @@ class MFT(object):
             A tuple of three values (min, max, step) will be used in a numpy.arange() function to return an array of dose values.
             
             'data_type' [str,list] corresponds to the type of data to be displayed, by default 'all'.
-            There are three data types you can choose from ('nominal', 'mean', 'std'). When 'all' it will select all the data_types, but you can enter a single data_type as a string or combined inside a list, e.g: ['nominal', 'mean']. For more information about the data types, please consult the online documentation (https://g-patin.github.io/microfading/).
+            There are three data types you can choose from ('nominal', 'mean', 'std'). When 'all' it will select all the data_types, but you can enter a single data_type as a string or combined inside a list, e.g: ['nominal', 'mean']. For more information about the data types, please consult the online documentation (https://g-patin.github.io/microfading/datafiles/).
     
         figure_settings : dict, optional
             Adjust the settings related to the figure, by default {}.
@@ -2810,7 +2898,7 @@ class MFT(object):
 
             'fontsize' [int] defines the fontsize of the legend, by default 14. 
 
-            'labels' [str, list] defines the labels displayed inside the legend, by default 'default'. If you enter an empy list [] or an empty string '', the legend won't be displayed. When set to 'default', each label is made of the measurement id and the spot description. You can also enter a list of strings, as long as the number of string elements inside the list is equal to the number of measurements being displayed. Finally, you can enter a template string based on the parameters available in the info tab (metadata) of the measurement files. The parameters have to be inserted inside square brackets [], e.g: 'id: [meas_id] - [object_type]'. For more information about it, please consult the online documentation (https://g-patin.github.io/microfading/).
+            'labels' [str, list] defines the labels displayed inside the legend, by default 'default'. If you enter an empy list [] or an empty string '', the legend won't be displayed. When set to 'default', each label is made of the measurement id and the spot description. You can also enter a list of strings, as long as the number of string elements inside the list is equal to the number of measurements being displayed. Finally, you can enter a template string based on the parameters available in the info tab (metadata) of the measurement files. The parameters have to be inserted inside square brackets [], e.g: 'id: [meas_id] - [object_type]'. For more information about it, please consult the online documentation (https://g-patin.github.io/microfading/data-visualization/).
 
             'ncols' [int] defines the number of columns inside the legend, by default 1.
 
@@ -2944,21 +3032,27 @@ class MFT(object):
         )        
         
 
-    def plot_coordinates(self, coordinates:Union[list, str] = ['L*', 'a*', 'b*'], dose_unit:Optional[str] = 'He', fontsize:Optional[int] = 24, ls:Union[list,str] = None, colors:Union[str,list] = None, title:Optional[str] = None, title_fontsize:Optional[int] = 20, legend_labels:Union[str,list] = 'default', legend_position:Optional[str] = 'in', legend_fontsize:Optional[int] = 20, legend_title:Optional[str] = None):
+    def plot_coordinates(self, coordinates:Union[list, str] = ['L*', 'a*', 'b*'], dose_unit:Optional[str] = 'He', std:Optional[bool] = True, fontsize:Optional[int] = 24, ls:Union[list,str] = None, colors:Union[str,list] = None, title:Optional[str] = None, title_fontsize:Optional[int] = 20, legend_labels:Union[str,list] = 'default', legend_position:Optional[str] = 0, legend_fontsize:Optional[int] = 20, legend_title:Optional[str] = None, figsize:Optional[tuple] = 'default', save:Optional[bool] = False, path_fig:Optional[str] = 'cwd'):
 
-        data_coordinates = self.get_cielab(coordinates=coordinates, dose_unit=dose_unit)
+        # Retrieve the data
+        data_coordinates = self.get_cielab(coordinates=coordinates, dose_unit=dose_unit, concat=True)
 
+        # Retrieve the info dataframe
+        df_info = self.get_metadata()
+        
+        # Define the legend labels
+        if legend_labels == 'default':           
 
-        return plotting.coordinates(data=data_coordinates, fontsize=fontsize, legend_labels=legend_labels, legend_fontsize=legend_fontsize, legend_position=legend_position, legend_title=legend_title, title=title, title_fontsize=title_fontsize, ls=ls)
+            if 'spot_description' in df_info.index:                
+                spot_descriptions = df_info.loc['spot_description'].values
 
-
-
-
-
-
-    
-    
-    
+            else:
+                spot_descriptions = [''] * len(self.files)
+                
+            legend_labels = [f'{x}-{y}' for x,y in zip(self.get_meas_ids,spot_descriptions)]
+        
+        
+        return plotting.coordinates(data=data_coordinates, std=std, fontsize=fontsize, legend_labels=legend_labels, legend_fontsize=legend_fontsize, legend_position=legend_position, legend_title=legend_title, title=title, title_fontsize=title_fontsize, ls=ls, figsize=figsize, save=save, path_fig=path_fig)       
     
     
     def plot_swatches_circle(self, orientation:Optional[str] = 'horizontal', light_doses:Optional[list] = [0,0.5,1,2,5,15], JND:Optional[list] = [1,2,3,5,10], dose_unit:Union[str,tuple] = 'Hv', dE:Optional[bool] = True, museum_exposure:Optional[tuple] = (), fontsize:Optional[int] = 32, equation:Optional[str] = 'power_3p', initial_params:Optional[List[float]] = 'auto', bounds:Optional[list] = (-np.inf, np.inf), save:Optional[bool] = False, path_fig:Optional[str] = 'cwd', title:Optional[str] = None, report:Optional[bool] = False, circle_h:Optional[float] = 0): 
@@ -3061,7 +3155,7 @@ class MFT(object):
         
         
         # Retrieve the analyses light dose values
-        doses = [x for x in self.get_doses(dose_unit=dose_unit, max_doses=True)]
+        doses = [x for x in self.get_doses(dose_unit=dose_unit, max_doses=True, concat=False)]
         dose_min = np.min(doses)
         
         
@@ -3081,15 +3175,15 @@ class MFT(object):
             print('Enter valid values for the swatches parameter, ie. a tuple of integer or float.')
             return
                 
-        Lab_top = [x.values[0] for x in self.get_cielab(coordinates=['L*','a*', 'b*'], dose_unit=dose_unit, dose_values=dose_value_top)]
+        Lab_top = [x.values[0] for x in self.get_cielab(coordinates=['L*','a*', 'b*'], dose_unit=dose_unit, dose_values=dose_value_top, concat=False)]
         
                 
         # Define the Lab values for the bottom colour swatches
         
         if swatches[1] == 'f':                          # Select last measured values
-            Lab_bottom = [x.iloc[-1].values for x in self.get_cielab(coordinates=['L*','a*', 'b*'], dose_unit=dose_unit)]
+            Lab_bottom = [x.iloc[-1].values for x in self.get_cielab(coordinates=['L*','a*', 'b*'], dose_unit=dose_unit, concat=False)]
             bottom_text = 'Final'
-            wanted_dose = [x for x in self.get_doses(dose_unit=dose_unit, max_doses=True)]
+            wanted_dose = [x for x in self.get_doses(dose_unit=dose_unit, max_doses=True, concat=False)]
 
         elif isinstance(swatches[1], (int,float)):      # Select the values according to a dE or H value
 
@@ -3443,29 +3537,23 @@ class MFT(object):
             'f' for final spectra,
             'i+f' for initial and final spectra, 
             'all' for all the spectra, 
-            'doses' for spectra at different dose values indicated by the dose_unit and dose_values parameters
+            a tuple of two values (a, b) can be entered to plot spectra for specific dose values. The first parameter ("a") indicates the dose_unit ('He', 'Hv', 't'). The second parameter ("b") corresponds to the dose values, it can be a single integer or float, a list of integers or floats, or a tuple of three integers (start, end, step). When a single value is given, it will plot the spectrum related to the given dose value. When a list of values is given, it will plot as much spectra as provided values. When a tuple is given, it will plot the requested amount of spectra. For more information and examples, please consult the online documentation (https://g-patin.github.io/microfading/).           
 
         stdev : bool, optional
             Whether to show the standard deviation values, by default False
 
         data_settings : dict, optional
             Adjust settings related to the data, by default {}.
-            Enter key:value inside the dictionary. The following keys are valid : 'data_mode', 'derivation, 'dose_unit', 'dose_values', 'smoothing', 'wl_range'
+            Enter key:value inside the dictionary. The following keys are valid : 'mode', 'derivation, 'dose_unit', 'smoothing', 'wl_range'
 
-            'data_mode' [string] defines the type or mode of the measurement (absorbance or refectance), by default 'R'.
+            'mode' [string] defines the type or mode of the measurement (absorbance or refectance), by default 'R'.
             When 'R', it returns reflectance spectra. When 'A', it returns absorption spectra using the following equation: A = -log(R).
 
             'derivation' defines whether to compute to first derivative values, by default False.
             When True, it will return and plot the derivative values of the colourimetric delta values.
             
             'dose_unit' corresponds to the unit of the light energy dose, by default 'He'. 
-            Any of the following units can be used: 'He', 'Hv', 't'. Where 'He' corresponds to radiant energy (MJ/m2), 'Hv' to exposure dose (Mlxh), and 't' to times (sec)
-
-            'dose values' selects the light dose valules for which the colourimetric delta values will be returned, by default 'all'.
-            When 'all', it returns the colourimetric values for all the dose values available in the given input data files.
-            A single dose value (an integer or a float number) can be entered.
-            A list of dose values, as integer or float, can also be entered.
-            A tuple of three values (min, max, step) will be used in a numpy.arange() function to return an array of dose values.
+            Any of the following units can be used: 'He', 'Hv', 't'. Where 'He' corresponds to radiant energy (MJ/m2), 'Hv' to exposure dose (Mlxh), and 't' to times (sec)            
             
             'smoothing' defines whether to smooth the data, by default (1,0).
             It takes a tuple of two integers as value which is used as input for the Savitzky-Golay filter. The first value corresponds to the window_length and the second to the polyorder value.
@@ -3518,37 +3606,13 @@ class MFT(object):
 
             'ls' [str, list] defines the style of the lines, by default '-'.
             When 'random', it will applied different line styles. A single style as a string can be entered and will be applied to all the lines. A list of string can be entered to individually define the linestyle related to each measurement. Valid values for the line styles are based on the matplotlib library.
-
-            'lw' [int, list] defines the width of the lines, by default 2.
-            A single width value can be entered and will be applied to all the lines. A list of integers can be entered to individually define the width related to each measurement.  
-
-        
-
-
-
-        ls : Union[str, list], optional
-            Define the line style of the plot lines, by default '-'
-            It can be a string ('-', '--', ':', '-.') that will apply to all the curves. Or a list of string can be used where the number of string elements should match the number of reflectance curves.
-
+            
         save : bool, optional
             Whether to save the figure, by default False
 
         path_fig : str, optional
             Absolute path required to save the figure, by default 'cwd'
-            When 'cwd', it will save the figure in the current working directory.
-
-        derivation : bool, optional
-            Wether to compute and display the first derivative values of the spectra, by default False
-
-        smooth : bool, optional
-            Whether to smooth the reflectance curves, by default False
-
-        smooth_params : list, optional
-            Parameters related to the Savitzky-Golay filter, by default [10,1]
-            Enter a list of two integers where the first value corresponds to the window_length and the second to the polyorder value. 
-
-        report : Optional[bool], optional
-            Configure some aspects of the figure for use in a report, by default False
+            When 'cwd', it will save the figure in the current working directory.       
 
         Returns
         -------
@@ -3564,17 +3628,39 @@ class MFT(object):
             fontsize = 30
 
         # Extract the data settings 
-        dose_unit = data_settings.get('dose_unit', 'He')
-        dose_values = data_settings.get('dose_values', 'all')   
+        dose_unit = data_settings.get('dose_unit', 'He')        
         derivation = data_settings.get('derivation', False)
         smoothing = data_settings.get('smoothing', (1,0))
         data_mode = data_settings.get('mode', 'R')     
         wl_range = data_settings.get('wl_range', None)
 
         # Extract the legend settings    
-        legend_labels = legend_settings.get('labels', [])
+        legend_labels = legend_settings.get('labels', 'default')
+        legend_title = legend_settings.get('title', 'default')
+
+        # Extract the lines settings
+        lw = lines_settings.get('lw', 'default')
+        ls = lines_settings.get('ls', 'default')
+        colors = lines_settings.get('colors', 'none')
 
 
+        # Define the wanted light dose values
+
+        max_doses = self.get_doses(dose_unit=dose_unit, max_doses=True).values[0]
+
+        if spectra == 'i':
+            wanted_doses = 0
+        
+        elif spectra == 'f':
+            wanted_doses = max_doses
+
+        elif spectra == 'i+f':
+            pass 
+        
+        elif isinstance(spectra, tuple) and len(spectra)==2:
+            wanted_doses = spectra[1]
+        
+        
         # Retrieve the metadata
         info = self.get_metadata()
 
@@ -3584,16 +3670,16 @@ class MFT(object):
         else:
             spot_descriptions = [''] * len(self.files)
 
-
+        
         # Define the labels
-        if legend_labels == 'default':
+        if legend_labels == 'none':
+            legend_settings['labels'] = []
+
+        elif legend_labels == 'default' and spectra in ['i', 'f', 'i+f']:
             legend_labels = sorted([f'{x}-{y}' for x,y in zip(self.get_meas_ids,spot_descriptions)])
-            legend_title = 'Measurement $n^o$'
-
-        elif legend_labels == None:
-            legend_labels = []
-
-        elif isinstance(legend_labels, str):
+            legend_title = 'Measurement $n^o$'     
+        
+        elif isinstance(legend_labels, str) and not 'default':
             index_info = [x.strip() for x in legend_labels.split(',')]
             df_metadata = self.get_metadata().T
 
@@ -3603,45 +3689,42 @@ class MFT(object):
             legend_labels = [', '.join(x) for x in df_metadata[index_info].values]
 
         legend_settings['labels'] = legend_labels
-        
-        
+                
         
         # Retrieve the spectral data
         
         if spectra == 'i':
-            dose_values = 0
-            data_sp = self.get_spectra(dose_unit=dose_unit, dose_values=0, spectral_mode=data_mode,derivation=derivation,smoothing=smoothing, concat=True)
+            
+            data_sp = self.get_spectra(wl_range=wl_range, dose_unit=dose_unit, dose_values=wanted_doses, spectral_mode=data_mode,derivation=derivation,smoothing=smoothing, concat=True)
 
             text = 'Initial spectra'
             text_settings['text'] = text
 
         elif spectra == 'f':
-            data_sp_all = self.get_spectra(dose_unit=dose_unit,dose_values='all', spectral_mode=data_mode,derivation=derivation,smoothing=smoothing, concat=True)            
+            data_sp_all = self.get_spectra(wl_range=wl_range, dose_unit=dose_unit,dose_values='all', spectral_mode=data_mode,derivation=derivation,smoothing=smoothing, concat=True)        
             
-            max_doses = [x for x in self.get_doses(dose_unit=dose_unit, max_doses=True)]
             result_columns = []
 
-            for meas_id, max_dose in zip(self.get_meas_ids, max_doses):
+            for meas_id, dose in zip(self.get_meas_ids, wanted_doses):
                
                 # Select columns for this meas_id and max dose
                 mask = (
                     (data_sp_all.columns.get_level_values('meas_id') == meas_id) &
-                    (data_sp_all.columns.get_level_values(1).isin([max_dose]))
+                    (data_sp_all.columns.get_level_values(1).isin([dose]))
                 )
                 result_columns.extend(data_sp_all.columns[mask])
 
             # Select the desired columns
             data_sp = data_sp_all.loc[:, result_columns]
-
+            
             text = 'Final spectra'
             text_settings['text'] = text
         
         
         elif spectra == 'i+f':
-            data_sp_all = self.get_spectra(dose_unit=dose_unit,dose_values='all', spectral_mode=data_mode,derivation=derivation,smoothing=smoothing, concat=True)            
+            data_sp_all = self.get_spectra(wl_range=wl_range, dose_unit=dose_unit,dose_values='all', spectral_mode=data_mode,derivation=derivation,smoothing=smoothing, concat=True)            
             #data_sp = [x[x.columns.get_level_values(0).unique()[0]][x.columns.get_level_values(1)[[0]+[-1]]] for x in data_sp_all]
-
-            max_doses = self.get_doses(dose_unit=dose_unit, max_doses=True).values[0]            
+                       
             result_columns = []
 
             for meas_id, max_dose in zip(self.get_meas_ids, max_doses):
@@ -3676,31 +3759,60 @@ class MFT(object):
             legend_settings['labels'] = new_legend_labels
 
         
-        elif spectra == 'doses':
-            dose_values = dose_values
+        elif isinstance(spectra, tuple) and len(spectra)==2:
+            dose_unit = spectra[0]
+            dose_values = wanted_doses           
+
+            data_sp = self.get_spectra(wl_range=wl_range, dose_unit=dose_unit, dose_values=dose_values, spectral_mode=data_mode,derivation=derivation,smoothing=smoothing, concat=True)
             
-        
+            
+
+            if ls == 'default':
+                lines_settings['ls'] = 'random'
+
+            if lw == 'lw':
+                lines_settings['lw'] = 2
+
+            if isinstance(dose_values, tuple):
+                dose_values = np.arange(dose_values[0], dose_values[1], dose_values[2])
+            
+            if isinstance(dose_values, (int, float)) and legend_title == 'Measurement $n^o$':
+                legend_settings['title'] = f'Light dose {dose_unit} = {dose_values} {labels_eq[dose_unit]}'
+            
+            elif legend_labels == 'default' and isinstance(dose_values, (list, tuple)):                
+                
+                legend_settings['labels'] = dose_values
+                legend_settings['title'] = f'Light dose {dose_unit} ({labels_eq[dose_unit]})'
+
+                if colors == 'sample':
+                    colors = list(self.get_sRGB(dose_values=dose_values, clip=True).T.values)
         
         
 
+        # Determine the number of curves
+        data_sp_nominal = (data_sp.loc[:, data_sp.columns.get_level_values('data_type') != 'std'])
+        num_curves = data_sp_nominal.shape[1]  
 
+        
         # Define the colour of the curves
-        colors = lines_settings.get('colors', None)
-        
-        if colors == 'sample':
-            colors = list(self.get_sRGB(dose_values=0, clip=True).T.values)
+        if colors == 'none':
+            colors = [None] * num_curves        
+
+        elif spectra == 'i+f':
+            pass
+
+        elif colors == 'sample':
+            if spectra == 'f':
+                wanted_doses = 0
+            
+            colors = list(self.get_sRGB(dose_values=wanted_doses, clip=True).T.values)
 
         elif isinstance(colors, str):
-            colors = [colors] * len(self.files)
+            colors = [colors] * num_curves
 
-        elif colors == None:
-            colors = [None] * len(self.files)
-                
+          
         lines_settings['colors'] = colors
            
-        
-        
-
         
         return plotting.spectra(
             data=data_sp,
@@ -4457,14 +4569,31 @@ class MFT(object):
                 subprocess.run(['mv', 'temp_report.pdf', f'{folder_report}/{project_id}_MFT_rapport-project.pdf'])                
 
                 # Clean up temporary .tex and auxiliary files
-                subprocess.run(['rm', 'temp_report.tex', 'temp_report.aux', 'temp_report.log'])
-                
-
-                
-                
+                subprocess.run(['rm', 'temp_report.tex', 'temp_report.aux', 'temp_report.log'])       
 
 
     def make_table(self, parameters:Optional[list] = ['BWSE'], sort_by:Optional[str] = 'meas_id', title:Optional[str] = None, subtitle:Optional[str] = None):
+        """Create a table showing values from the 'info' sheets.
+
+        Parameters
+        ----------
+        parameters : Optional[list], optional
+            Select which parameters of the info sheet to display, by default ['BWSE']
+
+        sort_by : Optional[str], optional
+            Select the parameters on which to sort the rows of the table, by default 'meas_id'
+
+        title : Optional[str], optional
+            Whether to add a title above the table, by default None
+
+        subtitle : Optional[str], optional
+            Whether to add a subtitle below the title, by default None
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
 
         wanted_parameters = ['meas_id'] + parameters
 
