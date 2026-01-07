@@ -27,14 +27,28 @@ Table 1. Description of the *plot* functions.
 
 Each plot function has been written so that you can use them without passing any arguments, as illustrated below. Such a visualization will render the default behaviour of each function. The following section shows how to pass arguments to the function to adjust some aspects of the plots.
 
-![Alt text](images/mf_basic-plot.png){: .img-Large align=left }
+![Alt text](images/mf_basic-plot_02.png){: .img-Large align=left }
 /// caption
 Basic plot.
 ///
 
 ## **Advanced plotting**
 
-To modify the aspects of the plots, you will need to enter the information, as **key : value**, inside dictionaries. There are five dictionaries that encompass all aspects of plotting:
+The advanced plotting functionalites will allow you to modify the aspects of the plots. To achieve that, you will need to enter specific values inside the brackets of the functions. The plotting functions contain several parameters which can be divided into three main categories:
+
+1. **Function-related parameters**: a few useful parameters specific to each function
+2. **Settings dictionaries**: a set of standard dictionaries used to adapt the visualization
+3. **Saving parameters**: parameters to save the visualization as png files.
+
+For example, the figure below shows the docstrings of a plotting function. The two first parameters *coordinates* and *stdev* allow the users to quickly change some important aspects of the visualizations. Then come the five settings dictionaries and finally two parameters *save* and *path_fig* to save the visualization. 
+
+![Alt text](images/mf_advanced-plot_docstrings.png){: .img-medium align=left }
+/// caption
+Advanced plotting - Docstrings.
+///
+
+
+There are five dictionaries that encompass all aspects of plotting:
 
 1. *data_settings* : aspects directly related to the data
 2. *figure_settings* : aspects about the  figure 
@@ -42,7 +56,7 @@ To modify the aspects of the plots, you will need to enter the information, as *
 4. *lines_settings* : aspects about the data lines
 5. *text_settings* : add a text box inside the figure
 
-As an illustration, the following lines of code show you how to modify the size of a figure:
+Inside each dictionary, you will need to enter the information, as **key : value**. For each dictionary, there are several valid keys that you will need to know to correctly use the settings dictionaries. As an illustration, the following lines of code show you how to modify the size of a figure:
 
 ```python
 m = mf.MFT(files=files)
@@ -55,7 +69,7 @@ Table 2. Valid keys for each function.
 
 | <div style="width:100px">Plot functions</div> | <div style="width:100px">Parameters</div> | <div style="width:300px">Valid keys</div>
 | :--------| :--------- | :---------
-|plot_CIELAB | data_settings <br /> figure_settings  <br /> legend_settings <br /> lines_settings | dose_unit, dose_values, derivation, smoothing |
+|plot_CIELAB | data_settings <br /> figure_settings  <br /> legend_settings <br /> lines_settings | dose_unit, dose_values, data_type <br /> title, xlabel, ylabel, fontsize, fontsize_title <br /> fontsize,labels, ncols, obs_ill, position, title <br /> alpha, colors, markers, size |
 |plot_coordinates | data_settings <br /> figure_settings  <br /> legend_settings <br /> lines_settings | dose_unit, dose_values, derivation, smoothing |
 |plot_delta | data_settings <br /> figure_settings  <br /> legend_settings <br /> lines_settings <br />  text_settings | dose_unit, dose_values, derivation, smoothing <br /> figsize, title, xlabel, ylabel, xlim, ylim, fontsize, fontsize_title <br /> fontsize, labels, ncols, position, title <br /> colors, ls, lw <br /> text, xy, fontsize |
 |plot_sp | data_settings <br /> figure_settings  <br /> legend_settings <br /> lines_settings <br />  text_settings |  mode, derivation, dose_unit, smoothing, wl_range <br /> figsize, title, xlabel, ylabel, xlim, ylim, fontsize, fontsize_title <br /> fontsize, labels, ncols, position, title <br /> colors, ls, lw <br /> text, xy, fontsize |
@@ -163,6 +177,22 @@ The *legend_settings* concerns all aspects related to the legend, for which the 
 
 The *lines_settings* concerns all aspects related to the data lines, for which the following keys can be used:
 
+- **alpha** [float, list]
+	
+	Modify the transparency of markers. You can enter the following types of input values:
+	
+	<ul class="a">
+	  <li>Float: it can be any float number between 0 and 1 included, where 0 corresponds to complete transparent markers and 1 to fully opaque markers.
+	  
+	  eg: 0.5 or 0.85 </li>  	  
+	  
+	  <li>List of float: If you want to attribute a specific alpha value to each group of markers. The amount of float elements in the list should therefore before equal to the amount of measurements.
+	  
+	  eg: [0.5, 0.85]</li>   
+	  
+	</ul>
+	
+
 - **colors** [str, list, float]
 
 	Modify the colour of the lines or points. You can enter the following types of input values:
@@ -181,6 +211,23 @@ The *lines_settings* concerns all aspects related to the data lines, for which t
 	  <li>Float: a float between 0 and 1 will give a grey line ranging from black (0) to white (1).</li> 
 	</ul>
 	
+- **markers** [str, list], by default 'o'
+
+	Modify the marker style of data points. You can enter the following types of input values:
+	
+	<ul class="a">
+	  <li>String: it can be any marker styles compatible with the matplotlib styles. In that case, all the measurements have the same style. The most common marker styles are: "o", "s", "D", or "X", but they are many more.
+	  
+	  </li> 
+	  
+	
+	  <li>List: If you want to attribute a specific marker style to each measurement, you can use a list of string elements, where each element follow the rule mentioned just above.
+	  
+	  eg: ["o", "X", "D", "^", "*"], etc.</li> 
+	  
+	</ul>
+	
+	
 - **ls** [str, list], by default '-'
 
 	Modify the style of data lines. You can enter the following types of input values:
@@ -191,7 +238,7 @@ The *lines_settings* concerns all aspects related to the data lines, for which t
 	  eg: "-" or  "--", etc.</li> 
 	  
 	
-	  <li>List: a list of string combining  any line styles compatible with the matplotlib styles. n that case, all the lines have the same style. The most common styles are: '-', '--', ':', '-.'.
+	  <li>List: If you want to attribute a line style to each measurement, you can use a list of string elements, where each element follow the rule mentioned just above.
 	  
 	  eg: ["-", "--", ":", "-"], etc.</li> 
 	  
