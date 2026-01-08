@@ -21,16 +21,21 @@ classifiers = [
 
 dependencies = [
     "colour-science",
-    "seaborn",
-    "uncertainties",
+    "great-tables",
+    "h5py", 
+    "imageio", 
+    "ipywidgets",      
     "matplotlib",
+    "matplotlib_scalebar",
     "msdb",
     "pillow",
     "pandas",
     "openpyxl",
     "jupyterlab",
-    "xarray",
-    "ipywidgets",    
+    "seaborn",
+    "scipy",
+    "uncertainties",
+    "xarray",           
 ]
 
 [project.urls]
