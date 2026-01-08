@@ -1021,13 +1021,26 @@
 <h2 id="basic-plotting"><strong>Basic plotting</strong><a class="headerlink" href="#basic-plotting" title="Permanent link">&para;</a></h2>
 <p>Each plot function has been written so that you can use them without passing any arguments, as illustrated below. Such a visualization will render the default behaviour of each function. The following section shows how to pass arguments to the function to adjust some aspects of the plots.</p>
 <figure>
-<p><img align="left" alt="Alt text" class="img-Large" src="../images/mf_basic-plot.png" /></p>
+<p><img align="left" alt="Alt text" class="img-Large" src="../images/mf_basic-plot_02.png" /></p>
 <figcaption>
 <p>Basic plot.</p>
 </figcaption>
 </figure>
 <h2 id="advanced-plotting"><strong>Advanced plotting</strong><a class="headerlink" href="#advanced-plotting" title="Permanent link">&para;</a></h2>
-<p>To modify the aspects of the plots, you will need to enter the information, as <strong>key : value</strong>, inside dictionaries. There are five dictionaries that encompass all aspects of plotting:</p>
+<p>The advanced plotting functionalites will allow you to modify the aspects of the plots. To achieve that, you will need to enter specific values inside the brackets of the functions. The plotting functions contain several parameters which can be divided into three main categories:</p>
+<ol>
+<li><strong>Function-related parameters</strong>: a few useful parameters specific to each function</li>
+<li><strong>Settings dictionaries</strong>: a set of standard dictionaries used to adapt the visualization</li>
+<li><strong>Saving parameters</strong>: parameters to save the visualization as png files.</li>
+</ol>
+<p>For example, the figure below shows the docstrings of a plotting function. The two first parameters <em>coordinates</em> and <em>stdev</em> allow the users to quickly change some important aspects of the visualizations. Then come the five settings dictionaries and finally two parameters <em>save</em> and <em>path_fig</em> to save the visualization. </p>
+<figure>
+<p><img align="left" alt="Alt text" class="img-medium" src="../images/mf_advanced-plot_docstrings.png" /></p>
+<figcaption>
+<p>Advanced plotting - Docstrings.</p>
+</figcaption>
+</figure>
+<p>There are five dictionaries that encompass all aspects of plotting:</p>
 <ol>
 <li><em>data_settings</em> : aspects directly related to the data</li>
 <li><em>figure_settings</em> : aspects about the  figure </li>
@@ -1035,7 +1048,7 @@
 <li><em>lines_settings</em> : aspects about the data lines</li>
 <li><em>text_settings</em> : add a text box inside the figure</li>
 </ol>
-<p>As an illustration, the following lines of code show you how to modify the size of a figure:</p>
+<p>Inside each dictionary, you will need to enter the information, as <strong>key : value</strong>. For each dictionary, there are several valid keys that you will need to know to correctly use the settings dictionaries. As an illustration, the following lines of code show you how to modify the size of a figure:</p>
 <div class="highlight"><pre><span></span><code><span class="n">m</span> <span class="o">=</span> <span class="n">mf</span><span class="o">.</span><span class="n">MFT</span><span class="p">(</span><span class="n">files</span><span class="o">=</span><span class="n">files</span><span class="p">)</span>
 <span class="n">m</span><span class="o">.</span><span class="n">plot_delta</span><span class="p">(</span><span class="n">figure_settings</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;figsize&#39;</span><span class="p">:(</span><span class="mi">15</span><span class="p">,</span><span class="mi">10</span><span class="p">)})</span>
 </code></pre></div>
@@ -1053,7 +1066,7 @@
 <tr>
 <td style="text-align: left;">plot_CIELAB</td>
 <td style="text-align: left;">data_settings <br /> figure_settings  <br /> legend_settings <br /> lines_settings</td>
-<td style="text-align: left;">dose_unit, dose_values, derivation, smoothing</td>
+<td style="text-align: left;">dose_unit, dose_values, data_type <br /> title, xlabel, ylabel, fontsize, fontsize_title <br /> fontsize,labels, ncols, obs_ill, position, title <br /> alpha, colors, markers, size</td>
 </tr>
 <tr>
 <td style="text-align: left;">plot_coordinates</td>
@@ -1167,6 +1180,16 @@
 <p>The <em>lines_settings</em> concerns all aspects related to the data lines, for which the following keys can be used:</p>
 <ul>
 <li>
+<p><strong>alpha</strong> [float, list]</p>
+<p>Modify the transparency of markers. You can enter the following types of input values:</p>
+<p><ul class="a">
+  <li>Float: it can be any float number between 0 and 1 included, where 0 corresponds to complete transparent markers and 1 to fully opaque markers.</p>
+<p>eg: 0.5 or 0.85 </li>       </p>
+<p><li>List of float: If you want to attribute a specific alpha value to each group of markers. The amount of float elements in the list should therefore before equal to the amount of measurements.</p>
+<p>eg: [0.5, 0.85]</li>   </p>
+</ul>
+</li>
+<li>
 <p><strong>colors</strong> [str, list, float]</p>
 <p>Modify the colour of the lines or points. You can enter the following types of input values:</p>
 <p><ul class="a">
@@ -1179,12 +1202,22 @@
 </ul></p>
 </li>
 <li>
+<p><strong>markers</strong> [str, list], by default 'o'</p>
+<p>Modify the marker style of data points. You can enter the following types of input values:</p>
+<p><ul class="a">
+  <li>String: it can be any marker styles compatible with the matplotlib styles. In that case, all the measurements have the same style. The most common marker styles are: "o", "s", "D", or "X", but they are many more.</p>
+<p></li> </p>
+<p><li>List: If you want to attribute a specific marker style to each measurement, you can use a list of string elements, where each element follow the rule mentioned just above.</p>
+<p>eg: ["o", "X", "D", "^", "*"], etc.</li> </p>
+</ul>
+</li>
+<li>
 <p><strong>ls</strong> [str, list], by default '-'</p>
 <p>Modify the style of data lines. You can enter the following types of input values:</p>
 <p><ul class="a">
   <li>String: it can be any line styles compatible with the matplotlib styles. In that case, all the lines have the same style. The most common styles are: "-", "--", ":", "-.".</p>
 <p>eg: "-" or  "--", etc.</li> </p>
-<p><li>List: a list of string combining  any line styles compatible with the matplotlib styles. n that case, all the lines have the same style. The most common styles are: '-', '--', ':', '-.'.</p>
+<p><li>List: If you want to attribute a line style to each measurement, you can use a list of string elements, where each element follow the rule mentioned just above.</p>
 <p>eg: ["-", "--", ":", "-"], etc.</li> </p>
 </ul>
 </li>
