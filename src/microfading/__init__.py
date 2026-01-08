@@ -2,4 +2,4 @@ from .microfading import MFT, create_DB, is_DB, get_parameters_info, get_config,
 
 from .process_rawfiles import MFT_fotonowy
 
-__version__ = "2.1.0"
+__version__ = "2.1.1"
