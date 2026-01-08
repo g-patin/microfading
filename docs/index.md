@@ -49,7 +49,7 @@ Email: microfading@mailo.com
 
 If you are using this package for a publication, please cite the package as follows: 
 
-- Patin, G., 2025, *Microfading*, Python Package, v.2.1.0, [https://github.com/g-patin/microfading](https://github.com/g-patin/microfading)
+- Patin, G., 2026, *Microfading*, Python Package, v.2.1.0, [https://github.com/g-patin/microfading](https://github.com/g-patin/microfading)
 
  
 
