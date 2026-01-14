@@ -1206,7 +1206,7 @@ class MFT(object):
 
         if isinstance(dose_values[1], (int,float)):
 
-            highest_dose = np.max([x for x in self.get_doses(dose_unit=dose_unit, max_doses=True)])
+            highest_dose = np.max(self.get_doses(dose_unit=dose_unit, max_doses=True, concat=True).values[0])
             if dose_values[1] > highest_dose:
                 print(f'Process aborted. The end dose value you enter ({dose_values[1]}) is above the maximum light dose value available ({highest_dose} {dose_units[dose_unit]}).')
                 return
@@ -1216,14 +1216,14 @@ class MFT(object):
 
         elif dose_values[1] == 'max':
 
-            highest_dose = np.max([x for x in self.get_doses(dose_unit=dose_unit, max_doses=True)])
+            highest_dose = np.max(self.get_doses(dose_unit=dose_unit, max_doses=True, concat=True).values[0])
             wanted_dose_range = 'all'
             wanted_dose_values = np.arange(dose_values[0], highest_dose+dose_values[2], dose_values[2])
             
 
         elif dose_values[1] == 'chd':
 
-            common_highest_dose = np.min([x for x in self.get_doses(dose_unit=dose_unit, max_doses=True)])
+            common_highest_dose = np.min(self.get_doses(dose_unit=dose_unit, max_doses=True, concat=True).values[0])
             wanted_dose_range = (dose_values[0], common_highest_dose, dose_values[2])
             wanted_dose_values = np.arange(*wanted_dose_range)
 
@@ -1294,32 +1294,38 @@ class MFT(object):
         # Create a multi-index pandas DataFrame
         
         cielab_tuples = [(x, measurement) for x in data_cl[0].columns.get_level_values('coordinate') for measurement in ['mean', 'std']]
-        multiindex_cols = pd.MultiIndex.from_tuples(cielab_tuples, names=['coordinate', 'data_type'])
+        multiindex_cols = pd.MultiIndex.from_tuples(cielab_tuples)  # names=['coordinate', 'data_type']
         
         data_df_cl = np.empty((wanted_cl_mean.shape[0], wanted_cl_mean.shape[1] * 2))       
         data_df_cl[:, 0::2] = wanted_cl_mean
         data_df_cl[:, 1::2] = wanted_cl_std
+        
         df_cl_final = pd.DataFrame(data_df_cl,columns=multiindex_cols, index=data_cl[0].index)
                 
         df_cl_final = round(df_cl_final, rounding[0])
 
+        df_cl_final = df_cl_final.reset_index()
+
         if dose_unit == 'He':
             df_cl_final.drop([('Hv_Mlxh','std'), ('t_sec','std')], axis=1, inplace=True)
-            mapper = {('Hv_Mlxh', 'mean'): ('Hv_Mlxh', 'nominal'), ('t_sec', 'mean'): ('t_sec', 'nominal')}
+            mapper = {('He_MJ/m2', ''): ('He_MJ/m2', 'nominal'), ('Hv_Mlxh', 'mean'): ('Hv_Mlxh', 'nominal'), ('t_sec', 'mean'): ('t_sec', 'nominal')}
             df_cl_final.columns = pd.MultiIndex.from_tuples([mapper.get(x, x) for x in df_cl_final.columns])
 
         elif dose_unit == 'Hv':
             df_cl_final.drop([('He_MJ/m2','std'), ('t_sec','std')], axis=1, inplace=True)
-            mapper = {('He_MJ/m2', 'mean'): ('He_MJ/m2', 'nominal'), ('t_sec', 'mean'): ('t_sec', 'nominal')}
+            mapper = {('He_MJ/m2', 'mean'): ('He_MJ/m2', 'nominal'), ('Hv_Mlxh', ''): ('Hv_Mlxh', 'nominal'), ('t_sec', 'mean'): ('t_sec', 'nominal')}
             df_cl_final.columns = pd.MultiIndex.from_tuples([mapper.get(x, x) for x in df_cl_final.columns])
 
         elif dose_unit == 't':
             df_cl_final.drop([('He_MJ/m2','std'), ('Hv_Mlxh','std')], axis=1, inplace=True)
-            mapper = {('He_MJ/m2', 'mean'): ('He_MJ/m2', 'nominal'), ('Hv_Mlxh', 'mean'): ('Hv_Mlxh', 'nominal')}
+            mapper = {('He_MJ/m2', 'mean'): ('He_MJ/m2', 'nominal'), ('Hv_Mlxh', 'mean'): ('Hv_Mlxh', 'nominal'), ('t_sec', ''): ('t_sec', 'nominal')}
             df_cl_final.columns = pd.MultiIndex.from_tuples([mapper.get(x, x) for x in df_cl_final.columns])
 
-        df_cl_final.columns.names = ('coordinate', 'data_type')
-        
+
+        df_cl_final = df_cl_final.set_index(df_cl_final.columns[0])
+
+        df_cl_final.index.name = ''
+        df_cl_final.columns.names = (f'{dose_units[dose_unit]}', 'nominal')
     
 
         ###### INFO #######
