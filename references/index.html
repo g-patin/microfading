@@ -7562,7 +7562,13 @@
 <span class="normal">4666</span>
 <span class="normal">4667</span>
 <span class="normal">4668</span>
-<span class="normal">4669</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">MFT</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<span class="normal">4669</span>
+<span class="normal">4670</span>
+<span class="normal">4671</span>
+<span class="normal">4672</span>
+<span class="normal">4673</span>
+<span class="normal">4674</span>
+<span class="normal">4675</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">MFT</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">files</span><span class="p">:</span><span class="nb">list</span><span class="p">,</span> <span class="n">BWS</span><span class="p">:</span><span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Instantiate a Microfading (MFT) class object in order to manipulate and visualize microfading analysis data.</span>
@@ -8107,7 +8113,7 @@
 
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">dose_values</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span><span class="nb">float</span><span class="p">)):</span>
 
-            <span class="n">highest_dose</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">([</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_doses</span><span class="p">(</span><span class="n">dose_unit</span><span class="o">=</span><span class="n">dose_unit</span><span class="p">,</span> <span class="n">max_doses</span><span class="o">=</span><span class="kc">True</span><span class="p">)])</span>
+            <span class="n">highest_dose</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_doses</span><span class="p">(</span><span class="n">dose_unit</span><span class="o">=</span><span class="n">dose_unit</span><span class="p">,</span> <span class="n">max_doses</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">concat</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
             <span class="k">if</span> <span class="n">dose_values</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">highest_dose</span><span class="p">:</span>
                 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Process aborted. The end dose value you enter (</span><span class="si">{</span><span class="n">dose_values</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s1">) is above the maximum light dose value available (</span><span class="si">{</span><span class="n">highest_dose</span><span class="si">}</span><span class="s1"> </span><span class="si">{</span><span class="n">dose_units</span><span class="p">[</span><span class="n">dose_unit</span><span class="p">]</span><span class="si">}</span><span class="s1">).&#39;</span><span class="p">)</span>
                 <span class="k">return</span>
@@ -8117,14 +8123,14 @@
 
         <span class="k">elif</span> <span class="n">dose_values</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;max&#39;</span><span class="p">:</span>
 
-            <span class="n">highest_dose</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">([</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_doses</span><span class="p">(</span><span class="n">dose_unit</span><span class="o">=</span><span class="n">dose_unit</span><span class="p">,</span> <span class="n">max_doses</span><span class="o">=</span><span class="kc">True</span><span class="p">)])</span>
+            <span class="n">highest_dose</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_doses</span><span class="p">(</span><span class="n">dose_unit</span><span class="o">=</span><span class="n">dose_unit</span><span class="p">,</span> <span class="n">max_doses</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">concat</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
             <span class="n">wanted_dose_range</span> <span class="o">=</span> <span class="s1">&#39;all&#39;</span>
             <span class="n">wanted_dose_values</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">dose_values</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">highest_dose</span><span class="o">+</span><span class="n">dose_values</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">dose_values</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
 
 
         <span class="k">elif</span> <span class="n">dose_values</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;chd&#39;</span><span class="p">:</span>
 
-            <span class="n">common_highest_dose</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">([</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_doses</span><span class="p">(</span><span class="n">dose_unit</span><span class="o">=</span><span class="n">dose_unit</span><span class="p">,</span> <span class="n">max_doses</span><span class="o">=</span><span class="kc">True</span><span class="p">)])</span>
+            <span class="n">common_highest_dose</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_doses</span><span class="p">(</span><span class="n">dose_unit</span><span class="o">=</span><span class="n">dose_unit</span><span class="p">,</span> <span class="n">max_doses</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">concat</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
             <span class="n">wanted_dose_range</span> <span class="o">=</span> <span class="p">(</span><span class="n">dose_values</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">common_highest_dose</span><span class="p">,</span> <span class="n">dose_values</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
             <span class="n">wanted_dose_values</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="o">*</span><span class="n">wanted_dose_range</span><span class="p">)</span>
 
@@ -8195,32 +8201,38 @@
         <span class="c1"># Create a multi-index pandas DataFrame</span>
 
         <span class="n">cielab_tuples</span> <span class="o">=</span> <span class="p">[(</span><span class="n">x</span><span class="p">,</span> <span class="n">measurement</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">data_cl</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">get_level_values</span><span class="p">(</span><span class="s1">&#39;coordinate&#39;</span><span class="p">)</span> <span class="k">for</span> <span class="n">measurement</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;mean&#39;</span><span class="p">,</span> <span class="s1">&#39;std&#39;</span><span class="p">]]</span>
-        <span class="n">multiindex_cols</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">MultiIndex</span><span class="o">.</span><span class="n">from_tuples</span><span class="p">(</span><span class="n">cielab_tuples</span><span class="p">,</span> <span class="n">names</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;coordinate&#39;</span><span class="p">,</span> <span class="s1">&#39;data_type&#39;</span><span class="p">])</span>
+        <span class="n">multiindex_cols</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">MultiIndex</span><span class="o">.</span><span class="n">from_tuples</span><span class="p">(</span><span class="n">cielab_tuples</span><span class="p">)</span>  <span class="c1"># names=[&#39;coordinate&#39;, &#39;data_type&#39;]</span>
 
         <span class="n">data_df_cl</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="n">wanted_cl_mean</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">wanted_cl_mean</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="mi">2</span><span class="p">))</span>       
         <span class="n">data_df_cl</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">::</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">wanted_cl_mean</span>
         <span class="n">data_df_cl</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">::</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">wanted_cl_std</span>
+
         <span class="n">df_cl_final</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">data_df_cl</span><span class="p">,</span><span class="n">columns</span><span class="o">=</span><span class="n">multiindex_cols</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="n">data_cl</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
 
         <span class="n">df_cl_final</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">df_cl_final</span><span class="p">,</span> <span class="n">rounding</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
 
+        <span class="n">df_cl_final</span> <span class="o">=</span> <span class="n">df_cl_final</span><span class="o">.</span><span class="n">reset_index</span><span class="p">()</span>
+
         <span class="k">if</span> <span class="n">dose_unit</span> <span class="o">==</span> <span class="s1">&#39;He&#39;</span><span class="p">:</span>
             <span class="n">df_cl_final</span><span class="o">.</span><span class="n">drop</span><span class="p">([(</span><span class="s1">&#39;Hv_Mlxh&#39;</span><span class="p">,</span><span class="s1">&#39;std&#39;</span><span class="p">),</span> <span class="p">(</span><span class="s1">&#39;t_sec&#39;</span><span class="p">,</span><span class="s1">&#39;std&#39;</span><span class="p">)],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-            <span class="n">mapper</span> <span class="o">=</span> <span class="p">{(</span><span class="s1">&#39;Hv_Mlxh&#39;</span><span class="p">,</span> <span class="s1">&#39;mean&#39;</span><span class="p">):</span> <span class="p">(</span><span class="s1">&#39;Hv_Mlxh&#39;</span><span class="p">,</span> <span class="s1">&#39;nominal&#39;</span><span class="p">),</span> <span class="p">(</span><span class="s1">&#39;t_sec&#39;</span><span class="p">,</span> <span class="s1">&#39;mean&#39;</span><span class="p">):</span> <span class="p">(</span><span class="s1">&#39;t_sec&#39;</span><span class="p">,</span> <span class="s1">&#39;nominal&#39;</span><span class="p">)}</span>
+            <span class="n">mapper</span> <span class="o">=</span> <span class="p">{(</span><span class="s1">&#39;He_MJ/m2&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">):</span> <span class="p">(</span><span class="s1">&#39;He_MJ/m2&#39;</span><span class="p">,</span> <span class="s1">&#39;nominal&#39;</span><span class="p">),</span> <span class="p">(</span><span class="s1">&#39;Hv_Mlxh&#39;</span><span class="p">,</span> <span class="s1">&#39;mean&#39;</span><span class="p">):</span> <span class="p">(</span><span class="s1">&#39;Hv_Mlxh&#39;</span><span class="p">,</span> <span class="s1">&#39;nominal&#39;</span><span class="p">),</span> <span class="p">(</span><span class="s1">&#39;t_sec&#39;</span><span class="p">,</span> <span class="s1">&#39;mean&#39;</span><span class="p">):</span> <span class="p">(</span><span class="s1">&#39;t_sec&#39;</span><span class="p">,</span> <span class="s1">&#39;nominal&#39;</span><span class="p">)}</span>
             <span class="n">df_cl_final</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">MultiIndex</span><span class="o">.</span><span class="n">from_tuples</span><span class="p">([</span><span class="n">mapper</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">df_cl_final</span><span class="o">.</span><span class="n">columns</span><span class="p">])</span>
 
         <span class="k">elif</span> <span class="n">dose_unit</span> <span class="o">==</span> <span class="s1">&#39;Hv&#39;</span><span class="p">:</span>
             <span class="n">df_cl_final</span><span class="o">.</span><span class="n">drop</span><span class="p">([(</span><span class="s1">&#39;He_MJ/m2&#39;</span><span class="p">,</span><span class="s1">&#39;std&#39;</span><span class="p">),</span> <span class="p">(</span><span class="s1">&#39;t_sec&#39;</span><span class="p">,</span><span class="s1">&#39;std&#39;</span><span class="p">)],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-            <span class="n">mapper</span> <span class="o">=</span> <span class="p">{(</span><span class="s1">&#39;He_MJ/m2&#39;</span><span class="p">,</span> <span class="s1">&#39;mean&#39;</span><span class="p">):</span> <span class="p">(</span><span class="s1">&#39;He_MJ/m2&#39;</span><span class="p">,</span> <span class="s1">&#39;nominal&#39;</span><span class="p">),</span> <span class="p">(</span><span class="s1">&#39;t_sec&#39;</span><span class="p">,</span> <span class="s1">&#39;mean&#39;</span><span class="p">):</span> <span class="p">(</span><span class="s1">&#39;t_sec&#39;</span><span class="p">,</span> <span class="s1">&#39;nominal&#39;</span><span class="p">)}</span>
+            <span class="n">mapper</span> <span class="o">=</span> <span class="p">{(</span><span class="s1">&#39;He_MJ/m2&#39;</span><span class="p">,</span> <span class="s1">&#39;mean&#39;</span><span class="p">):</span> <span class="p">(</span><span class="s1">&#39;He_MJ/m2&#39;</span><span class="p">,</span> <span class="s1">&#39;nominal&#39;</span><span class="p">),</span> <span class="p">(</span><span class="s1">&#39;Hv_Mlxh&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">):</span> <span class="p">(</span><span class="s1">&#39;Hv_Mlxh&#39;</span><span class="p">,</span> <span class="s1">&#39;nominal&#39;</span><span class="p">),</span> <span class="p">(</span><span class="s1">&#39;t_sec&#39;</span><span class="p">,</span> <span class="s1">&#39;mean&#39;</span><span class="p">):</span> <span class="p">(</span><span class="s1">&#39;t_sec&#39;</span><span class="p">,</span> <span class="s1">&#39;nominal&#39;</span><span class="p">)}</span>
             <span class="n">df_cl_final</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">MultiIndex</span><span class="o">.</span><span class="n">from_tuples</span><span class="p">([</span><span class="n">mapper</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">df_cl_final</span><span class="o">.</span><span class="n">columns</span><span class="p">])</span>
 
         <span class="k">elif</span> <span class="n">dose_unit</span> <span class="o">==</span> <span class="s1">&#39;t&#39;</span><span class="p">:</span>
             <span class="n">df_cl_final</span><span class="o">.</span><span class="n">drop</span><span class="p">([(</span><span class="s1">&#39;He_MJ/m2&#39;</span><span class="p">,</span><span class="s1">&#39;std&#39;</span><span class="p">),</span> <span class="p">(</span><span class="s1">&#39;Hv_Mlxh&#39;</span><span class="p">,</span><span class="s1">&#39;std&#39;</span><span class="p">)],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-            <span class="n">mapper</span> <span class="o">=</span> <span class="p">{(</span><span class="s1">&#39;He_MJ/m2&#39;</span><span class="p">,</span> <span class="s1">&#39;mean&#39;</span><span class="p">):</span> <span class="p">(</span><span class="s1">&#39;He_MJ/m2&#39;</span><span class="p">,</span> <span class="s1">&#39;nominal&#39;</span><span class="p">),</span> <span class="p">(</span><span class="s1">&#39;Hv_Mlxh&#39;</span><span class="p">,</span> <span class="s1">&#39;mean&#39;</span><span class="p">):</span> <span class="p">(</span><span class="s1">&#39;Hv_Mlxh&#39;</span><span class="p">,</span> <span class="s1">&#39;nominal&#39;</span><span class="p">)}</span>
+            <span class="n">mapper</span> <span class="o">=</span> <span class="p">{(</span><span class="s1">&#39;He_MJ/m2&#39;</span><span class="p">,</span> <span class="s1">&#39;mean&#39;</span><span class="p">):</span> <span class="p">(</span><span class="s1">&#39;He_MJ/m2&#39;</span><span class="p">,</span> <span class="s1">&#39;nominal&#39;</span><span class="p">),</span> <span class="p">(</span><span class="s1">&#39;Hv_Mlxh&#39;</span><span class="p">,</span> <span class="s1">&#39;mean&#39;</span><span class="p">):</span> <span class="p">(</span><span class="s1">&#39;Hv_Mlxh&#39;</span><span class="p">,</span> <span class="s1">&#39;nominal&#39;</span><span class="p">),</span> <span class="p">(</span><span class="s1">&#39;t_sec&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">):</span> <span class="p">(</span><span class="s1">&#39;t_sec&#39;</span><span class="p">,</span> <span class="s1">&#39;nominal&#39;</span><span class="p">)}</span>
             <span class="n">df_cl_final</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">MultiIndex</span><span class="o">.</span><span class="n">from_tuples</span><span class="p">([</span><span class="n">mapper</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">df_cl_final</span><span class="o">.</span><span class="n">columns</span><span class="p">])</span>
 
-        <span class="n">df_cl_final</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">names</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;coordinate&#39;</span><span class="p">,</span> <span class="s1">&#39;data_type&#39;</span><span class="p">)</span>
 
+        <span class="n">df_cl_final</span> <span class="o">=</span> <span class="n">df_cl_final</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="n">df_cl_final</span><span class="o">.</span><span class="n">columns</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+        <span class="n">df_cl_final</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+        <span class="n">df_cl_final</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">names</span> <span class="o">=</span> <span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">dose_units</span><span class="p">[</span><span class="n">dose_unit</span><span class="p">]</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="s1">&#39;nominal&#39;</span><span class="p">)</span>
 
 
         <span class="c1">###### INFO #######</span>
@@ -13273,7 +13285,13 @@ One can also enter a filename, but without a filename extension.</p>
 <span class="normal">1551</span>
 <span class="normal">1552</span>
 <span class="normal">1553</span>
-<span class="normal">1554</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">compute_mean</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">return_data</span><span class="p">:</span><span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">criterion</span><span class="p">:</span><span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;spot_group&#39;</span><span class="p">,</span> <span class="n">dose_unit</span><span class="p">:</span><span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;He&#39;</span><span class="p">,</span> <span class="n">dose_values</span><span class="p">:</span><span class="n">Optional</span><span class="p">[</span><span class="nb">tuple</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;chd&#39;</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">),</span> <span class="n">rounding</span><span class="p">:</span><span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span><span class="nb">tuple</span><span class="p">,</span><span class="nb">list</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mi">4</span><span class="p">,</span><span class="mi">3</span><span class="p">),</span> <span class="n">save</span><span class="p">:</span><span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">folder</span><span class="p">:</span><span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="n">filename</span><span class="p">:</span><span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;default&#39;</span><span class="p">):</span>
+<span class="normal">1554</span>
+<span class="normal">1555</span>
+<span class="normal">1556</span>
+<span class="normal">1557</span>
+<span class="normal">1558</span>
+<span class="normal">1559</span>
+<span class="normal">1560</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">compute_mean</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">return_data</span><span class="p">:</span><span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">criterion</span><span class="p">:</span><span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;spot_group&#39;</span><span class="p">,</span> <span class="n">dose_unit</span><span class="p">:</span><span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;He&#39;</span><span class="p">,</span> <span class="n">dose_values</span><span class="p">:</span><span class="n">Optional</span><span class="p">[</span><span class="nb">tuple</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;chd&#39;</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">),</span> <span class="n">rounding</span><span class="p">:</span><span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span><span class="nb">tuple</span><span class="p">,</span><span class="nb">list</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mi">4</span><span class="p">,</span><span class="mi">3</span><span class="p">),</span> <span class="n">save</span><span class="p">:</span><span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">folder</span><span class="p">:</span><span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="n">filename</span><span class="p">:</span><span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;default&#39;</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute mean and standard deviation values of several microfading measurements.</span>
 
 <span class="sd">    Parameters</span>
@@ -13371,7 +13389,7 @@ One can also enter a filename, but without a filename extension.</p>
 
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">dose_values</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span><span class="nb">float</span><span class="p">)):</span>
 
-        <span class="n">highest_dose</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">([</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_doses</span><span class="p">(</span><span class="n">dose_unit</span><span class="o">=</span><span class="n">dose_unit</span><span class="p">,</span> <span class="n">max_doses</span><span class="o">=</span><span class="kc">True</span><span class="p">)])</span>
+        <span class="n">highest_dose</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_doses</span><span class="p">(</span><span class="n">dose_unit</span><span class="o">=</span><span class="n">dose_unit</span><span class="p">,</span> <span class="n">max_doses</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">concat</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
         <span class="k">if</span> <span class="n">dose_values</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">highest_dose</span><span class="p">:</span>
             <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Process aborted. The end dose value you enter (</span><span class="si">{</span><span class="n">dose_values</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s1">) is above the maximum light dose value available (</span><span class="si">{</span><span class="n">highest_dose</span><span class="si">}</span><span class="s1"> </span><span class="si">{</span><span class="n">dose_units</span><span class="p">[</span><span class="n">dose_unit</span><span class="p">]</span><span class="si">}</span><span class="s1">).&#39;</span><span class="p">)</span>
             <span class="k">return</span>
@@ -13381,14 +13399,14 @@ One can also enter a filename, but without a filename extension.</p>
 
     <span class="k">elif</span> <span class="n">dose_values</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;max&#39;</span><span class="p">:</span>
 
-        <span class="n">highest_dose</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">([</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_doses</span><span class="p">(</span><span class="n">dose_unit</span><span class="o">=</span><span class="n">dose_unit</span><span class="p">,</span> <span class="n">max_doses</span><span class="o">=</span><span class="kc">True</span><span class="p">)])</span>
+        <span class="n">highest_dose</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_doses</span><span class="p">(</span><span class="n">dose_unit</span><span class="o">=</span><span class="n">dose_unit</span><span class="p">,</span> <span class="n">max_doses</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">concat</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
         <span class="n">wanted_dose_range</span> <span class="o">=</span> <span class="s1">&#39;all&#39;</span>
         <span class="n">wanted_dose_values</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">dose_values</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">highest_dose</span><span class="o">+</span><span class="n">dose_values</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">dose_values</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
 
 
     <span class="k">elif</span> <span class="n">dose_values</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;chd&#39;</span><span class="p">:</span>
 
-        <span class="n">common_highest_dose</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">([</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_doses</span><span class="p">(</span><span class="n">dose_unit</span><span class="o">=</span><span class="n">dose_unit</span><span class="p">,</span> <span class="n">max_doses</span><span class="o">=</span><span class="kc">True</span><span class="p">)])</span>
+        <span class="n">common_highest_dose</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_doses</span><span class="p">(</span><span class="n">dose_unit</span><span class="o">=</span><span class="n">dose_unit</span><span class="p">,</span> <span class="n">max_doses</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">concat</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
         <span class="n">wanted_dose_range</span> <span class="o">=</span> <span class="p">(</span><span class="n">dose_values</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">common_highest_dose</span><span class="p">,</span> <span class="n">dose_values</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
         <span class="n">wanted_dose_values</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="o">*</span><span class="n">wanted_dose_range</span><span class="p">)</span>
 
@@ -13459,32 +13477,38 @@ One can also enter a filename, but without a filename extension.</p>
     <span class="c1"># Create a multi-index pandas DataFrame</span>
 
     <span class="n">cielab_tuples</span> <span class="o">=</span> <span class="p">[(</span><span class="n">x</span><span class="p">,</span> <span class="n">measurement</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">data_cl</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">get_level_values</span><span class="p">(</span><span class="s1">&#39;coordinate&#39;</span><span class="p">)</span> <span class="k">for</span> <span class="n">measurement</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;mean&#39;</span><span class="p">,</span> <span class="s1">&#39;std&#39;</span><span class="p">]]</span>
-    <span class="n">multiindex_cols</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">MultiIndex</span><span class="o">.</span><span class="n">from_tuples</span><span class="p">(</span><span class="n">cielab_tuples</span><span class="p">,</span> <span class="n">names</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;coordinate&#39;</span><span class="p">,</span> <span class="s1">&#39;data_type&#39;</span><span class="p">])</span>
+    <span class="n">multiindex_cols</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">MultiIndex</span><span class="o">.</span><span class="n">from_tuples</span><span class="p">(</span><span class="n">cielab_tuples</span><span class="p">)</span>  <span class="c1"># names=[&#39;coordinate&#39;, &#39;data_type&#39;]</span>
 
     <span class="n">data_df_cl</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="n">wanted_cl_mean</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">wanted_cl_mean</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="mi">2</span><span class="p">))</span>       
     <span class="n">data_df_cl</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">::</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">wanted_cl_mean</span>
     <span class="n">data_df_cl</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">::</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">wanted_cl_std</span>
+
     <span class="n">df_cl_final</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">data_df_cl</span><span class="p">,</span><span class="n">columns</span><span class="o">=</span><span class="n">multiindex_cols</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="n">data_cl</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
 
     <span class="n">df_cl_final</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">df_cl_final</span><span class="p">,</span> <span class="n">rounding</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
 
+    <span class="n">df_cl_final</span> <span class="o">=</span> <span class="n">df_cl_final</span><span class="o">.</span><span class="n">reset_index</span><span class="p">()</span>
+
     <span class="k">if</span> <span class="n">dose_unit</span> <span class="o">==</span> <span class="s1">&#39;He&#39;</span><span class="p">:</span>
         <span class="n">df_cl_final</span><span class="o">.</span><span class="n">drop</span><span class="p">([(</span><span class="s1">&#39;Hv_Mlxh&#39;</span><span class="p">,</span><span class="s1">&#39;std&#39;</span><span class="p">),</span> <span class="p">(</span><span class="s1">&#39;t_sec&#39;</span><span class="p">,</span><span class="s1">&#39;std&#39;</span><span class="p">)],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-        <span class="n">mapper</span> <span class="o">=</span> <span class="p">{(</span><span class="s1">&#39;Hv_Mlxh&#39;</span><span class="p">,</span> <span class="s1">&#39;mean&#39;</span><span class="p">):</span> <span class="p">(</span><span class="s1">&#39;Hv_Mlxh&#39;</span><span class="p">,</span> <span class="s1">&#39;nominal&#39;</span><span class="p">),</span> <span class="p">(</span><span class="s1">&#39;t_sec&#39;</span><span class="p">,</span> <span class="s1">&#39;mean&#39;</span><span class="p">):</span> <span class="p">(</span><span class="s1">&#39;t_sec&#39;</span><span class="p">,</span> <span class="s1">&#39;nominal&#39;</span><span class="p">)}</span>
+        <span class="n">mapper</span> <span class="o">=</span> <span class="p">{(</span><span class="s1">&#39;He_MJ/m2&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">):</span> <span class="p">(</span><span class="s1">&#39;He_MJ/m2&#39;</span><span class="p">,</span> <span class="s1">&#39;nominal&#39;</span><span class="p">),</span> <span class="p">(</span><span class="s1">&#39;Hv_Mlxh&#39;</span><span class="p">,</span> <span class="s1">&#39;mean&#39;</span><span class="p">):</span> <span class="p">(</span><span class="s1">&#39;Hv_Mlxh&#39;</span><span class="p">,</span> <span class="s1">&#39;nominal&#39;</span><span class="p">),</span> <span class="p">(</span><span class="s1">&#39;t_sec&#39;</span><span class="p">,</span> <span class="s1">&#39;mean&#39;</span><span class="p">):</span> <span class="p">(</span><span class="s1">&#39;t_sec&#39;</span><span class="p">,</span> <span class="s1">&#39;nominal&#39;</span><span class="p">)}</span>
         <span class="n">df_cl_final</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">MultiIndex</span><span class="o">.</span><span class="n">from_tuples</span><span class="p">([</span><span class="n">mapper</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">df_cl_final</span><span class="o">.</span><span class="n">columns</span><span class="p">])</span>
 
     <span class="k">elif</span> <span class="n">dose_unit</span> <span class="o">==</span> <span class="s1">&#39;Hv&#39;</span><span class="p">:</span>
         <span class="n">df_cl_final</span><span class="o">.</span><span class="n">drop</span><span class="p">([(</span><span class="s1">&#39;He_MJ/m2&#39;</span><span class="p">,</span><span class="s1">&#39;std&#39;</span><span class="p">),</span> <span class="p">(</span><span class="s1">&#39;t_sec&#39;</span><span class="p">,</span><span class="s1">&#39;std&#39;</span><span class="p">)],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-        <span class="n">mapper</span> <span class="o">=</span> <span class="p">{(</span><span class="s1">&#39;He_MJ/m2&#39;</span><span class="p">,</span> <span class="s1">&#39;mean&#39;</span><span class="p">):</span> <span class="p">(</span><span class="s1">&#39;He_MJ/m2&#39;</span><span class="p">,</span> <span class="s1">&#39;nominal&#39;</span><span class="p">),</span> <span class="p">(</span><span class="s1">&#39;t_sec&#39;</span><span class="p">,</span> <span class="s1">&#39;mean&#39;</span><span class="p">):</span> <span class="p">(</span><span class="s1">&#39;t_sec&#39;</span><span class="p">,</span> <span class="s1">&#39;nominal&#39;</span><span class="p">)}</span>
+        <span class="n">mapper</span> <span class="o">=</span> <span class="p">{(</span><span class="s1">&#39;He_MJ/m2&#39;</span><span class="p">,</span> <span class="s1">&#39;mean&#39;</span><span class="p">):</span> <span class="p">(</span><span class="s1">&#39;He_MJ/m2&#39;</span><span class="p">,</span> <span class="s1">&#39;nominal&#39;</span><span class="p">),</span> <span class="p">(</span><span class="s1">&#39;Hv_Mlxh&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">):</span> <span class="p">(</span><span class="s1">&#39;Hv_Mlxh&#39;</span><span class="p">,</span> <span class="s1">&#39;nominal&#39;</span><span class="p">),</span> <span class="p">(</span><span class="s1">&#39;t_sec&#39;</span><span class="p">,</span> <span class="s1">&#39;mean&#39;</span><span class="p">):</span> <span class="p">(</span><span class="s1">&#39;t_sec&#39;</span><span class="p">,</span> <span class="s1">&#39;nominal&#39;</span><span class="p">)}</span>
         <span class="n">df_cl_final</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">MultiIndex</span><span class="o">.</span><span class="n">from_tuples</span><span class="p">([</span><span class="n">mapper</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">df_cl_final</span><span class="o">.</span><span class="n">columns</span><span class="p">])</span>
 
     <span class="k">elif</span> <span class="n">dose_unit</span> <span class="o">==</span> <span class="s1">&#39;t&#39;</span><span class="p">:</span>
         <span class="n">df_cl_final</span><span class="o">.</span><span class="n">drop</span><span class="p">([(</span><span class="s1">&#39;He_MJ/m2&#39;</span><span class="p">,</span><span class="s1">&#39;std&#39;</span><span class="p">),</span> <span class="p">(</span><span class="s1">&#39;Hv_Mlxh&#39;</span><span class="p">,</span><span class="s1">&#39;std&#39;</span><span class="p">)],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-        <span class="n">mapper</span> <span class="o">=</span> <span class="p">{(</span><span class="s1">&#39;He_MJ/m2&#39;</span><span class="p">,</span> <span class="s1">&#39;mean&#39;</span><span class="p">):</span> <span class="p">(</span><span class="s1">&#39;He_MJ/m2&#39;</span><span class="p">,</span> <span class="s1">&#39;nominal&#39;</span><span class="p">),</span> <span class="p">(</span><span class="s1">&#39;Hv_Mlxh&#39;</span><span class="p">,</span> <span class="s1">&#39;mean&#39;</span><span class="p">):</span> <span class="p">(</span><span class="s1">&#39;Hv_Mlxh&#39;</span><span class="p">,</span> <span class="s1">&#39;nominal&#39;</span><span class="p">)}</span>
+        <span class="n">mapper</span> <span class="o">=</span> <span class="p">{(</span><span class="s1">&#39;He_MJ/m2&#39;</span><span class="p">,</span> <span class="s1">&#39;mean&#39;</span><span class="p">):</span> <span class="p">(</span><span class="s1">&#39;He_MJ/m2&#39;</span><span class="p">,</span> <span class="s1">&#39;nominal&#39;</span><span class="p">),</span> <span class="p">(</span><span class="s1">&#39;Hv_Mlxh&#39;</span><span class="p">,</span> <span class="s1">&#39;mean&#39;</span><span class="p">):</span> <span class="p">(</span><span class="s1">&#39;Hv_Mlxh&#39;</span><span class="p">,</span> <span class="s1">&#39;nominal&#39;</span><span class="p">),</span> <span class="p">(</span><span class="s1">&#39;t_sec&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">):</span> <span class="p">(</span><span class="s1">&#39;t_sec&#39;</span><span class="p">,</span> <span class="s1">&#39;nominal&#39;</span><span class="p">)}</span>
         <span class="n">df_cl_final</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">MultiIndex</span><span class="o">.</span><span class="n">from_tuples</span><span class="p">([</span><span class="n">mapper</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">df_cl_final</span><span class="o">.</span><span class="n">columns</span><span class="p">])</span>
 
-    <span class="n">df_cl_final</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">names</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;coordinate&#39;</span><span class="p">,</span> <span class="s1">&#39;data_type&#39;</span><span class="p">)</span>
 
+    <span class="n">df_cl_final</span> <span class="o">=</span> <span class="n">df_cl_final</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="n">df_cl_final</span><span class="o">.</span><span class="n">columns</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+    <span class="n">df_cl_final</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+    <span class="n">df_cl_final</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">names</span> <span class="o">=</span> <span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">dose_units</span><span class="p">[</span><span class="n">dose_unit</span><span class="p">]</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="s1">&#39;nominal&#39;</span><span class="p">)</span>
 
 
     <span class="c1">###### INFO #######</span>
@@ -13741,20 +13765,20 @@ One can also enter a filename, but without a filename extension.</p>
 
             <details class="quote">
               <summary>Source code in <code>src/microfading/microfading.py</code></summary>
-              <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1557</span>
-<span class="normal">1558</span>
-<span class="normal">1559</span>
-<span class="normal">1560</span>
-<span class="normal">1561</span>
-<span class="normal">1562</span>
-<span class="normal">1563</span>
+              <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1563</span>
 <span class="normal">1564</span>
 <span class="normal">1565</span>
 <span class="normal">1566</span>
 <span class="normal">1567</span>
 <span class="normal">1568</span>
 <span class="normal">1569</span>
-<span class="normal">1570</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">compute_sp_derivate</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="normal">1570</span>
+<span class="normal">1571</span>
+<span class="normal">1572</span>
+<span class="normal">1573</span>
+<span class="normal">1574</span>
+<span class="normal">1575</span>
+<span class="normal">1576</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">compute_sp_derivate</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute the first derivative values of reflectance spectra.</span>
 
 <span class="sd">    Returns</span>
@@ -13823,13 +13847,7 @@ The value corresponds to the amount of digits after the decimal separator.</p>
 
             <details class="quote">
               <summary>Source code in <code>src/microfading/microfading.py</code></summary>
-              <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2407</span>
-<span class="normal">2408</span>
-<span class="normal">2409</span>
-<span class="normal">2410</span>
-<span class="normal">2411</span>
-<span class="normal">2412</span>
-<span class="normal">2413</span>
+              <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2413</span>
 <span class="normal">2414</span>
 <span class="normal">2415</span>
 <span class="normal">2416</span>
@@ -13904,7 +13922,13 @@ The value corresponds to the amount of digits after the decimal separator.</p>
 <span class="normal">2485</span>
 <span class="normal">2486</span>
 <span class="normal">2487</span>
-<span class="normal">2488</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">get_XYZ</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">illuminant</span><span class="p">:</span><span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;default&#39;</span><span class="p">,</span> <span class="n">observer</span><span class="p">:</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;default&#39;</span><span class="p">,</span> <span class="n">dose_unit</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;He&#39;</span><span class="p">,</span> <span class="n">dose_values</span><span class="p">:</span><span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;all&#39;</span><span class="p">,</span> <span class="n">rounding</span><span class="p">:</span><span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">2</span><span class="p">):</span>
+<span class="normal">2488</span>
+<span class="normal">2489</span>
+<span class="normal">2490</span>
+<span class="normal">2491</span>
+<span class="normal">2492</span>
+<span class="normal">2493</span>
+<span class="normal">2494</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">get_XYZ</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">illuminant</span><span class="p">:</span><span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;default&#39;</span><span class="p">,</span> <span class="n">observer</span><span class="p">:</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;default&#39;</span><span class="p">,</span> <span class="n">dose_unit</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;He&#39;</span><span class="p">,</span> <span class="n">dose_values</span><span class="p">:</span><span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;all&#39;</span><span class="p">,</span> <span class="n">rounding</span><span class="p">:</span><span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">2</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute the XYZ values. </span>
 
 <span class="sd">    Parameters</span>
@@ -14042,13 +14066,7 @@ The value corresponds to the amount of digits after the decimal separator.</p>
 
             <details class="quote">
               <summary>Source code in <code>src/microfading/microfading.py</code></summary>
-              <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1737</span>
-<span class="normal">1738</span>
-<span class="normal">1739</span>
-<span class="normal">1740</span>
-<span class="normal">1741</span>
-<span class="normal">1742</span>
-<span class="normal">1743</span>
+              <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1743</span>
 <span class="normal">1744</span>
 <span class="normal">1745</span>
 <span class="normal">1746</span>
@@ -14209,7 +14227,13 @@ The value corresponds to the amount of digits after the decimal separator.</p>
 <span class="normal">1901</span>
 <span class="normal">1902</span>
 <span class="normal">1903</span>
-<span class="normal">1904</span></pre></div></td><td class="code"><div><pre><span></span><code>    <span class="k">def</span> <span class="nf">get_cielab</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">coordinates</span><span class="p">:</span><span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;dE00&#39;</span><span class="p">],</span> <span class="n">dose_unit</span><span class="p">:</span><span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;He&#39;</span><span class="p">,</span> <span class="n">dose_values</span><span class="p">:</span><span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;all&#39;</span><span class="p">,</span> <span class="n">data_type</span><span class="p">:</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;all&#39;</span><span class="p">,</span> <span class="n">rounding</span><span class="p">:</span><span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">4</span><span class="p">,</span> <span class="n">concat</span><span class="p">:</span><span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span><span class="p">):</span>
+<span class="normal">1904</span>
+<span class="normal">1905</span>
+<span class="normal">1906</span>
+<span class="normal">1907</span>
+<span class="normal">1908</span>
+<span class="normal">1909</span>
+<span class="normal">1910</span></pre></div></td><td class="code"><div><pre><span></span><code>    <span class="k">def</span> <span class="nf">get_cielab</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">coordinates</span><span class="p">:</span><span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;dE00&#39;</span><span class="p">],</span> <span class="n">dose_unit</span><span class="p">:</span><span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;He&#39;</span><span class="p">,</span> <span class="n">dose_values</span><span class="p">:</span><span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;all&#39;</span><span class="p">,</span> <span class="n">data_type</span><span class="p">:</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;all&#39;</span><span class="p">,</span> <span class="n">rounding</span><span class="p">:</span><span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">4</span><span class="p">,</span> <span class="n">concat</span><span class="p">:</span><span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Retrieve the colourimetric values for one or multiple light dose values.</span>
 
 <span class="sd">        Parameters</span>
@@ -14413,13 +14437,7 @@ The value corresponds to the amount of digits after the decimal separator.</p>
 
             <details class="quote">
               <summary>Source code in <code>src/microfading/microfading.py</code></summary>
-              <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1959</span>
-<span class="normal">1960</span>
-<span class="normal">1961</span>
-<span class="normal">1962</span>
-<span class="normal">1963</span>
-<span class="normal">1964</span>
-<span class="normal">1965</span>
+              <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1965</span>
 <span class="normal">1966</span>
 <span class="normal">1967</span>
 <span class="normal">1968</span>
@@ -14590,7 +14608,13 @@ The value corresponds to the amount of digits after the decimal separator.</p>
 <span class="normal">2133</span>
 <span class="normal">2134</span>
 <span class="normal">2135</span>
-<span class="normal">2136</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">get_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;all&#39;</span><span class="p">,</span> <span class="n">xarray</span><span class="p">:</span><span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
+<span class="normal">2136</span>
+<span class="normal">2137</span>
+<span class="normal">2138</span>
+<span class="normal">2139</span>
+<span class="normal">2140</span>
+<span class="normal">2141</span>
+<span class="normal">2142</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">get_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;all&#39;</span><span class="p">,</span> <span class="n">xarray</span><span class="p">:</span><span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;A generic way to retrieve the microfading data. For more precise data retrieving, the function get_cielab() or get_spectra() will be more adequate.</span>
 
 <span class="sd">    Parameters</span>
@@ -14806,13 +14830,7 @@ When False, it returns a list of dataframes</p>
 
             <details class="quote">
               <summary>Source code in <code>src/microfading/microfading.py</code></summary>
-              <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2190</span>
-<span class="normal">2191</span>
-<span class="normal">2192</span>
-<span class="normal">2193</span>
-<span class="normal">2194</span>
-<span class="normal">2195</span>
-<span class="normal">2196</span>
+              <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2196</span>
 <span class="normal">2197</span>
 <span class="normal">2198</span>
 <span class="normal">2199</span>
@@ -14875,7 +14893,13 @@ When False, it returns a list of dataframes</p>
 <span class="normal">2256</span>
 <span class="normal">2257</span>
 <span class="normal">2258</span>
-<span class="normal">2259</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">get_doses</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dose_unit</span><span class="p">:</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span><span class="nb">list</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;all&#39;</span><span class="p">,</span> <span class="n">max_doses</span><span class="p">:</span><span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">concat</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<span class="normal">2259</span>
+<span class="normal">2260</span>
+<span class="normal">2261</span>
+<span class="normal">2262</span>
+<span class="normal">2263</span>
+<span class="normal">2264</span>
+<span class="normal">2265</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">get_doses</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dose_unit</span><span class="p">:</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span><span class="nb">list</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;all&#39;</span><span class="p">,</span> <span class="n">max_doses</span><span class="p">:</span><span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">concat</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Retrieve the light energy doses related to each microfading measurement.</span>
 
 <span class="sd">    Parameters</span>
@@ -14979,13 +15003,7 @@ It can be either '2' or '10'</p>
 
             <details class="quote">
               <summary>Source code in <code>src/microfading/microfading.py</code></summary>
-              <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1907</span>
-<span class="normal">1908</span>
-<span class="normal">1909</span>
-<span class="normal">1910</span>
-<span class="normal">1911</span>
-<span class="normal">1912</span>
-<span class="normal">1913</span>
+              <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1913</span>
 <span class="normal">1914</span>
 <span class="normal">1915</span>
 <span class="normal">1916</span>
@@ -15006,7 +15024,13 @@ It can be either '2' or '10'</p>
 <span class="normal">1931</span>
 <span class="normal">1932</span>
 <span class="normal">1933</span>
-<span class="normal">1934</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">get_illuminant</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">illuminant</span><span class="p">:</span><span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;D65&#39;</span><span class="p">,</span> <span class="n">observer</span><span class="p">:</span><span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;10&#39;</span><span class="p">):</span>
+<span class="normal">1934</span>
+<span class="normal">1935</span>
+<span class="normal">1936</span>
+<span class="normal">1937</span>
+<span class="normal">1938</span>
+<span class="normal">1939</span>
+<span class="normal">1940</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">get_illuminant</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">illuminant</span><span class="p">:</span><span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;D65&#39;</span><span class="p">,</span> <span class="n">observer</span><span class="p">:</span><span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;10&#39;</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Retrieve data over the illuminant.</span>
 
 <span class="sd">    Parameters</span>
@@ -15069,13 +15093,7 @@ For example, if you want to retrieve all the information about the objects, you 
 
             <details class="quote">
               <summary>Source code in <code>src/microfading/microfading.py</code></summary>
-              <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2139</span>
-<span class="normal">2140</span>
-<span class="normal">2141</span>
-<span class="normal">2142</span>
-<span class="normal">2143</span>
-<span class="normal">2144</span>
-<span class="normal">2145</span>
+              <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2145</span>
 <span class="normal">2146</span>
 <span class="normal">2147</span>
 <span class="normal">2148</span>
@@ -15117,7 +15135,13 @@ For example, if you want to retrieve all the information about the objects, you 
 <span class="normal">2184</span>
 <span class="normal">2185</span>
 <span class="normal">2186</span>
-<span class="normal">2187</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">get_metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">labels</span><span class="p">:</span><span class="n">Union</span><span class="p">[</span><span class="nb">list</span><span class="p">,</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;all&#39;</span><span class="p">,</span> <span class="n">section</span><span class="p">:</span><span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;all&#39;</span><span class="p">):</span>
+<span class="normal">2187</span>
+<span class="normal">2188</span>
+<span class="normal">2189</span>
+<span class="normal">2190</span>
+<span class="normal">2191</span>
+<span class="normal">2192</span>
+<span class="normal">2193</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">get_metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">labels</span><span class="p">:</span><span class="n">Union</span><span class="p">[</span><span class="nb">list</span><span class="p">,</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;all&#39;</span><span class="p">,</span> <span class="n">section</span><span class="p">:</span><span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;all&#39;</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Retrieve the metadata.</span>
 
 <span class="sd">    Parameters</span>
@@ -15194,13 +15218,7 @@ For example, if you want to retrieve all the information about the objects, you 
 
             <details class="quote">
               <summary>Source code in <code>src/microfading/microfading.py</code></summary>
-              <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1937</span>
-<span class="normal">1938</span>
-<span class="normal">1939</span>
-<span class="normal">1940</span>
-<span class="normal">1941</span>
-<span class="normal">1942</span>
-<span class="normal">1943</span>
+              <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1943</span>
 <span class="normal">1944</span>
 <span class="normal">1945</span>
 <span class="normal">1946</span>
@@ -15213,7 +15231,13 @@ For example, if you want to retrieve all the information about the objects, you 
 <span class="normal">1953</span>
 <span class="normal">1954</span>
 <span class="normal">1955</span>
-<span class="normal">1956</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">get_observer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">observer</span><span class="p">:</span><span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;10&#39;</span><span class="p">):</span>
+<span class="normal">1956</span>
+<span class="normal">1957</span>
+<span class="normal">1958</span>
+<span class="normal">1959</span>
+<span class="normal">1960</span>
+<span class="normal">1961</span>
+<span class="normal">1962</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">get_observer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">observer</span><span class="p">:</span><span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;10&#39;</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Retrieve data over the observer.</span>
 
 <span class="sd">    Parameters</span>
@@ -15287,13 +15311,7 @@ A tuple of three values (min, max, step) will be used in a numpy.arange() functi
 
             <details class="quote">
               <summary>Source code in <code>src/microfading/microfading.py</code></summary>
-              <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2289</span>
-<span class="normal">2290</span>
-<span class="normal">2291</span>
-<span class="normal">2292</span>
-<span class="normal">2293</span>
-<span class="normal">2294</span>
-<span class="normal">2295</span>
+              <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2295</span>
 <span class="normal">2296</span>
 <span class="normal">2297</span>
 <span class="normal">2298</span>
@@ -15390,7 +15408,13 @@ A tuple of three values (min, max, step) will be used in a numpy.arange() functi
 <span class="normal">2389</span>
 <span class="normal">2390</span>
 <span class="normal">2391</span>
-<span class="normal">2392</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">get_sRGB</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">illuminant</span><span class="o">=</span><span class="s1">&#39;default&#39;</span><span class="p">,</span> <span class="n">observer</span><span class="o">=</span><span class="s1">&#39;default&#39;</span><span class="p">,</span> <span class="n">dose_unit</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;He&#39;</span><span class="p">,</span> <span class="n">dose_values</span><span class="p">:</span><span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;all&#39;</span><span class="p">,</span> <span class="n">clip</span><span class="p">:</span><span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span><span class="p">):</span>
+<span class="normal">2392</span>
+<span class="normal">2393</span>
+<span class="normal">2394</span>
+<span class="normal">2395</span>
+<span class="normal">2396</span>
+<span class="normal">2397</span>
+<span class="normal">2398</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">get_sRGB</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">illuminant</span><span class="o">=</span><span class="s1">&#39;default&#39;</span><span class="p">,</span> <span class="n">observer</span><span class="o">=</span><span class="s1">&#39;default&#39;</span><span class="p">,</span> <span class="n">dose_unit</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;He&#39;</span><span class="p">,</span> <span class="n">dose_values</span><span class="p">:</span><span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;all&#39;</span><span class="p">,</span> <span class="n">clip</span><span class="p">:</span><span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute the sRGB values. </span>
 
 <span class="sd">    Parameters</span>
@@ -15564,13 +15588,7 @@ When False, it returns </p>
 
             <details class="quote">
               <summary>Source code in <code>src/microfading/microfading.py</code></summary>
-              <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1573</span>
-<span class="normal">1574</span>
-<span class="normal">1575</span>
-<span class="normal">1576</span>
-<span class="normal">1577</span>
-<span class="normal">1578</span>
-<span class="normal">1579</span>
+              <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1579</span>
 <span class="normal">1580</span>
 <span class="normal">1581</span>
 <span class="normal">1582</span>
@@ -15725,7 +15743,13 @@ When False, it returns </p>
 <span class="normal">1731</span>
 <span class="normal">1732</span>
 <span class="normal">1733</span>
-<span class="normal">1734</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">get_spectra</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">wl_range</span><span class="p">:</span><span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;all&#39;</span><span class="p">,</span> <span class="n">dose_unit</span><span class="p">:</span><span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;He&#39;</span><span class="p">,</span> <span class="n">dose_values</span><span class="p">:</span><span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;all&#39;</span><span class="p">,</span> <span class="n">spectral_mode</span><span class="p">:</span><span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;R&#39;</span><span class="p">,</span> <span class="n">derivation</span><span class="p">:</span><span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">smoothing</span><span class="p">:</span><span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">],</span> <span class="n">concat</span><span class="p">:</span><span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span><span class="p">):</span>
+<span class="normal">1734</span>
+<span class="normal">1735</span>
+<span class="normal">1736</span>
+<span class="normal">1737</span>
+<span class="normal">1738</span>
+<span class="normal">1739</span>
+<span class="normal">1740</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">get_spectra</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">wl_range</span><span class="p">:</span><span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;all&#39;</span><span class="p">,</span> <span class="n">dose_unit</span><span class="p">:</span><span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;He&#39;</span><span class="p">,</span> <span class="n">dose_values</span><span class="p">:</span><span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;all&#39;</span><span class="p">,</span> <span class="n">spectral_mode</span><span class="p">:</span><span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;R&#39;</span><span class="p">,</span> <span class="n">derivation</span><span class="p">:</span><span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">smoothing</span><span class="p">:</span><span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">],</span> <span class="n">concat</span><span class="p">:</span><span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Retrieve the reflectance spectra related to the input files.</span>
 
 <span class="sd">    Parameters</span>
@@ -15942,13 +15966,7 @@ The value corresponds to the amount of digits after the decimal separator.</p>
 
             <details class="quote">
               <summary>Source code in <code>src/microfading/microfading.py</code></summary>
-              <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2491</span>
-<span class="normal">2492</span>
-<span class="normal">2493</span>
-<span class="normal">2494</span>
-<span class="normal">2495</span>
-<span class="normal">2496</span>
-<span class="normal">2497</span>
+              <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2497</span>
 <span class="normal">2498</span>
 <span class="normal">2499</span>
 <span class="normal">2500</span>
@@ -16024,7 +16042,13 @@ The value corresponds to the amount of digits after the decimal separator.</p>
 <span class="normal">2570</span>
 <span class="normal">2571</span>
 <span class="normal">2572</span>
-<span class="normal">2573</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">get_xy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">illuminant</span><span class="p">:</span><span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;default&#39;</span><span class="p">,</span> <span class="n">observer</span><span class="p">:</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;default&#39;</span><span class="p">,</span> <span class="n">dose_unit</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;He&#39;</span><span class="p">,</span> <span class="n">dose_values</span><span class="p">:</span><span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;all&#39;</span><span class="p">,</span> <span class="n">rounding</span><span class="p">:</span><span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">4</span><span class="p">):</span>
+<span class="normal">2573</span>
+<span class="normal">2574</span>
+<span class="normal">2575</span>
+<span class="normal">2576</span>
+<span class="normal">2577</span>
+<span class="normal">2578</span>
+<span class="normal">2579</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">get_xy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">illuminant</span><span class="p">:</span><span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;default&#39;</span><span class="p">,</span> <span class="n">observer</span><span class="p">:</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;default&#39;</span><span class="p">,</span> <span class="n">dose_unit</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;He&#39;</span><span class="p">,</span> <span class="n">dose_values</span><span class="p">:</span><span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;all&#39;</span><span class="p">,</span> <span class="n">rounding</span><span class="p">:</span><span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">4</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute the xy values. </span>
 
 <span class="sd">    Parameters</span>
@@ -16149,13 +16173,7 @@ The value corresponds to the amount of digits after the decimal separator.</p>
 
             <details class="quote">
               <summary>Source code in <code>src/microfading/microfading.py</code></summary>
-              <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">4575</span>
-<span class="normal">4576</span>
-<span class="normal">4577</span>
-<span class="normal">4578</span>
-<span class="normal">4579</span>
-<span class="normal">4580</span>
-<span class="normal">4581</span>
+              <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">4581</span>
 <span class="normal">4582</span>
 <span class="normal">4583</span>
 <span class="normal">4584</span>
@@ -16189,7 +16207,13 @@ The value corresponds to the amount of digits after the decimal separator.</p>
 <span class="normal">4612</span>
 <span class="normal">4613</span>
 <span class="normal">4614</span>
-<span class="normal">4615</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">make_table</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parameters</span><span class="p">:</span><span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;BWSE&#39;</span><span class="p">],</span> <span class="n">sort_by</span><span class="p">:</span><span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;meas_id&#39;</span><span class="p">,</span> <span class="n">title</span><span class="p">:</span><span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">subtitle</span><span class="p">:</span><span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<span class="normal">4615</span>
+<span class="normal">4616</span>
+<span class="normal">4617</span>
+<span class="normal">4618</span>
+<span class="normal">4619</span>
+<span class="normal">4620</span>
+<span class="normal">4621</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">make_table</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parameters</span><span class="p">:</span><span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;BWSE&#39;</span><span class="p">],</span> <span class="n">sort_by</span><span class="p">:</span><span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;meas_id&#39;</span><span class="p">,</span> <span class="n">title</span><span class="p">:</span><span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">subtitle</span><span class="p">:</span><span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Create a table showing values from the &#39;info&#39; sheets.</span>
 
 <span class="sd">    Parameters</span>
@@ -16335,13 +16359,7 @@ When 'cwd', it will save the figure in the current working directory.</p>
 
             <details class="quote">
               <summary>Source code in <code>src/microfading/microfading.py</code></summary>
-              <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2843</span>
-<span class="normal">2844</span>
-<span class="normal">2845</span>
-<span class="normal">2846</span>
-<span class="normal">2847</span>
-<span class="normal">2848</span>
-<span class="normal">2849</span>
+              <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2849</span>
 <span class="normal">2850</span>
 <span class="normal">2851</span>
 <span class="normal">2852</span>
@@ -16524,7 +16542,13 @@ When 'cwd', it will save the figure in the current working directory.</p>
 <span class="normal">3029</span>
 <span class="normal">3030</span>
 <span class="normal">3031</span>
-<span class="normal">3032</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">plot_CIELAB</span><span class="p">(</span>
+<span class="normal">3032</span>
+<span class="normal">3033</span>
+<span class="normal">3034</span>
+<span class="normal">3035</span>
+<span class="normal">3036</span>
+<span class="normal">3037</span>
+<span class="normal">3038</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">plot_CIELAB</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">dE</span><span class="p">:</span><span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">stdev</span><span class="p">:</span><span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> 
@@ -16802,13 +16826,7 @@ When 'cwd', it will save the figure in the current working directory.</p>
 </details>
             <details class="quote">
               <summary>Source code in <code>src/microfading/microfading.py</code></summary>
-              <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2599</span>
-<span class="normal">2600</span>
-<span class="normal">2601</span>
-<span class="normal">2602</span>
-<span class="normal">2603</span>
-<span class="normal">2604</span>
-<span class="normal">2605</span>
+              <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2605</span>
 <span class="normal">2606</span>
 <span class="normal">2607</span>
 <span class="normal">2608</span>
@@ -17026,7 +17044,13 @@ When 'cwd', it will save the figure in the current working directory.</p>
 <span class="normal">2820</span>
 <span class="normal">2821</span>
 <span class="normal">2822</span>
-<span class="normal">2823</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">plot_bars</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">BWS_lines</span><span class="p">:</span><span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">coordinate</span><span class="p">:</span><span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;dE00&#39;</span><span class="p">,</span> <span class="n">dose_unit</span><span class="p">:</span><span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;Hv&#39;</span><span class="p">,</span> <span class="n">dose_value</span><span class="p">:</span><span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;hcd&#39;</span><span class="p">,</span> <span class="n">xlabels</span><span class="p">:</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;default&#39;</span><span class="p">,</span> <span class="n">group_objects</span><span class="p">:</span><span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">fontsize</span><span class="p">:</span><span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">24</span><span class="p">,</span> <span class="n">rotate_xlabels</span><span class="p">:</span><span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">45</span><span class="p">,</span> <span class="n">position_xlabels</span><span class="p">:</span><span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;right&#39;</span><span class="p">,</span> <span class="n">position_text</span><span class="p">:</span><span class="n">Optional</span><span class="p">[</span><span class="nb">tuple</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mf">0.75</span><span class="p">,</span><span class="mf">0.98</span><span class="p">),</span> <span class="n">colors</span><span class="p">:</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span><span class="nb">float</span><span class="p">,</span><span class="nb">list</span><span class="p">]</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">save</span><span class="p">:</span><span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">path_fig</span><span class="p">:</span><span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;cwd&#39;</span><span class="p">):</span>
+<span class="normal">2823</span>
+<span class="normal">2824</span>
+<span class="normal">2825</span>
+<span class="normal">2826</span>
+<span class="normal">2827</span>
+<span class="normal">2828</span>
+<span class="normal">2829</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">plot_bars</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">BWS_lines</span><span class="p">:</span><span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">coordinate</span><span class="p">:</span><span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;dE00&#39;</span><span class="p">,</span> <span class="n">dose_unit</span><span class="p">:</span><span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;Hv&#39;</span><span class="p">,</span> <span class="n">dose_value</span><span class="p">:</span><span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;hcd&#39;</span><span class="p">,</span> <span class="n">xlabels</span><span class="p">:</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;default&#39;</span><span class="p">,</span> <span class="n">group_objects</span><span class="p">:</span><span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">fontsize</span><span class="p">:</span><span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">24</span><span class="p">,</span> <span class="n">rotate_xlabels</span><span class="p">:</span><span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">45</span><span class="p">,</span> <span class="n">position_xlabels</span><span class="p">:</span><span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;right&#39;</span><span class="p">,</span> <span class="n">position_text</span><span class="p">:</span><span class="n">Optional</span><span class="p">[</span><span class="nb">tuple</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mf">0.75</span><span class="p">,</span><span class="mf">0.98</span><span class="p">),</span> <span class="n">colors</span><span class="p">:</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span><span class="nb">float</span><span class="p">,</span><span class="nb">list</span><span class="p">]</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">save</span><span class="p">:</span><span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">path_fig</span><span class="p">:</span><span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;cwd&#39;</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Plot a bar graph of a given colorimetric coordinate for a given light dose value.</span>
 
 <span class="sd">    Parameters</span>
@@ -17352,13 +17376,7 @@ When 'cwd', it will save the figure in the current working directory.</p>
 </details>
             <details class="quote">
               <summary>Source code in <code>src/microfading/microfading.py</code></summary>
-              <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">3273</span>
-<span class="normal">3274</span>
-<span class="normal">3275</span>
-<span class="normal">3276</span>
-<span class="normal">3277</span>
-<span class="normal">3278</span>
-<span class="normal">3279</span>
+              <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">3279</span>
 <span class="normal">3280</span>
 <span class="normal">3281</span>
 <span class="normal">3282</span>
@@ -17591,7 +17609,13 @@ When 'cwd', it will save the figure in the current working directory.</p>
 <span class="normal">3509</span>
 <span class="normal">3510</span>
 <span class="normal">3511</span>
-<span class="normal">3512</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">plot_delta</span><span class="p">(</span>
+<span class="normal">3512</span>
+<span class="normal">3513</span>
+<span class="normal">3514</span>
+<span class="normal">3515</span>
+<span class="normal">3516</span>
+<span class="normal">3517</span>
+<span class="normal">3518</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">plot_delta</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">coordinates</span><span class="p">:</span><span class="n">Union</span><span class="p">[</span><span class="nb">list</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;dE00&#39;</span><span class="p">],</span>
         <span class="n">stdev</span><span class="p">:</span><span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> 
@@ -17935,13 +17959,7 @@ When 'cwd', it will save the figure in the current working directory.       </p>
 
             <details class="quote">
               <summary>Source code in <code>src/microfading/microfading.py</code></summary>
-              <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">3516</span>
-<span class="normal">3517</span>
-<span class="normal">3518</span>
-<span class="normal">3519</span>
-<span class="normal">3520</span>
-<span class="normal">3521</span>
-<span class="normal">3522</span>
+              <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">3522</span>
 <span class="normal">3523</span>
 <span class="normal">3524</span>
 <span class="normal">3525</span>
@@ -18344,7 +18362,13 @@ When 'cwd', it will save the figure in the current working directory.       </p>
 <span class="normal">3922</span>
 <span class="normal">3923</span>
 <span class="normal">3924</span>
-<span class="normal">3925</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">plot_sp</span><span class="p">(</span>
+<span class="normal">3925</span>
+<span class="normal">3926</span>
+<span class="normal">3927</span>
+<span class="normal">3928</span>
+<span class="normal">3929</span>
+<span class="normal">3930</span>
+<span class="normal">3931</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">plot_sp</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> 
         <span class="n">spectra</span><span class="p">:</span><span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;i&#39;</span><span class="p">,</span>
         <span class="n">stdev</span><span class="p">:</span><span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> 
@@ -18848,13 +18872,7 @@ One can enter a negative or positive float number to shape the colored circles a
 
             <details class="quote">
               <summary>Source code in <code>src/microfading/microfading.py</code></summary>
-              <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">3058</span>
-<span class="normal">3059</span>
-<span class="normal">3060</span>
-<span class="normal">3061</span>
-<span class="normal">3062</span>
-<span class="normal">3063</span>
-<span class="normal">3064</span>
+              <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">3064</span>
 <span class="normal">3065</span>
 <span class="normal">3066</span>
 <span class="normal">3067</span>
@@ -18925,7 +18943,13 @@ One can enter a negative or positive float number to shape the colored circles a
 <span class="normal">3132</span>
 <span class="normal">3133</span>
 <span class="normal">3134</span>
-<span class="normal">3135</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">plot_swatches_circle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">orientation</span><span class="p">:</span><span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;horizontal&#39;</span><span class="p">,</span> <span class="n">light_doses</span><span class="p">:</span><span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mf">0.5</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">5</span><span class="p">,</span><span class="mi">15</span><span class="p">],</span> <span class="n">JND</span><span class="p">:</span><span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">5</span><span class="p">,</span><span class="mi">10</span><span class="p">],</span> <span class="n">dose_unit</span><span class="p">:</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span><span class="nb">tuple</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;Hv&#39;</span><span class="p">,</span> <span class="n">dE</span><span class="p">:</span><span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">museum_exposure</span><span class="p">:</span><span class="n">Optional</span><span class="p">[</span><span class="nb">tuple</span><span class="p">]</span> <span class="o">=</span> <span class="p">(),</span> <span class="n">fontsize</span><span class="p">:</span><span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">32</span><span class="p">,</span> <span class="n">equation</span><span class="p">:</span><span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;power_3p&#39;</span><span class="p">,</span> <span class="n">initial_params</span><span class="p">:</span><span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="s1">&#39;auto&#39;</span><span class="p">,</span> <span class="n">bounds</span><span class="p">:</span><span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">),</span> <span class="n">save</span><span class="p">:</span><span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">path_fig</span><span class="p">:</span><span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;cwd&#39;</span><span class="p">,</span> <span class="n">title</span><span class="p">:</span><span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">report</span><span class="p">:</span><span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">circle_h</span><span class="p">:</span><span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span><span class="p">):</span> 
+<span class="normal">3135</span>
+<span class="normal">3136</span>
+<span class="normal">3137</span>
+<span class="normal">3138</span>
+<span class="normal">3139</span>
+<span class="normal">3140</span>
+<span class="normal">3141</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">plot_swatches_circle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">orientation</span><span class="p">:</span><span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;horizontal&#39;</span><span class="p">,</span> <span class="n">light_doses</span><span class="p">:</span><span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mf">0.5</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">5</span><span class="p">,</span><span class="mi">15</span><span class="p">],</span> <span class="n">JND</span><span class="p">:</span><span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">5</span><span class="p">,</span><span class="mi">10</span><span class="p">],</span> <span class="n">dose_unit</span><span class="p">:</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span><span class="nb">tuple</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;Hv&#39;</span><span class="p">,</span> <span class="n">dE</span><span class="p">:</span><span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">museum_exposure</span><span class="p">:</span><span class="n">Optional</span><span class="p">[</span><span class="nb">tuple</span><span class="p">]</span> <span class="o">=</span> <span class="p">(),</span> <span class="n">fontsize</span><span class="p">:</span><span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">32</span><span class="p">,</span> <span class="n">equation</span><span class="p">:</span><span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;power_3p&#39;</span><span class="p">,</span> <span class="n">initial_params</span><span class="p">:</span><span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="s1">&#39;auto&#39;</span><span class="p">,</span> <span class="n">bounds</span><span class="p">:</span><span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">),</span> <span class="n">save</span><span class="p">:</span><span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">path_fig</span><span class="p">:</span><span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;cwd&#39;</span><span class="p">,</span> <span class="n">title</span><span class="p">:</span><span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">report</span><span class="p">:</span><span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">circle_h</span><span class="p">:</span><span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span><span class="p">):</span> 
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Plot the microfading data with circular colored patches. </span>
 
 <span class="sd">    Parameters</span>
@@ -19027,13 +19051,7 @@ One can enter a negative or positive float number to shape the colored circles a
 
             <details class="quote">
               <summary>Source code in <code>src/microfading/microfading.py</code></summary>
-              <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2576</span>
-<span class="normal">2577</span>
-<span class="normal">2578</span>
-<span class="normal">2579</span>
-<span class="normal">2580</span>
-<span class="normal">2581</span>
-<span class="normal">2582</span>
+              <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">2582</span>
 <span class="normal">2583</span>
 <span class="normal">2584</span>
 <span class="normal">2585</span>
@@ -19047,7 +19065,13 @@ One can enter a negative or positive float number to shape the colored circles a
 <span class="normal">2593</span>
 <span class="normal">2594</span>
 <span class="normal">2595</span>
-<span class="normal">2596</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">plots</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">plots</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;CIELAB&#39;</span><span class="p">,</span> <span class="s1">&#39;SP&#39;</span><span class="p">,</span> <span class="s1">&#39;SW&#39;</span><span class="p">,</span> <span class="s1">&#39;dE&#39;</span><span class="p">,</span> <span class="s1">&#39;dLab&#39;</span><span class="p">]):</span>
+<span class="normal">2596</span>
+<span class="normal">2597</span>
+<span class="normal">2598</span>
+<span class="normal">2599</span>
+<span class="normal">2600</span>
+<span class="normal">2601</span>
+<span class="normal">2602</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">plots</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">plots</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;CIELAB&#39;</span><span class="p">,</span> <span class="s1">&#39;SP&#39;</span><span class="p">,</span> <span class="s1">&#39;SW&#39;</span><span class="p">,</span> <span class="s1">&#39;dE&#39;</span><span class="p">,</span> <span class="s1">&#39;dLab&#39;</span><span class="p">]):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Create plots</span>
 
 <span class="sd">    Parameters</span>
@@ -19096,13 +19120,7 @@ One can enter a negative or positive float number to shape the colored circles a
 
             <details class="quote">
               <summary>Source code in <code>src/microfading/microfading.py</code></summary>
-              <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">4618</span>
-<span class="normal">4619</span>
-<span class="normal">4620</span>
-<span class="normal">4621</span>
-<span class="normal">4622</span>
-<span class="normal">4623</span>
-<span class="normal">4624</span>
+              <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">4624</span>
 <span class="normal">4625</span>
 <span class="normal">4626</span>
 <span class="normal">4627</span>
@@ -19147,7 +19165,13 @@ One can enter a negative or positive float number to shape the colored circles a
 <span class="normal">4666</span>
 <span class="normal">4667</span>
 <span class="normal">4668</span>
-<span class="normal">4669</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">read_files</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sheets</span><span class="p">:</span><span class="n">Union</span><span class="p">[</span><span class="nb">list</span><span class="p">,</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;info&#39;</span><span class="p">,</span> <span class="s1">&#39;CIELAB&#39;</span><span class="p">,</span> <span class="s1">&#39;spectra&#39;</span><span class="p">]):</span>
+<span class="normal">4669</span>
+<span class="normal">4670</span>
+<span class="normal">4671</span>
+<span class="normal">4672</span>
+<span class="normal">4673</span>
+<span class="normal">4674</span>
+<span class="normal">4675</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">read_files</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sheets</span><span class="p">:</span><span class="n">Union</span><span class="p">[</span><span class="nb">list</span><span class="p">,</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;info&#39;</span><span class="p">,</span> <span class="s1">&#39;CIELAB&#39;</span><span class="p">,</span> <span class="s1">&#39;spectra&#39;</span><span class="p">]):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Read the data files given as argument when defining the instance of the MFT class.</span>
 
 <span class="sd">    Parameters</span>
