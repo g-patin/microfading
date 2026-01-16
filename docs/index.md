@@ -15,13 +15,14 @@ This package has been created to help microfading users to manipulate their data
 
 ## What does this package provide ?
 
-The package provies computational tools to ease the manipulation of microfading data. The activities where the package provides help can be categorized in three main groups:
+The package provides computational tools to ease the manipulation of microfading data. The tasks where the package provides help can be categorized in three main groups:
 
 - **Rawdata processing**
 	- Transform the raw files produced by the spectrometer of the microfading system into a standardized file structure that is easier to read and which also contains metadata about the object and the analysis.	 
 - **Visualizations**
 	- Creation of figures to visualize the spectral data and colorimetric coordinates ($L^*$, $a^*$, $b^*$, $C^*$, $h$, $\Delta E$, etc.)
 	- Transform microfading numerical data into colored swatches
+	- Basic standardized reports
 	- Interactive plotting (not implemented yet !)
 - **Data manipulation**
 	- Perform specific query on spectral and colorimetric data

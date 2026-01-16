@@ -1,6 +1,8 @@
 In this section, we will give you all the essential information to correctly start using the `microfading` package.
 
-If you are not familiar with Python or Jupyter notebooks, you might want to consult our section on [Jupyter notebooks](https://g-patin.github.io/microfading/jupyter-introduction/), where we briefly describe what they are and why did we choose them for manipulating our microfading data.
+The easiest way to use the `microfading` package is within a Jupyter notebook. If you are not familiar with Python or Jupyter notebooks, you might want to consult our section on [Jupyter notebooks](https://g-patin.github.io/microfading/jupyter-introduction/), where we briefly describe what they are and why did we choose them for manipulating our microfading data.
+
+Once you installed Jupyter on your computer and are able to open new notebooks, you will need to install the `microfading` package (see the section [installation](https://g-patin.github.io/microfading/installation/)). You are now good to go ! Below you will find 5 recommendations that will guide you to correctly start using the package.  
 
 ## 1. **Do you have microfading data files?**
 
