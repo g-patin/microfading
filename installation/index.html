@@ -20,7 +20,7 @@
     
     
       
-        <title>Installation - microfading</title>
+        <title>Install package - microfading</title>
       
     
     
@@ -65,6 +65,11 @@
     <label class="md-overlay" for="__drawer"></label>
     <div data-md-component="skip">
       
+        
+        <a href="#install-package" class="md-skip">
+          Skip to content
+        </a>
+      
     </div>
     <div data-md-component="announce">
       
@@ -96,7 +101,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Installation
+              Install package
             
           </span>
         </div>
@@ -214,12 +219,14 @@
       <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
       
       
+        
+      
       
       <a href="./" class="md-nav__link md-nav__link--active">
         
   
   <span class="md-ellipsis">
-    Installation
+    Install package
   </span>
   
 
@@ -748,6 +755,8 @@
   
   
   
+    
+  
   
 </nav>
                   </div>
@@ -762,18 +771,34 @@
                   
 
 
-  <h1>Installation</h1>
-
-<p>For an optimal use of the <code>microfading</code> package, we recommend you to use the package inside a <a href="https://jupyter.org/">Jupyter notebook environment</a>. If you are not familiar with such an environment or if Jupyter is not installed on your computer, please first consult the appropriate documentation to install or learn about Jupyter notebooks.</p>
-<p>To install the latest version of the microfading package, open a terminal and enter the following command:</p>
+<h1 id="install-package">Install package<a class="headerlink" href="#install-package" title="Permanent link">&para;</a></h1>
+<p>For an optimal use of the <code>microfading</code> package, we recommend you to use the package inside a <a href="https://jupyter.org/">Jupyter notebook environment</a>. If you are not familiar with such an environment or if Jupyter is not installed on your computer, please first consult the appropriate documentation to install or learn about Jupyter notebooks. We wrote a short introduction section on <a href="https://g-patin.github.io/microfading/jupyter-introduction/">Jupyter notebooks</a> if you want to know more about it.</p>
+<p>You can install the <code>microfading</code> package in 2 different ways:</p>
+<ol>
+<li>
+<p><strong>Inside a terminal or a command prompt</strong></p>
+<p>Open a terminal and run the following command:</p>
 <div class="highlight"><pre><span></span><code>pip install microfading
 </code></pre></div>
-<p>If you wish to install a specific version of the microfading package, the version number can be added to the pip command as illustrated in the following example:</p>
+<p>If you wish to install a specific version of the <code>microfading</code> package, the version number can be added to the pip command as illustrated in the following example:</p>
 <div class="highlight"><pre><span></span><code>pip install microfading==1.0.10
 </code></pre></div>
+</li>
+<li>
+<p><strong>Inside a Jupyter notebook</strong></p>
+<p>If you are not familiar with terminal interfaces, you can install the package by using a Jupyter notebook. Open a new notebook, write the following command inside a code cell and activate the cell. Don't forget the exclamation mark at the beginning.</p>
+<div class="highlight"><pre><span></span><code>! pip install microfading
+</code></pre></div>
+</li>
+</ol>
 <p>&nbsp;</p>
-<p>To upgrade the package, open a terminal and enter the following command</p>
-<div class="highlight"><pre><span></span><code>pip install --upgrade microfading
+<h1 id="upgrade-package">Upgrade package<a class="headerlink" href="#upgrade-package" title="Permanent link">&para;</a></h1>
+<p>Similarly, you can upgrade the package via a terminal or a Jupyter notebook.</p>
+<div class="highlight"><pre><span></span><code># inside a terminal
+pip install --upgrade microfading
+</code></pre></div>
+<div class="highlight"><pre><span></span><code># inside a notebook
+! pip install --upgrade microfading
 </code></pre></div>
 
 
