@@ -9,7 +9,7 @@
       
       
       
-        <link rel="prev" href="../data-visualization/">
+        <link rel="prev" href="../connection-db-files/">
       
       
         <link rel="next" href="../create-MFT-class-instance/">
@@ -217,7 +217,7 @@
         
   
   <span class="md-ellipsis">
-    Install package
+    Installation
   </span>
   
 
@@ -476,6 +476,27 @@
                 
   
   
+  
+  
+    <li class="md-nav__item">
+      <a href="../connection-db-files/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Connect with db files
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
     
   
   
@@ -580,6 +601,69 @@
   
   <span class="md-ellipsis">
     register MFT devices
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../register-objects/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Register objects
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../register-projects/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Register projects
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../register-work-environment-info/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Register work environment info
   </span>
   
 
@@ -844,14 +928,14 @@
   <h1>Create databases</h1>
 
 <p>In this section, you will learn how to create the databases files. </p>
-<p>Creating databases is an operation that only needs to be performed one time using the <code>create_DB()</code> function (see below). Inside a desired folder on your local computer, it will create a few empty files (csv and txt) in which information about microfading projects and objects can be recorded. </p>
-<div class="highlight"><pre><span></span><code><span class="kn">import</span> <span class="nn">microfading</span> <span class="k">as</span> <span class="nn">mf</span>
-</code></pre></div>
-<div class="highlight"><pre><span></span><code><span class="n">folder</span> <span class="o">=</span> <span class="s2">&quot;Enter a desired folder path as a string&quot;</span>
-<span class="c1"># e.g: &quot;home/john/Documents/MFT/databases&quot;</span>
-
-<span class="n">mf</span><span class="o">.</span><span class="n">create_DB</span><span class="p">(</span><span class="n">folder</span><span class="o">=</span><span class="n">folder</span><span class="p">)</span>
-</code></pre></div>
+<p>Creating databases is an operation that only needs to be performed one time using the <code>create_DB()</code> function. Inside a given folder on your local computer, the algorithm will create a few empty files (csv and txt) in which information about microfading projects and objects can be recorded.</p>
+<p>When running the function, it will display some ipywidgets inside which you can enter the name of your database and the local folder where the database files will be stored (see image below). I personally only have a single set of database files for all my microfading analyses (with "MFT" for the database name). This is easier to manage and to query information about obejcts and projects. But you might feel the need to create several sets of database files. </p>
+<figure>
+<p><img align="left" alt="Alt text" class="img-large" src="../images/mf_create-db.png" /> </p>
+<figcaption>
+<p>Create database files </p>
+</figcaption>
+</figure>
 <p>&nbsp;</p>
 <h2 id="databases-created"><strong>Databases created ?</strong><a class="headerlink" href="#databases-created" title="Permanent link">&para;</a></h2>
 <p>If you want to know whether databases were created, use the <code>is_DB()</code> function.</p>
@@ -882,6 +966,9 @@ All the databases were created and can be found in the following directory: /hom
  'usage': True}
 </pre>
 </div>
+
+<hr />
+<p>© 2026 Gauthier Patin. All rights reserved. | Last updated: 2026-01-17</p>
 
 
 

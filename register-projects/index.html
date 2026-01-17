@@ -9,10 +9,10 @@
       
       
       
-        <link rel="prev" href="../databases-management/">
+        <link rel="prev" href="../register-objects/">
       
       
-        <link rel="next" href="../generate-report/">
+        <link rel="next" href="../register-work-environment-info/">
       
       
       <link rel="icon" href="../assets/images/favicon.png">
@@ -20,7 +20,7 @@
     
     
       
-        <title>Assess light sensitivity - microfading</title>
+        <title>Register projects - microfading</title>
       
     
     
@@ -96,7 +96,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Assess light sensitivity
+              Register projects
             
           </span>
         </div>
@@ -245,19 +245,17 @@
       
   
   
-    
   
   
-  
     
     
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
         
           
           <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
@@ -271,7 +269,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_4">
             <span class="md-nav__icon md-icon"></span>
             Tutorials
@@ -345,17 +343,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../assess-light-sensitivity/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -364,7 +355,6 @@
   
 
       </a>
-      
     </li>
   
 
@@ -444,17 +434,19 @@
       
   
   
+    
   
   
+  
     
     
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" checked>
         
           
           <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
@@ -468,7 +460,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_5">
             <span class="md-nav__icon md-icon"></span>
             How-to-guides
@@ -584,10 +576,17 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../register-projects/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   <span class="md-ellipsis">
@@ -596,6 +595,7 @@
   
 
       </a>
+      
     </li>
   
 
@@ -848,9 +848,43 @@
                   
 
 
-  <h1>Assess light sensitivity</h1>
+  <h1>Register projects</h1>
 
+<p>In this section, you will learn how to register a new project. When it comes to microfading analyses, we are assuming that most of the time, the analyses are performed within a specific context, i.e. a project. It could be a temporary exhibition, a research project, a student internship, etc. </p>
+<p>The information about the new project will be registered in the database files that you created earlier. If you haven't created any database files, please first consult the section on how to <a href="https://g-patin.github.io/microfading/create-databases/">create database files</a>.</p>
+<p>You will need to know the name that you chose for your database files. If you forgot it, you can ask for all the database names that you created (see code below).</p>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span> <span class="nn">msdb</span>
 
+<span class="c1"># return all the names of created databases</span>
+<span class="n">msdb</span><span class="o">.</span><span class="n">get_names</span><span class="p">()</span>
+</code></pre></div>
+<p>&nbsp;</p>
+<p>Afterwards, follow the code displayed below to add a new project. </p>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span> <span class="nn">msdb</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><span class="c1"># create a DB class instance</span>
+<span class="n">db_name</span> <span class="o">=</span> <span class="s1">&#39;write the name you chose you for your database files&#39;</span>
+<span class="n">db</span> <span class="o">=</span> <span class="n">msdb</span><span class="o">.</span><span class="n">DB</span><span class="p">(</span><span class="n">db_name</span><span class="o">=</span><span class="n">db_name</span><span class="p">)</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><span class="c1"># add a new project</span>
+<span class="n">db</span><span class="o">.</span><span class="n">add_projects</span><span class="p">()</span>
+</code></pre></div>
+<p>The last line of code above will return several ipywidgets, inside which you will be able to insert the required information about the project. The values for the institutions, project leader, co-researchers, and methods will appear automatically if you first had registered them (see code below). </p>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span> <span class="nn">msdb</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><span class="c1"># create a DB class instance</span>
+<span class="n">db_name</span> <span class="o">=</span> <span class="s1">&#39;write the name you chose you for your database files&#39;</span>
+<span class="n">db</span> <span class="o">=</span> <span class="n">msdb</span><span class="o">.</span><span class="n">DB</span><span class="p">(</span><span class="n">db_name</span><span class="o">=</span><span class="n">db_name</span><span class="p">)</span>
+</code></pre></div>
+<p><div class="highlight"><pre><span></span><code><span class="c1"># add a new institution</span>
+<span class="n">db</span><span class="o">.</span><span class="n">add_institutions</span><span class="p">()</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><span class="c1"># add a new user (project leader, co-researchers)</span>
+<span class="n">db</span><span class="o">.</span><span class="n">add_users</span><span class="p">()</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><span class="c1"># add a new analytical method</span>
+<span class="n">db</span><span class="o">.</span><span class="n">add_methods</span><span class="p">()</span>
+</code></pre></div></p>
 
 
 

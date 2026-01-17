@@ -217,7 +217,7 @@
         
   
   <span class="md-ellipsis">
-    Install package
+    Installation
   </span>
   
 
@@ -557,6 +557,27 @@
   
   
     <li class="md-nav__item">
+      <a href="../connection-db-files/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Connect with db files
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../create-databases/" class="md-nav__link">
         
   
@@ -604,6 +625,69 @@
   
   <span class="md-ellipsis">
     register MFT devices
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../register-objects/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Register objects
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../register-projects/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Register projects
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../register-work-environment-info/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Register work environment info
   </span>
   
 
@@ -891,9 +975,9 @@
 
   <h1>Rawdata processing</h1>
 
-<p>In this section, we will show you how to process raw microfading files into our standard <em>interim</em> files, that are required to use the <code>microfading</code> package. </p>
-<p>A summary of this page has been compiled inside a Jupyter notebook and is available for download: <a href="../notebooks/Process_rawfiles.zip">Download notebook</a></p>
-<p>The current version of the <code>microfading</code> package can only process raw files obtained with the Fotonowy microfading device. Don't hesitate to contact us to discuss the possibility to process raw files obtained with other microfading systems.</p>
+<p>In this section, we will show you how to process microfading raw files into our standard <em>interim</em> files, that are required to use the <code>microfading</code> package. To learn more about the types of files used in this package, see the <a href="https://g-patin.github.io/microfading/datafiles/">Datafiles</a> section.</p>
+<p>A summary of this page has been compiled inside a Jupyter notebook and is available for download: <a href="../notebooks/Process_rawfiles.zip">rawdata processing notebook</a>.</p>
+<p>The current version of the <code>microfading</code> package can only process raw files obtained with the Fotonowy microfading device. Please, don't hesitate to contact us to discuss the possibility to process raw files obtained with other microfading systems.</p>
 <p>Processing the rawdata files consists of two main steps:</p>
 <ol>
 <li>Get a list of your raw files</li>
@@ -901,8 +985,8 @@
 </ol>
 <h2 id="get-raw-files">Get raw files<a class="headerlink" href="#get-raw-files" title="Permanent link">&para;</a></h2>
 <p>There are many ways in python to retrieve a list of files. I will only show two ways of doing it.</p>
-<p><strong>Option 1</strong> - Retrieve the files manually</p>
-<p>In this option you create a list by typing the names of the raw files. To ease the process, you can start writing the first letter and then press the <code>Tab</code> button to autocomplete the rest of the filename. This only works if the notebooks is in the same folder as the data files or if you modified the current working directory of the notebook. </p>
+<p><strong>Option 1</strong> - Retrieve files manually</p>
+<p>In this option you create a list by typing the names of the raw files. To ease the process, you can start writing the first letter and then press the <code>Tab</code> button to autocomplete the rest of the filename. This only works if the notebook is in the same folder as the data files or if you modified the current working directory of the notebook. </p>
 <div class="highlight"><pre><span></span><code><span class="c1"># For example, I created a list of two rawdata files</span>
 <span class="n">files</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;Project01_MF.plume01.01_G01_blue_rawdata.txt&#39;</span><span class="p">,</span>
          <span class="s1">&#39;Project12_MF.S0001.01_G01_paperBlock_rawdata.txt&#39;</span><span class="p">]</span>
@@ -913,12 +997,17 @@
          <span class="s1">&#39;/home/john/Documents/data/Project12_MF.S01.01_G01_paperBlock_rawdata.txt&#39;</span><span class="p">]</span>
 </code></pre></div>
 <p>&nbsp;</p>
-<p><strong>Option 2</strong> - Retrieve with <code>glob</code></p>
+<p><strong>Option 2</strong> - Retrieve files with <code>glob</code></p>
+<p>The <code>glob</code> module allows users to find pathnames according to pattern matching expression that you will provide. The current working directory (cwd) of the notebook should be similar to the folder where your files are located. You can change the cwd of the notebook by using the <em>cd</em> command. Then you can invoke the <code>glob</code> module as described below, by entering the pattern matching expressions between * *. By default, the recurvise parameter is set to False, but if you set it to True, then the function will also search for files in all the sub-folders of the cwd.</p>
 <div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">glob</span> <span class="kn">import</span> <span class="n">glob</span>
-
-<span class="c1"># Ask glob to retrieve all the files containing the expression *MF* and *rawdata* in their filenames</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><span class="c1"># change the cwd of the notebook if you need to</span>
+<span class="n">cd</span> <span class="o">/</span><span class="n">home</span><span class="o">/</span><span class="n">john</span><span class="o">/</span><span class="n">Documents</span><span class="o">/</span><span class="n">MFT</span><span class="o">/</span><span class="n">rawfiles</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><span class="c1"># Ask glob to retrieve all the files containing the expression *MF* and *rawdata* in their filenames</span>
 <span class="c1"># I also asked to sort the files</span>
-<span class="n">files</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">glob</span><span class="p">(</span><span class="s1">&#39;*MF*rawdata*&#39;</span><span class="p">))</span>
+
+<span class="n">files</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">glob</span><span class="p">(</span><span class="s1">&#39;*MF*rawdata*&#39;</span><span class="p">),</span> <span class="n">recursive</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 <span class="n">files</span>
 </code></pre></div>
 <div class="output-area">
@@ -928,6 +1017,9 @@
 </div>
 
 <p>Although option 1 is the easiest one, it can be quite time-consuming. For instance, the Fotonowy device currently produces 4 raw files per analysis, which can quickly become a lot of files to individually write. If you are saving all your microfading raw files inside the same folder, you might want to consider creating a sub-folder called "To_process" and copy-paste any analyses that you want to process. To select all the files in this sub-folder you can use the <code>glob</code> method as showed below.</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># change the cwd of the notebook to the &quot;To_process&quot; folder</span>
+<span class="n">cd</span> <span class="o">/</span><span class="n">home</span><span class="o">/</span><span class="n">john</span><span class="o">/</span><span class="n">Documents</span><span class="o">/</span><span class="n">MFT</span><span class="o">/</span><span class="n">rawfiles</span><span class="o">/</span><span class="n">To_process</span>
+</code></pre></div>
 <div class="highlight"><pre><span></span><code><span class="n">all_files</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">glob</span><span class="p">(</span><span class="s1">&#39;**&#39;</span><span class="p">))</span>
 </code></pre></div>
 <h2 id="run-function">Run function<a class="headerlink" href="#run-function" title="Permanent link">&para;</a></h2>
@@ -943,7 +1035,7 @@
 <h3 id="fotonowy-device">Fotonowy device<a class="headerlink" href="#fotonowy-device" title="Permanent link">&para;</a></h3>
 <p>Currently, the Fotonowy device produces 4 raw files for each analysis, thus you will need to enter these 4 files in the list of required raw files.
 The list of raw files can contain several analyses. The algorithm will automatically detect that there are more than one analyses, and will thus process them separately. </p>
-<p>For the argument 'device' of the <code>process_rawdata()</code> function, you can start by entering 'fotonowy' as value (see code below).</p>
+<p>For the argument 'device' of the <code>process_rawdata()</code> function, you can start by entering 'fotonowy' as a value (see code below).</p>
 <div class="highlight"><pre><span></span><code><span class="c1">#### BASIC RAWDATA PROCESSING STEPS ####</span>
 
 <span class="c1"># retrieve raw files</span>
@@ -953,9 +1045,36 @@ The list of raw files can contain several analyses. The algorithm will automatic
 <span class="n">mf</span><span class="o">.</span><span class="n">process_rawdata</span><span class="p">(</span><span class="n">files</span><span class="o">=</span><span class="n">rawfiles</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="s1">&#39;fotonowy&#39;</span><span class="p">)</span>
 </code></pre></div>
 <p>The method showed in the above cell corresponds to the most basic way of processing your raw files. It can be viewed as a 'quick and dirty way' ! This is not the recommended method, but we understand that at first, you might prefer to use such a method. </p>
-<p>For a better way to process your raw files, you will need to use the other arguments of the <code>process_rawdata()</code> function for which more information is provided in the following sub-section.</p>
+<p>For a better way to process your raw files, you will need to use the other arguments of the <code>process_rawdata()</code> function, for which more information is provided in the following sub-section.</p>
 <h2 id="function-arguments">Function arguments<a class="headerlink" href="#function-arguments" title="Permanent link">&para;</a></h2>
-<p>The <code>process_rawdata()</code> function contains several arguments that enable you to process your data in a more rigorous way. I will let you read the docstrings for detailed information. But I will just focus on two parameters that you might find important to be aware of. </p>
+<p>The <code>process_rawdata()</code> function contains several arguments that enable you to process your data in a more rigorous way, more specifically:</p>
+<ul>
+<li>Information about objects and projects will be automatically added</li>
+<li>Better control over some data processing parameters (rounding, interpolation, wavelength range and step, filenaming, etc.)</li>
+<li>Default behavior to fill in some values</li>
+<li>Overall data processing more coherent and more repeatable</li>
+</ul>
+<p>To make use of the arguments of the <code>process_rawdata()</code> function, you will need to perform the following few steps:</p>
+<ol>
+<li>
+<p>Register your working environment information inside database files (see section <a href="https://g-patin.github.io/microfading/register-work-environment-info/">register work-environment info</a>). </p>
+</li>
+<li>
+<p>Connect the <code>microfading</code> package with the database files previously created (see section <a href="https://g-patin.github.io/microfading/connection-db-files/">connection with db files</a>). </p>
+</li>
+<li>
+<p>Set default behavior information (see section <a href="https://g-patin.github.io/microfading/configuration-info/">configuration info</a>).  </p>
+<p>Steps 1 to 3 only needs to be performed once at the beginning. However, each time you have a new project or a new object on which you will perform microfading analyses, then you will need to register the project or object.  </p>
+</li>
+<li>
+<p>Register a new project (see section <a href="https://g-patin.github.io/microfading/register-projects/">register projects</a>).</p>
+</li>
+<li>
+<p>Register a new object (see section <a href="https://g-patin.github.io/microfading/register-objects/">register objects</a>).</p>
+</li>
+</ol>
+<hr />
+<p>© 2026 Gauthier Patin. All rights reserved. | Last updated: 2026-01-17</p>
 
 
 
