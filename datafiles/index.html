@@ -65,6 +65,11 @@
     <label class="md-overlay" for="__drawer"></label>
     <div data-md-component="skip">
       
+        
+        <a href="#files-types" class="md-skip">
+          Skip to content
+        </a>
+      
     </div>
     <div data-md-component="announce">
       
@@ -472,6 +477,27 @@
   
   
     <li class="md-nav__item">
+      <a href="../compute-average/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Compute average values
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../connection-db-files/" class="md-nav__link">
         
   
@@ -733,6 +759,17 @@
       
       
       
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    Datafiles
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
       <a href="./" class="md-nav__link md-nav__link--active">
         
   
@@ -742,6 +779,50 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#files-types" class="md-nav__link">
+    <span class="md-ellipsis">
+      Files types
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#interim-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      Interim files
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#data-types" class="md-nav__link">
+    <span class="md-ellipsis">
+      Data types
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
       
     </li>
   
@@ -835,6 +916,41 @@
   
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#files-types" class="md-nav__link">
+    <span class="md-ellipsis">
+      Files types
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#interim-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      Interim files
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#data-types" class="md-nav__link">
+    <span class="md-ellipsis">
+      Data types
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -850,14 +966,28 @@
 
   <h1>Datafiles</h1>
 
-<p>The <code>microfading</code> package aims to facilitate the manipulation of microfading data. Consequently, the microfading data files play a central role in the package. Like in most analytical techniques, several microfading devices have been developed over the years. Each device creates its own specfic rawfiles that are usually very different from one device to another. To compare the results obtained with different devices, one solution is to convert each rawfile into a unique file format, which is the method that has been chosen in this package. </p>
-<p>This unique file format, called <em>interim</em> file, is simply an Excel or an OpenDocument file with a specific inner structure to organize the data. Each <em>interim</em> file is composed of three sheets:</p>
+<h2 id="files-types">Files types<a class="headerlink" href="#files-types" title="Permanent link">&para;</a></h2>
+<p>The <code>microfading</code> package aims to facilitate the manipulation of microfading data. Consequently, data files play a central role in the package, for which we applied the following typology for our files (we simply re-used the structure from <a href="https://cookiecutter-data-science.drivendata.org/">Cookiecutter data science</a>):</p>
+<ol>
+<li>
+<p><strong>Raw files</strong>: the files that are produced by the software of microfading devices when performing analyses. </p>
+</li>
+<li>
+<p><strong>Interim files</strong>: standardized Excel or OpenDocument files created by the <code>microfading</code> package from the raw files previously mentioned.</p>
+</li>
+<li>
+<p><strong>Processed files</strong>: modified interim files tailored according to specific research needs. Currently, the package only proposed the average of several interim files as processed files. But you can definitely modified yourself the interim files, by adding new columns or modifying the existing data.</p>
+</li>
+</ol>
+<p>Our conception of the structure related to scientific data and files can be viewed as a tree or an hourglass shape. At the bottom, there are multiple roots. Each root can be viewed as a device that produces its own raw files with a specific structure inside the files. It is very common in laboratory, to have different devices that are doing similar analyses. For example, several microfading devices were developed over the past decaded. Each device creates its own specfic rawfiles that are usually very different from one device to another. Comparing the data from these various raw files can be quite tidious. One solution is to convert each raw file into a unique file format, which is the method that has been chosen in this package. This unique file format corresponds to the above-mentioned <em>interim</em> file. Therefore, first step of our package is to convert raw files into <em>interim</em> files, so that whatever the microfading device you used to perform your analyses, the <em>interim</em> file will always have a similar structure. This is what makes the <code>microfading</code> functional because it expects a given structure that makes it easy to retrieve data or perform further computational processes. Above the <em>interim</em> files are the <em>processed</em> files. Their structure can be different and be specific according to the projects, the research questions, etc. This is where data and files gain in flexibility so that it can adequately fullfill the needs and objectives of each project.</p>
+<h2 id="interim-files">Interim files<a class="headerlink" href="#interim-files" title="Permanent link">&para;</a></h2>
+<p>An <em>interim</em> file is simply an Excel or an OpenDocument file with a specific inner structure to organize the data. Each <em>interim</em> file is composed of three sheets:</p>
 <ol>
 <li><strong>info</strong> : it contains the metadata related to the measurements, the object, and the project</li>
 <li><strong>CIELAB</strong> : it contains the colorimetric values</li>
 <li><strong>spectra</strong> : it contains the spectral values</li>
 </ol>
-<p>An example of an <em>interim</em> file can be found in the microfading package <a href="https://g-patin.github.io/microfading/retrieve-test-datasets/">(get_datasets() function)</a>. As an illustration of the content of <em>interim</em> files, the picture below shows the CIELAB sheet of an <em>interim</em> file. The first three rows on the left are related to the light dose energy, while the other columns show various colorimetric units.</p>
+<p>An example of an <em>interim</em> file can be found in the microfading package <a href="https://g-patin.github.io/microfading/retrieve-test-datasets/">(section Retrieve test datasets)</a>. As an illustration of the content of <em>interim</em> files, the picture below shows the CIELAB sheet of an <em>interim</em> file. The first three rows on the left are related to the light dose energy, while the other columns show various colorimetric units. The value <em>nominal</em>, that you can see inside <em>interim</em> file, corresponds to the data types, for which more information is provided below.</p>
 <figure>
 <p><img align="left" alt="Alt text" class="img-large" src="../images/mf_interim-file_CIELAB-sheet.png" /></p>
 <figcaption>
@@ -865,9 +995,22 @@
 </figcaption>
 </figure>
 <p>If you prefer to use the functionalities provided by Excel or OpenDocument, you can always create a new sheet inside an <em>interim</em> file to perform more calculations or create figures. I would not recommend to delete the existing columns or rows inside the first three sheets (info, CIELAB, spectra), or to create figures inside them. This might lead to some issues with the functions of the <code>microfading</code> package, and thus preventing its use.</p>
-<p>Our conception of the structure related to scientific data and files can be viewed as a tree or an hourglass shape. At the bottom, there are multiple roots. Each root can be viewed as a device that produces its own raw files with a specific structure inside the files. It is very common in laboratory, to have different devices that are doing similar analyses. Comparing the data from these various raw files can be quite tidious. This is the reason why, the first step of our package is to convert raw files into <em>interim</em> files, so that whatever the microfading device you used to perform your analyses, the <em>interim</em> file will always have a similar structure. This is what makes the <code>microfading</code> functional because it expects a given structure that makes it easy to retrieve data or perform further computational processes. Above the <em>interim</em> files are the <em>processed</em> files. Their structure can be different and be specific according to the projects, the research questions, etc. This is where data and files gain in flexibility so that it can adequately fullfill the needs and objectives of each project.</p>
+<h2 id="data-types">Data types<a class="headerlink" href="#data-types" title="Permanent link">&para;</a></h2>
+<p>We defined three types of numerical data in the package:</p>
+<ol>
+<li>
+<p><strong>nominal</strong>: a single value directly obtained a single measurement.</p>
+</li>
+<li>
+<p><strong>mean</strong>: a value obtained by averaging several nominal values.</p>
+</li>
+<li>
+<p><strong>std</strong>: a value corresponding to the standard deviation value of several nominal values.</p>
+</li>
+</ol>
+<p><strong>Mean</strong> and <strong>std</strong> values will be encountered when asking the package to compute the average of several <em>interim</em> files (see section <a href="https://g-patin.github.io/microfading/compute-average/">Compute average values</a>).</p>
 <hr />
-<p>© 2026 Gauthier Patin. All rights reserved. | Last updated: 2026-01-05</p>
+<p>© 2026 Gauthier Patin. All rights reserved. | Last updated: 2026-01-18</p>
 
 
 

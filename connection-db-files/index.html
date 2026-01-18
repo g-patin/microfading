@@ -9,7 +9,7 @@
       
       
       
-        <link rel="prev" href="../data-visualization/">
+        <link rel="prev" href="../compute-average/">
       
       
         <link rel="next" href="../create-databases/">
@@ -471,6 +471,27 @@
                 
   
   
+  
+  
+    <li class="md-nav__item">
+      <a href="../compute-average/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Compute average values
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
     
   
   
@@ -850,7 +871,45 @@
 
   <h1>Connect with db files</h1>
 
-<p>Hello world !</p>
+<p>In this section, you will learn how to connect the <code>microfading</code> package with the database files, that you created using the <code>msdb</code> package (see msdb - <a href="https://g-patin.github.io/msdb/create-databases/">create db files</a>).</p>
+<p>Follow the instructions below:</p>
+<ol>
+<li>
+<p>open a new or an existing notebook</p>
+</li>
+<li>
+<p>import the microfading package</p>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span> <span class="nn">microfading</span> <span class="k">as</span> <span class="nn">mf</span>
+</code></pre></div>
+</li>
+<li>
+<p>In a new cell, run the following code:</p>
+<div class="highlight"><pre><span></span><code><span class="n">mf</span><span class="o">.</span><span class="n">set_DB</span><span class="p">()</span>
+</code></pre></div>
+<p>This will display some ipywidgets (see figures below). If you click on inside the white space rectangle for the <em>db_name</em> and then push the bottom arrow on your keyboard, a window should appear with the name of the database files that you previously created. You can then select one of the names, and the <em>db_path</em> will automatically be filled with the valid value.</p>
+</li>
+</ol>
+<figure>
+<p><img align="left" alt="Alt text" class="img-large" src="../images/mf_connect-db_01.png" /></p>
+<figcaption>
+<p>ipywidgets to connect with the database files.</p>
+</figcaption>
+</figure>
+<figure>
+<p><img align="left" alt="Alt text" class="img-large" src="../images/mf_connect-db_02.png" /></p>
+<figcaption>
+<p>ipywidgets to connect with the database files - select a db_name.</p>
+</figcaption>
+</figure>
+<figure>
+<p><img align="left" alt="Alt text" class="img-large" src="../images/mf_connect-db_03.png" /></p>
+<figcaption>
+<p>ipywidgets to connect with the database files - all is completed, click on the Save button.</p>
+</figcaption>
+</figure>
+<p>The parameter called <em>Use</em> defines whether the <code>microfading</code> package should by default make us the information provided in the database files. By default it is set to True, and you can leave it as it is. But you can decide to still make the connection between the <code>microfading</code> package and the database files and decide manually each time you want the functions of the <code>microfading</code> package to make use the database files.</p>
+<hr />
+<p>© 2026 Gauthier Patin. All rights reserved. | Last updated: 2026-01-18</p>
 
 
 

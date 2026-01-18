@@ -65,6 +65,11 @@
     <label class="md-overlay" for="__drawer"></label>
     <div data-md-component="skip">
       
+        
+        <a href="#an-holistic-approach" class="md-skip">
+          Skip to content
+        </a>
+      
     </div>
     <div data-md-component="announce">
       
@@ -474,6 +479,27 @@
   
   
     <li class="md-nav__item">
+      <a href="../compute-average/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Compute average values
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../connection-db-files/" class="md-nav__link">
         
   
@@ -607,6 +633,17 @@
       
       
       
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    Register work environment info
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
       <a href="./" class="md-nav__link md-nav__link--active">
         
   
@@ -616,6 +653,41 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#an-holistic-approach" class="md-nav__link">
+    <span class="md-ellipsis">
+      An holistic approach
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#msdb-package" class="md-nav__link">
+    <span class="md-ellipsis">
+      MSDB package
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
       
     </li>
   
@@ -835,6 +907,32 @@
   
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#an-holistic-approach" class="md-nav__link">
+    <span class="md-ellipsis">
+      An holistic approach
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#msdb-package" class="md-nav__link">
+    <span class="md-ellipsis">
+      MSDB package
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -850,7 +948,25 @@
 
   <h1>Register work environment info</h1>
 
-<p>Hello world !</p>
+<h2 id="an-holistic-approach">An holistic approach<a class="headerlink" href="#an-holistic-approach" title="Permanent link">&para;</a></h2>
+<p>In this section, you will learn how to register information about your working environment inside database files. The first thing that you need to be aware is that this kind of information is not limited to microfading analyses. For example, we will register information about objects or researchers, knowing that several different types of analyses can be performed on objects by different researchers. Therefore, we need to have an holistic / global approach when registering such information. This is the reason why, such tasks are not performed by the <code>microfading</code> package, but by another package called <a href="https://g-patin.github.io/msdb/">msdb</a> (material science database).</p>
+<h2 id="msdb-package">MSDB package<a class="headerlink" href="#msdb-package" title="Permanent link">&para;</a></h2>
+<p>The <code>msdb</code> package will allow you to create a set of simple csv and txt files inside which you will be able to record information about your working environment. Have a look at the documentation website of the <code>msdb</code> package and especially the <a href="https://g-patin.github.io/msdb/get-started/">get started section</a>. But the first thing you will need to do is to <a href="https://g-patin.github.io/msdb/create-databases/">create the database files</a>. Afterwards, you will be able to record information inside the database files (<a href="https://g-patin.github.io/msdb/databases-usage/">msdb - add info</a>). The last step will be to connect the <code>microfading</code> package with the name of msdb database files that you just created (see section <a href="https://g-patin.github.io/microfading/connection-db-files/">Connect with db files</a>). This will enable the <code>microfading</code> package to have access to the information stored in the database files, so that they can automatically be added to your microfading analyses. More precisely, inside the <em>interim</em> microfading file, the values contained in first tab, called <em>info</em>, come from the information stored in the msdb database files. </p>
+<p>&nbsp;</p>
+<p>To sum-up, just follow the steps:</p>
+<ol>
+<li>
+<p><a href="https://g-patin.github.io/msdb/create-databases/">create</a> the database files</p>
+</li>
+<li>
+<p><a href="https://g-patin.github.io/msdb/databases-usage/">add info</a> inside the databases files</p>
+</li>
+<li>
+<p><a href="https://g-patin.github.io/microfading/connection-db-files/">connect</a> the databases with the <code>microfading</code> package</p>
+</li>
+</ol>
+<hr />
+<p>© 2026 Gauthier Patin. All rights reserved. | Last updated: 2026-01-18</p>
 
 
 
