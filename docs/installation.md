@@ -1,5 +1,5 @@
 
-# Install package
+## Install package
 
 For an optimal use of the `microfading` package, we recommend you to use the package inside a [Jupyter notebook environment](https://jupyter.org/). If you are not familiar with such an environment or if Jupyter is not installed on your computer, please first consult the appropriate documentation to install or learn about Jupyter notebooks. We wrote a short introduction section on [Jupyter notebooks](https://g-patin.github.io/microfading/jupyter-introduction/) if you want to know more about it.
 
@@ -29,7 +29,7 @@ You can install the `microfading` package in 2 different ways:
 
 &nbsp;
 
-# Upgrade package
+## Upgrade package
 
 Similarly, you can upgrade the package via a terminal or a Jupyter notebook.
 
@@ -42,3 +42,7 @@ pip install --upgrade microfading
 # inside a notebook
 ! pip install --upgrade microfading
 ```
+
+---
+
+© 2026 Gauthier Patin. All rights reserved. | Last updated: 2026-01-17

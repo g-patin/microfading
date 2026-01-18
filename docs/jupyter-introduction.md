@@ -26,7 +26,7 @@ A Jupyter notebook with three empty cells.
 
 ![Alt text](images/mf_notebook_basic-inputs.png){: .img-large align=left }
 /// caption
-A simple print statement.
+A simple print statement and an addition.
 ///
 
 Now think of a notebook as a very basic car. The most basic functionalities of such a car would simply be to move forward, backward, and to stop. A simple notebook on its own - meaning without importing any external package - only provide basic operators, like print statement or simple mathematical operations. Going back to your car, you might want to listen to the radio or have a navigation system. A skilled electrician could build a radio from scratch and customize it for the car, but most of us would directly buy a radio made by someone else and simply connect it to our car. The same concept apply in Jupyter notebooks. To increase the things we can do inside notebooks, we will import software (called "package") made by others. For example, in the figure below, I imported the `math` package in the first cell (activating cells containing only import statements usually does not produce an output, but it is still important that you activate the cell). Then, in the second cell, I used the `log` function of the `math` package to calculate the logarithm value of 30. I could have written myself the python code to compute logarithmic values, but it would have taken me much more time, and I could have made errors during the writing process. Now, I can encapsulated this value into a variable that I deciced to call $x$, so that the notebook remembers it, and at any time I can ask to print the value of $x$.
@@ -46,3 +46,8 @@ Import the microfading package.
 ///
 
 This was a very short introduction about Jupyter notebooks. There are much more to say about it, but you will be able to find online many useful tutorials about it. Welcome and goodluck !
+
+
+---
+
+© 2026 Gauthier Patin. All rights reserved. | Last updated: 2026-01-18

@@ -15,7 +15,7 @@ extra:
   
 nav:
   - index.md
-  - installation.md  
+  - Installation: installation.md  
   - microfading.md
   - Tutorials:
       - get-started.md
@@ -26,9 +26,14 @@ nav:
       - rawdata-processing.md
       - data-visualization.md      
   - How-to-guides:
+      - Compute average values: compute-average.md
+      - Connect with db files: connection-db-files.md
       - create-databases.md
       - Create an MFT class instance: create-MFT-class-instance.md  
       - register-MFT-devices.md
+      - register-objects.md
+      - register-projects.md
+      - register-work-environment-info.md
       - retrieve-test-datasets.md    
   - Explanation:
       - Jupyter notebooks: jupyter-introduction.md

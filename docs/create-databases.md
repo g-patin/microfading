@@ -1,19 +1,14 @@
 
 In this section, you will learn how to create the databases files. 
 
-Creating databases is an operation that only needs to be performed one time using the `create_DB()` function (see below). Inside a desired folder on your local computer, it will create a few empty files (csv and txt) in which information about microfading projects and objects can be recorded. 
+Creating databases is an operation that only needs to be performed one time using the `create_DB()` function. Inside a given folder on your local computer, the algorithm will create a few empty files (csv and txt) in which information about microfading projects and objects can be recorded.
 
-```python
-import microfading as mf
-```
+When running the function, it will display some ipywidgets inside which you can enter the name of your database and the local folder where the database files will be stored (see image below). I personally only have a single set of database files for all my microfading analyses (with "MFT" for the database name). This is easier to manage and to query information about obejcts and projects. But you might feel the need to create several sets of database files. 
 
-
-```python
-folder = "Enter a desired folder path as a string"
-# e.g: "home/john/Documents/MFT/databases"
-
-mf.create_DB(folder=folder)
-```
+![Alt text](images/mf_create-db.png){: .img-large align=left } 
+/// caption
+Create database files 
+///
 
 &nbsp;
 
@@ -56,4 +51,8 @@ mf.get_config(key='databases')
  'usage': True}
 </pre>
 </div>
+
+---
+
+© 2026 Gauthier Patin. All rights reserved. | Last updated: 2026-01-17
 
