@@ -871,7 +871,48 @@
 
   <h1>Register objects</h1>
 
-<p>Hello world !</p>
+<p>In this section, you will learn how to register a new object. </p>
+<p>The information about the new object will be registered in one the database files - called objects_info.csv- that you created earlier. If you haven't created any database files, please first consult the section on how to <a href="https://g-patin.github.io/microfading/create-databases/">create database files</a>.</p>
+<p>You will need to know the name that you chose for your database files. If you forgot it, you can ask for all the database names that you created (see code below).</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># material science database package</span>
+<span class="kn">import</span> <span class="nn">msdb</span>
+
+<span class="c1"># return all the names of created databases</span>
+<span class="n">msdb</span><span class="o">.</span><span class="n">get_names</span><span class="p">()</span>
+</code></pre></div>
+<p>&nbsp;</p>
+<p>Afterwards, follow the code displayed below to add a new object. </p>
+<div class="highlight"><pre><span></span><code><span class="c1"># material science database package</span>
+<span class="kn">import</span> <span class="nn">msdb</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><span class="c1"># create a DB class instance</span>
+<span class="n">db_name</span> <span class="o">=</span> <span class="s1">&#39;write the name you chose you for your database files&#39;</span>
+<span class="n">db</span> <span class="o">=</span> <span class="n">msdb</span><span class="o">.</span><span class="n">DB</span><span class="p">(</span><span class="n">db_name</span><span class="o">=</span><span class="n">db_name</span><span class="p">)</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><span class="c1"># add a new object</span>
+<span class="n">db</span><span class="o">.</span><span class="n">add_objects</span><span class="p">()</span>
+</code></pre></div>
+<p>The last line of code above will return several ipywidgets, inside which you will be able to insert the required information about the object. Some of the ipywidgets already contains pre-registered values, so that you can directly select them. Have a look at the code lines below if you want to pre-register some information. </p>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span> <span class="nn">msdb</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><span class="c1"># create a DB class instance</span>
+<span class="n">db_name</span> <span class="o">=</span> <span class="s1">&#39;write the name you chose you for your database files&#39;</span>
+<span class="n">db</span> <span class="o">=</span> <span class="n">msdb</span><span class="o">.</span><span class="n">DB</span><span class="p">(</span><span class="n">db_name</span><span class="o">=</span><span class="n">db_name</span><span class="p">)</span>
+</code></pre></div>
+<p><div class="highlight"><pre><span></span><code><span class="c1"># add a new institution</span>
+<span class="n">db</span><span class="o">.</span><span class="n">add_institutions</span><span class="p">()</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><span class="c1"># add a new object creator</span>
+<span class="n">db</span><span class="o">.</span><span class="n">add_creators</span><span class="p">()</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><span class="c1"># add a new material</span>
+<span class="n">db</span><span class="o">.</span><span class="n">add_materials</span><span class="p">()</span>
+</code></pre></div></p>
+<div class="highlight"><pre><span></span><code><span class="c1"># add a new object type</span>
+<span class="n">db</span><span class="o">.</span><span class="n">add_types</span><span class="p">()</span>
+</code></pre></div>
+<hr />
+<p>© 2026 Gauthier Patin. All rights reserved. | Last updated: 2026-01-23</p>
 
 
 
